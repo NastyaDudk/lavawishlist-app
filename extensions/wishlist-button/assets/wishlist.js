@@ -367,7 +367,19 @@
     if (btn.classList.contains("wl-remove")) {
       const h = btn.dataset.h;
 
-      await fetch("/apps/wishlist", {
+      // ⚡ моментально удаляем из UI
+      const current = await getWishlist();
+      wishlistCache = current.filter((i) => i.handle !== h);
+
+      localStorage.setItem(LS_KEY, JSON.stringify(wishlistCache));
+      localStorage.setItem(LS_TIME, Date.now());
+
+      await updateCount();
+      await render();
+      await sync();
+
+      // сервер в фоне
+      fetch("/apps/wishlist", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -376,14 +388,16 @@
           handle: h,
           actionType: "remove",
         }),
+      }).then(() => {
+        getWishlist(true).then(() => {
+          updateCount();
+          render();
+          sync();
+        });
       });
 
-      await updateCount();
-      await render();
-      await sync();
       return;
     }
-
     /* ===== ADD TO CART ===== */
     if (btn.classList.contains("wl-add")) {
       if (btn.classList.contains("loading")) return;
@@ -414,7 +428,7 @@
         btn.innerText = "Added ✔";
         btn.disabled = true;
 
-        // ⚡ INSTANT COUNTER (без ожидания)
+        /* ⚡ мгновенно цифра */
         document
           .querySelectorAll(
             ".cart-count, .cart-count-bubble, .header__icon--cart span",
@@ -422,12 +436,11 @@
           .forEach((el) => {
             const n = parseInt(el.innerText) || 0;
             el.innerText = n + 1;
-
-            el.style.transform = "scale(1.2)";
-            setTimeout(() => (el.style.transform = "scale(1)"), 200);
           });
 
-        // 🔥 МГНОВЕННО ОБНОВЛЯЕМ DRAWER (без событий)
+        /* ⚡ открыть/обновить drawer */
+        document.dispatchEvent(new CustomEvent("cart:refresh"));
+
         refreshCartDrawer();
         updateCartCount();
       } catch (err) {
