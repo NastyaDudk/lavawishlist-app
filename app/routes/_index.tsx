@@ -54,12 +54,12 @@ export default function Index() {
 
             <div className="grid">
               {[
-                { src: "/app/public/images/header.png", label: "Animated lava heart" },
-                { src: "/app/public/images/catalog.png", label: "Wishlist on collection pages" },
-                { src: "/app/public/images/wishlist drawer.png", label: "Slide-out wishlist drawer" },
-                { src: "/app/public/images/icon.png", label: "Clean modern icons" },
-                { src: "/app/public/images/added.png", label: "Fast add to cart" },
-                { src: "/app/public/images/header before.png", label: "Fits every theme" },
+                { src: "/images/header.png", label: "Animated lava heart" },
+                { src: "/images/catalog.png", label: "Wishlist on collection pages" },
+                { src: "/images/wishlist drawer.png", label: "Slide-out wishlist drawer" },
+                { src: "/images/icon.png", label: "Clean modern icons" },
+                { src: "/images/added.png", label: "Fast add to cart" },
+                { src: "/images/header before.png", label: "Fits every theme" },
               ].map((img) => (
                 <div key={img.src} className="card-preview">
 
@@ -88,7 +88,7 @@ export default function Index() {
 
             <div className="video-box">
               <img
-                src="/app/public/images/setup.gif"
+                src="/images/setup.gif"
                 alt="Wishlist setup tutorial"
               />
             </div>
