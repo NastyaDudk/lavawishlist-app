@@ -1,7 +1,12 @@
 import "@shopify/shopify-app-react-router/adapters/node";
-import { shopifyApp, ApiVersion } from "@shopify/shopify-app-react-router/server";
-import prisma from "./db.server";
 
+import {
+  shopifyApp,
+  ApiVersion,
+  BillingInterval,
+} from "@shopify/shopify-app-react-router/server";
+
+import prisma from "./db.server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 
 const sessionStorage = new PrismaSessionStorage(prisma) as any;
@@ -14,6 +19,14 @@ export const shopify = shopifyApp({
   apiVersion: ApiVersion.January25,
   sessionStorage,
   isEmbeddedApp: true,
+
+billing: {
+  Growth: {
+    amount: 9.99,
+    currencyCode: "USD",
+    interval: "EVERY_30_DAYS" as any,
+  },
+},
 });
 
 export const authenticate = shopify.authenticate;
