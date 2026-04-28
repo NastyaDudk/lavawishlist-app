@@ -8,6 +8,17 @@ import prisma from "../db.server";
  */
 export async function loader({ request }: ActionFunctionArgs) {
   const url = new URL(request.url);
+
+  const health = url.searchParams.get("health");
+  if (health === "1") {
+    return new Response("ok", {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+  }
+
   const shop = url.searchParams.get("shop");
 
   if (!shop) {
