@@ -1,9 +1,16 @@
-# Learn more about configuring your app at:
-# https://shopify.dev/docs/apps/tools/cli/configuration
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "76b72a7575fcfc731bba4562cf360733"
-name = "Lava Favorites - Wishlist App"
-application_url = "https://app.lavawishlist.com"
+name = "wishlist-pro"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "76b72a7575fcfc731bba4562cf360733"
+name = "wishlist-pro"
+application_url = "https://example.com"
 embedded = true
 
 [build]
@@ -12,46 +19,32 @@ automatically_update_urls_on_dev = true
 [webhooks]
 api_version = "2026-07"
 
-[[webhooks.subscriptions]]
-topics = ["app/uninstalled"]
-uri = "/webhooks/app/uninstalled"
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
 
-[[webhooks.subscriptions]]
-topics = ["app/scopes_update"]
-uri = "/webhooks/app/scopes_update"
-
-[[webhooks.subscriptions]]
-topics = ["CUSTOMERS_DATA_REQUEST"]
-uri = "/webhooks/customers/data_request"
-
-[[webhooks.subscriptions]]
-topics = ["CUSTOMERS_REDACT"]
-uri = "/webhooks/customers/redact"
-
-[[webhooks.subscriptions]]
-topics = ["SHOP_REDACT"]
-uri = "/webhooks/shop/redact"
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products,write_metaobjects,write_metaobject_definitions"
 
 [auth]
-redirect_urls = [
-  "https://app.lavawishlist.com/auth/callback",
-  "https://app.lavawishlist.com/api/auth"
-]
+redirect_urls = [ "https://example.com/api/auth" ]
 
 [product.metafields.app.demo_info]
 type = "single_line_text_field"
 name = "Demo Source Info"
-description = "Tracks products created by the app"
+description = "Tracks products created by the Shopify app template for development"
 
   [product.metafields.app.demo_info.access]
   admin = "merchant_read_write"
 
 [metaobjects.app.example]
 name = "Lava Favorites - Wishlist App"
-description = "Wishlist data objects"
+description = "An example metaobject definition created by this template"
 
   [metaobjects.app.example.access]
   admin = "merchant_read_write"
@@ -62,11 +55,58 @@ type = "single_line_text_field"
 required = true
 
 [metaobjects.app.example.fields.description]
-name = "Description"
+name = "Lava Favorites - Wishlist App"
 type = "multi_line_text_field"
 
 [app_proxy]
-url = "https://app.lavawishlist.com/api/wishlist"
+url = "/api/wishlist"
+subpath = "wishlist"
+prefix = "apps"
+
+[webhooks]
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products,write_metaobjects,write_metaobject_definitions"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+
+[product.metafields.app.demo_info]
+type = "single_line_text_field"
+name = "Demo Source Info"
+description = "Tracks products created by the Shopify app template for development"
+
+  [product.metafields.app.demo_info.access]
+  admin = "merchant_read_write"
+
+[metaobjects.app.example]
+name = "Lava Favorites - Wishlist App"
+description = "An example metaobject definition created by this template"
+
+  [metaobjects.app.example.access]
+  admin = "merchant_read_write"
+
+[metaobjects.app.example.fields.title]
+name = "Title"
+type = "single_line_text_field"
+required = true
+
+[metaobjects.app.example.fields.description]
+name = "Lava Favorites - Wishlist App"
+type = "multi_line_text_field"
+
+[app_proxy]
+url = "/api/wishlist"
 subpath = "wishlist"
 prefix = "apps"
 
