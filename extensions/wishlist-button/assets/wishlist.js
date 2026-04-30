@@ -69,12 +69,32 @@
     const heart = document.querySelector(".wl-header-heart");
 
     if (heart) {
-      const fill = Math.min(1, count / 10);
-      heart.style.setProperty("--fill", fill);
+      heart.style.setProperty("--fill", Math.min(1, count / 10));
     }
   }
+  async function cleanupWishlist() {
+    const list = await getWishlist();
 
-  window.updateWishlistCount = updateCount;
+    const checks = await Promise.all(
+      list.map(async (item) => {
+        try {
+          const res = await fetch(`/products/${item.handle}.js`);
+          return res.ok;
+        } catch {
+          return false;
+        }
+      }),
+    );
+
+    const valid = list.filter((_, i) => checks[i]);
+
+    wishlistCache = valid;
+
+    localStorage.setItem(LS_KEY, JSON.stringify(valid));
+    localStorage.setItem(LS_TIME, Date.now());
+
+    updateCount();
+  }
 
   /* ======================
    HEADER
@@ -745,7 +765,7 @@ header,
     injectHeader();
     injectHearts();
     injectProductHeart();
-    updateCount();
+    cleanupWishlist();
   });
 
   document.addEventListener("shopify:section:load", () => {
