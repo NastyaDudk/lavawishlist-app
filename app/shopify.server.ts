@@ -12,7 +12,7 @@ const sessionStorage = new PrismaSessionStorage(prisma);
 export const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY!,
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
-  scopes: process.env.SCOPES!.split(","),
+  scopes: (process.env.SCOPES || "").split(",").filter(Boolean),
   appUrl: process.env.SHOPIFY_APP_URL!,
   apiVersion: ApiVersion.January25,
   sessionStorage: sessionStorage as never,
