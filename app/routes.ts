@@ -24,15 +24,7 @@ export default [
     file: "routes/webhooks.app.uninstalled.tsx",
   },
   {
-    path: "/webhooks/customers/data_request",
-    file: "routes/webhooks.customers.data_request.tsx",
-  },
-  {
-    path: "/webhooks/customers/redact",
-    file: "routes/webhooks.customers.redact.tsx",
-  },
-  {
-    path: "/webhooks/shop/redact",
-    file: "routes/webhooks.shop.redact.tsx",
-  },
+  path: "/webhooks/compliance",
+  file: "routes/webhooks.compliance.tsx",
+},
 ];
