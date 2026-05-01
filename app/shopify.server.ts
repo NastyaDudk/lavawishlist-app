@@ -14,7 +14,7 @@ export const shopify = shopifyApp({
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   scopes: (process.env.SCOPES || "").split(",").filter(Boolean),
   appUrl: process.env.SHOPIFY_APP_URL!,
-  apiVersion: ApiVersion.July26,
+  apiVersion: ApiVersion.April26,
   sessionStorage: sessionStorage as never,
   isEmbeddedApp: true,
 });
