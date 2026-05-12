@@ -20,7 +20,7 @@ export const shopify = shopifyApp({
   isEmbeddedApp: true,
 
 billing: {
-  Pro: {
+  pro: {
     lineItems: [
       {
         amount: 9.99,

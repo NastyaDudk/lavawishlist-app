@@ -17,7 +17,7 @@ export const action = async ({ request }: { request: Request }) => {
   const { billing } = await authenticate.admin(request);
 
   await billing.request({
-    plan: "Pro",
+    plan: "pro",
     isTest: true,
   });
 
