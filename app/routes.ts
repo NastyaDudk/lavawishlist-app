@@ -4,6 +4,10 @@ export default [
     file: "routes/_index.tsx",
   },
   {
+  path: "/pricing",
+  file: "routes/pricing.tsx",
+},
+  {
     path: "/privacy",
     file: "routes/privacy.tsx",
   },
