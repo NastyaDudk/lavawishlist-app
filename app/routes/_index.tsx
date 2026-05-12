@@ -22,7 +22,7 @@ export const loader = async ({ request }: { request: Request }) => {
   const saves = 55;
 
   if (!isPro && saves >= 50) {
-    return redirect("/pricing");
+    return redirect("/app/pricing");
   }
 
   return null;
