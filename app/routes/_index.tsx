@@ -5,7 +5,28 @@ import {
   BlockStack,
   List,
 } from "@shopify/polaris";
+import { redirect } from "react-router";
+import { authenticate } from "../shopify.server";
 
+export const loader = async ({ request }: { request: Request }) => {
+
+  const { billing } = await authenticate.admin(request);
+
+  const billingCheck = await billing.check({
+    plans: ["Pro"],
+  });
+
+  const isPro = billingCheck.hasActivePayment;
+
+  // пока тест
+  const saves = 55;
+
+  if (!isPro && saves >= 50) {
+    return redirect("/pricing");
+  }
+
+  return null;
+};
 export default function Index() {
   return (
     <Page title="❤️ Wishlist App">

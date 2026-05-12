@@ -6,6 +6,7 @@ import {
 
 import prisma from "./db.server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
+import { BillingInterval } from "@shopify/shopify-api";
 
 const sessionStorage = new PrismaSessionStorage(prisma);
 
@@ -17,6 +18,18 @@ export const shopify = shopifyApp({
   apiVersion: ApiVersion.April26,
   sessionStorage: sessionStorage as never,
   isEmbeddedApp: true,
+
+billing: {
+  Pro: {
+    lineItems: [
+      {
+        amount: 9.99,
+        currencyCode: "USD",
+        interval: BillingInterval.Every30Days,
+      },
+    ],
+  },
+},
 });
 
 export const authenticate = shopify.authenticate;
