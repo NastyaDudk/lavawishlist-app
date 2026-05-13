@@ -3,8 +3,8 @@ export default [
     path: "/",
     file: "routes/_index.tsx",
   },
-  {
-  path: "/pricing",
+{
+  path: "/app/pricing",
   file: "routes/pricing.tsx",
 },
   {

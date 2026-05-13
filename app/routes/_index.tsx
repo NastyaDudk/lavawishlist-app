@@ -22,9 +22,9 @@ export const loader = async ({ request }: { request: Request }) => {
   // пока тест
   const saves = 55;
 
-  if (!isPro && saves >= 50) {
-    return redirect("/pricing");
-  }
+ if (!isPro && saves >= 50) {
+  return redirect("/app/pricing");
+}
 
   return null;
 };
