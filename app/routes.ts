@@ -4,8 +4,8 @@ export default [
     file: "routes/_index.tsx",
   },
 {
-  path: "/app/pricing",
-  file: "routes/pricing.tsx",
+path: "/app/pricing",
+file: "routes/app.pricing.tsx",
   },
 {
   path: "/auth/login",
