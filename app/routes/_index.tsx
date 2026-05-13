@@ -5,6 +5,7 @@ import {
   BlockStack,
   List,
 } from "@shopify/polaris";
+
 import { redirect } from "react-router";
 import { authenticate } from "../shopify.server";
 
@@ -22,7 +23,7 @@ export const loader = async ({ request }: { request: Request }) => {
   const saves = 55;
 
   if (!isPro && saves >= 50) {
-    return redirect("/app/pricing");
+    return redirect("/pricing");
   }
 
   return null;
