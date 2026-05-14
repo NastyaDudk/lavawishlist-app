@@ -1,19 +1,16 @@
 export default [
-  {
+{
     path: "/auth/*",
     file: "routes/auth.$.tsx",
   },
+
   {
-  path: "/",
-  file: "app.tsx",
+    path: "/",
+    file: "app.tsx",
+
     children: [
       {
         index: true,
-        file: "routes/_index.tsx",
-      },
-
-      {
-        path: "app/pricing",
         file: "routes/app.pricing.tsx",
       },
 
