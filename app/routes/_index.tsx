@@ -11,7 +11,11 @@ import {
 
 export default function Index() {
 
+  const pricingUrl =
+    "https://apps.shopify.com/lava-favorites-wishlist-app/pricing";
+
   return (
+
     <Page title="❤️ Lava Favorites">
 
       <BlockStack gap="500">
@@ -19,7 +23,7 @@ export default function Index() {
         {/* HERO */}
         <div className="hero-card">
 
-          <div className="hero-glow"></div>
+          <div className="hero-glow" />
 
           <BlockStack gap="400">
 
@@ -54,7 +58,7 @@ export default function Index() {
 
               <Button
                 variant="secondary"
-                url="https://apps.shopify.com/lava-favorites-wishlist-app"
+                url={pricingUrl}
                 target="_blank"
               >
                 Upgrade to Pro
@@ -302,7 +306,7 @@ export default function Index() {
 
               <Button
                 variant="primary"
-                url="https://apps.shopify.com/lava-favorites-wishlist-app"
+                url={pricingUrl}
                 target="_blank"
               >
                 Upgrade to Pro — $9.99/mo
@@ -404,10 +408,8 @@ export default function Index() {
           .img-box img {
             width: 100%;
             height: 100%;
-
             object-fit: cover;
             object-position: center;
-
             display: block;
           }
 
@@ -478,5 +480,7 @@ export default function Index() {
       </BlockStack>
 
     </Page>
+
   );
+
 }
