@@ -1,10 +1,16 @@
-import { LoaderFunctionArgs } from "react-router";
-import { authenticate } from "../shopify.server";
+import { redirect } from "react-router";
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  await authenticate.admin(request);
+export async function loader({ request }: { request: Request }) {
 
-  return null;
+  const url = new URL(request.url);
+
+  const shop = url.searchParams.get("shop");
+
+  if (!shop) {
+    return redirect("/");
+  }
+
+  return redirect(`/auth?shop=${shop}`);
 }
 
 export default function AuthLogin() {
