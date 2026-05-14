@@ -27,15 +27,23 @@ export default function Index() {
               ❤️‍🔥 Shopify Wishlist App
             </Badge>
 
-            <Text as="h1" variant="heading2xl">
+            <Text
+              as="h1"
+              variant="heading2xl"
+            >
               Turn visitors into buyers
             </Text>
 
-            <Text as="p" variant="bodyLg">
-              Lava Favorites helps customers save
-              products they love and return later
-              to buy. Increase conversions,
-              repeat visits, and customer loyalty.
+            <Text
+              as="p"
+              variant="bodyLg"
+            >
+              Lava Favorites helps customers
+              save products they love and
+              return later to buy.
+              Increase conversions,
+              repeat visits,
+              and customer loyalty.
             </Text>
 
             <InlineStack gap="300">
@@ -45,6 +53,7 @@ export default function Index() {
               </Button>
 
               <Button
+                variant="secondary"
                 url="https://apps.shopify.com/lava-favorites-wishlist-app"
                 target="_blank"
               >
@@ -64,7 +73,10 @@ export default function Index() {
 
             <InlineStack align="space-between">
 
-              <Text as="h2" variant="headingLg">
+              <Text
+                as="h2"
+                variant="headingLg"
+              >
                 Why stores love Lava Favorites
               </Text>
 
@@ -86,8 +98,8 @@ export default function Index() {
               ].map((item) => (
 
                 <div
-                  className="benefit-item"
                   key={item}
+                  className="benefit-item"
                 >
 
                   <span className="benefit-icon">
@@ -113,7 +125,10 @@ export default function Index() {
 
           <BlockStack gap="500">
 
-            <Text as="h2" variant="headingLg">
+            <Text
+              as="h2"
+              variant="headingLg"
+            >
               Beautiful inside your store
             </Text>
 
@@ -184,7 +199,10 @@ export default function Index() {
 
             <InlineStack align="space-between">
 
-              <Text as="h2" variant="headingLg">
+              <Text
+                as="h2"
+                variant="headingLg"
+              >
                 Setup in under 1 minute 🎬
               </Text>
 
@@ -203,7 +221,10 @@ export default function Index() {
 
             </div>
 
-            <Text as="p" tone="subdued">
+            <Text
+              as="p"
+              tone="subdued"
+            >
               Theme Editor → App Embeds →
               Enable Lava Favorites → Save
             </Text>
@@ -217,7 +238,10 @@ export default function Index() {
 
           <BlockStack gap="500">
 
-            <Text as="h2" variant="headingLg">
+            <Text
+              as="h2"
+              variant="headingLg"
+            >
               Quick setup
             </Text>
 

@@ -2,7 +2,6 @@ import { json } from "@remix-run/node";
 import type { ActionFunctionArgs } from "@remix-run/node";
 
 import prisma from "../db.server";
-import { authenticate } from "../shopify.server";
 
 /**
  * GET /api/wishlist
@@ -84,31 +83,24 @@ export async function action({
   }
 
   /**
-   * CHECK SHOPIFY PLAN
-   */
-
-  const { billing } =
-    await authenticate.admin(request);
-
-  const billingCheck =
-    await billing.check({
-      plans: ["pro"],
-    });
-
-  const isPro =
-    billingCheck.hasActivePayment;
-
-  /**
    * FREE PLAN LIMIT
    * max 50 wishlist items
+   *
+   * Shopify App Pricing
+   * no billing.check anymore
    */
 
-  if (!isPro && actionType === "toggle") {
+  if (actionType === "toggle") {
 
     const count =
       await prisma.wishlistItem.count({
         where: { shop },
       });
+
+    /**
+     * TEMPORARY:
+     * all stores treated as free
+     */
 
     if (count >= 50) {
 

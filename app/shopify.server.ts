@@ -1,7 +1,6 @@
 import {
   shopifyApp,
   ApiVersion,
-  BillingInterval,
 } from "@shopify/shopify-app-react-router/server";
 
 import prisma from "./db.server";
@@ -35,31 +34,6 @@ export const shopify = shopifyApp({
     sessionStorage as never,
 
   isEmbeddedApp: true,
-
-  /**
-   * SHOPIFY BILLING
-   * ONLY FOR APP STORE LISTING
-   */
-
-  billing: {
-
-    pro: {
-
-      trialDays: 3,
-
-      lineItems: [
-        {
-          amount: 9.99,
-          currencyCode: "USD",
-
-          interval:
-            BillingInterval.Every30Days,
-        },
-      ],
-
-    },
-
-  } as const,
 
 });
 
