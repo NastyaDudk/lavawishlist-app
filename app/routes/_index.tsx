@@ -9,42 +9,6 @@ import {
   Button,
 } from "@shopify/polaris";
 
-import { authenticate } from "../shopify.server";
-
-export const loader = async ({
-  request,
-}: {
-  request: Request;
-}) => {
-
-  const { billing } =
-    await authenticate.admin(request);
-
-  const billingCheck =
-    await billing.check({
-      plans: ["pro"] as never,
-    });
-
-  /**
-   * NO ACTIVE SUBSCRIPTION
-   * OPEN SHOPIFY BILLING
-   */
-
-  if (!billingCheck.hasActivePayment) {
-
-    return billing.request({
-      plan: "pro",
-      isTest: true,
-
-      returnUrl:
-        `${process.env.SHOPIFY_APP_URL}/app`,
-    });
-
-  }
-
-  return null;
-};
-
 export default function Index() {
 
   return (
@@ -77,11 +41,14 @@ export default function Index() {
             <InlineStack gap="300">
 
               <Button variant="primary">
-                Pro Activated ✓
+                App Installed ✓
               </Button>
 
-              <Button disabled>
-                Shopify Billing Connected
+              <Button
+                url="https://apps.shopify.com/lava-favorites-wishlist-app"
+                target="_blank"
+              >
+                Upgrade to Pro
               </Button>
 
             </InlineStack>
@@ -110,8 +77,8 @@ export default function Index() {
             <div className="benefits-grid">
 
               {[
-                "Increase repeat purchases",
-                "Recover undecided shoppers",
+                "Free plan includes 50 wishlist saves",
+                "Unlimited wishlist saves in Pro",
                 "Boost customer loyalty",
                 "Beautiful lava heart UI ❤️‍🔥",
                 "Works with every Shopify theme",
@@ -296,16 +263,28 @@ export default function Index() {
               as="h2"
               variant="heading2xl"
             >
-              Lava Favorites is active 🔥
+              Ready for unlimited wishlists? 🔥
             </Text>
 
             <Text
               as="p"
               variant="bodyLg"
             >
-              Your store is now ready
-              to collect customer wishlists.
+              Upgrade to Lava Favorites Pro
+              and unlock unlimited wishlist saves.
             </Text>
+
+            <InlineStack align="center">
+
+              <Button
+                variant="primary"
+                url="https://apps.shopify.com/lava-favorites-wishlist-app"
+                target="_blank"
+              >
+                Upgrade to Pro — $9.99/mo
+              </Button>
+
+            </InlineStack>
 
           </BlockStack>
 
