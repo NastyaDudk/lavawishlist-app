@@ -25,8 +25,7 @@ scopes = "write_products,write_metaobjects,write_metaobject_definitions"
 
 [auth]
 redirect_urls = [
-  "https://app.lavawishlist.com/auth/callback",
-  "https://app.lavawishlist.com/api/auth"
+  "https://app.lavawishlist.com/auth/callback"
 ]
 
 [product.metafields.app.demo_info]
