@@ -1,4 +1,20 @@
 export default [
+  {
+  path: "/auth/login",
+  file: "routes/auth.login.tsx",
+},
+{
+  path: "/auth/callback",
+  file: "routes/auth.callback.tsx",
+},
+{
+  path: "/auth/exit-iframe",
+  file: "routes/auth.exit-iframe.tsx",
+},
+{
+  path: "/auth/error",
+  file: "routes/auth.error.tsx",
+},
 {
     path: "/",
     file: "routes/app.pricing.tsx",
