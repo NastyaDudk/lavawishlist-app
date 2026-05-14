@@ -20,7 +20,7 @@ export const shopify = shopifyApp({
   isEmbeddedApp: true,
 
 billing: {
-  pro_monthly: {
+  pro: {
     lineItems: [
       {
         amount: 9.99,
@@ -30,7 +30,7 @@ billing: {
     ],
   },
 
-  pro_yearly: {
+  pro: {
     lineItems: [
       {
         amount: 99,

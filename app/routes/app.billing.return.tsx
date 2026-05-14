@@ -6,7 +6,7 @@ export const loader = async ({ request }: { request: Request }) => {
   const { billing } = await authenticate.admin(request);
 
   const billingCheck = await billing.check({
-    plans: ["pro_monthly", "pro_yearly"],
+    plans: ["pro"],
   });
 
   if (billingCheck.hasActivePayment) {

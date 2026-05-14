@@ -21,7 +21,7 @@ export const action = async ({ request }: { request: Request }) => {
 
   if (plan === "monthly") {
     await billing.request({
-      plan: "pro_monthly",
+      plan: "pro",
       isTest: true,
       returnUrl: `${process.env.SHOPIFY_APP_URL}/app/billing/return`,
     });
@@ -29,7 +29,7 @@ export const action = async ({ request }: { request: Request }) => {
 
   if (plan === "yearly") {
     await billing.request({
-      plan: "pro_yearly",
+      plan: "pro",
       isTest: true,
       returnUrl: `${process.env.SHOPIFY_APP_URL}/app/billing/return`,
     });
