@@ -7,23 +7,40 @@ import {
   InlineStack,
   Badge,
   Button,
+  Link,
 } from "@shopify/polaris";
 
 export default function Index() {
 
+  /**
+   * SHOPIFY BILLING
+   */
+
   const openUpgrade = async () => {
 
-    const res = await fetch(
-      "/api/billing/upgrade",
-      {
-        method: "POST",
-      },
-    );
+    try {
 
-    const data = await res.json();
+      const res = await fetch(
+        "/api/billing/upgrade",
+        {
+          method: "POST",
+        },
+      );
 
-    if (data.url) {
-      window.top?.location.assign(data.url);
+      const data = await res.json();
+
+      if (data?.confirmationUrl) {
+
+        window.top?.location.assign(
+          data.confirmationUrl,
+        );
+
+      }
+
+    } catch (err) {
+
+      console.error(err);
+
     }
 
   };
@@ -68,7 +85,9 @@ export default function Index() {
             <InlineStack gap="300">
 
               <Button variant="primary">
+
                 App Installed ✓
+
               </Button>
 
               <Button
@@ -139,6 +158,126 @@ export default function Index() {
 
         </Card>
 
+        {/* SCREENSHOTS */}
+
+        <Card>
+
+          <BlockStack gap="500">
+
+            <Text
+              as="h2"
+              variant="headingLg"
+            >
+              Beautiful inside your store
+            </Text>
+
+            <div className="grid">
+
+              {[
+                {
+                  src: "/images/header.png",
+                  label: "Animated lava heart",
+                },
+                {
+                  src: "/images/catalog.png",
+                  label:
+                    "Wishlist on collection pages",
+                },
+                {
+                  src: "/images/wishlist drawer.png",
+                  label:
+                    "Slide-out wishlist drawer",
+                },
+                {
+                  src: "/images/icon.png",
+                  label:
+                    "Clean modern icons",
+                },
+                {
+                  src: "/images/added.png",
+                  label:
+                    "Fast add to cart",
+                },
+                {
+                  src: "/images/header before.png",
+                  label:
+                    "Fits every theme",
+                },
+              ].map((img) => (
+
+                <div
+                  key={img.src}
+                  className="card-preview"
+                >
+
+                  <div className="img-box">
+
+                    <img
+                      src={img.src}
+                      alt={img.label}
+                    />
+
+                  </div>
+
+                  <Text
+                    as="p"
+                    tone="subdued"
+                  >
+                    {img.label}
+                  </Text>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </BlockStack>
+
+        </Card>
+
+        {/* VIDEO */}
+
+        <Card>
+
+          <BlockStack gap="400">
+
+            <InlineStack align="space-between">
+
+              <Text
+                as="h2"
+                variant="headingLg"
+              >
+                Setup in under 1 minute 🎬
+              </Text>
+
+              <Badge tone="attention">
+                No Coding
+              </Badge>
+
+            </InlineStack>
+
+            <div className="video-box">
+
+              <img
+                src="/images/setup.gif"
+                alt="Wishlist setup tutorial"
+              />
+
+            </div>
+
+            <Text
+              as="p"
+              tone="subdued"
+            >
+              Theme Editor → App Embeds →
+              Enable Lava Favorites → Save
+            </Text>
+
+          </BlockStack>
+
+        </Card>
+
         {/* QUICK SETUP */}
 
         <Card>
@@ -202,14 +341,15 @@ export default function Index() {
               as="p"
               variant="bodyLg"
             >
-              Upgrade to Pro and unlock
-              unlimited wishlist saves.
+              Upgrade to Lava Favorites Pro
+              and unlock unlimited wishlist saves.
             </Text>
 
             <InlineStack align="center">
 
               <Button
                 variant="primary"
+                size="large"
                 onClick={openUpgrade}
               >
                 Upgrade to Pro — $9.99/mo
@@ -220,6 +360,48 @@ export default function Index() {
           </BlockStack>
 
         </div>
+
+        {/* POLICIES */}
+
+        <Card>
+
+          <BlockStack gap="300">
+
+            <Text
+              as="h2"
+              variant="headingLg"
+            >
+              Policies
+            </Text>
+
+            <BlockStack gap="200">
+
+              <Link
+                url="/policies/privacy"
+                removeUnderline
+              >
+                Privacy Policy
+              </Link>
+
+              <Link
+                url="/policies/terms"
+                removeUnderline
+              >
+                Terms of Service
+              </Link>
+
+              <Link
+                url="/policies/refund"
+                removeUnderline
+              >
+                Refund Policy
+              </Link>
+
+            </BlockStack>
+
+          </BlockStack>
+
+        </Card>
 
         {/* STYLES */}
 
@@ -284,6 +466,52 @@ export default function Index() {
             font-size: 20px;
           }
 
+          .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+          }
+
+          .card-preview {
+            transition: all .25s ease;
+          }
+
+          .card-preview:hover {
+            transform: translateY(-4px);
+          }
+
+          .img-box {
+            width: 100%;
+            height: 220px;
+
+            overflow: hidden;
+            border-radius: 18px;
+
+            background: #f6f6f7;
+            margin-bottom: 10px;
+          }
+
+          .img-box img {
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+            object-position: center;
+
+            display: block;
+          }
+
+          .video-box {
+            overflow: hidden;
+            border-radius: 18px;
+            background: #f6f6f7;
+          }
+
+          .video-box img {
+            width: 100%;
+            display: block;
+          }
+
           .setup-banner {
             padding: 16px;
             border-radius: 14px;
@@ -324,8 +552,13 @@ export default function Index() {
               padding: 28px;
             }
 
+            .grid,
             .benefits-grid {
               grid-template-columns: 1fr;
+            }
+
+            .img-box {
+              height: 240px;
             }
 
           }
