@@ -9,14 +9,6 @@ export default [
     file: "routes/_index.tsx",
   },
   {
-  path: "/api/wishlist",
-  file: "routes/api.wishlist.ts",
-  },
-{
-  path: "/api/billing/upgrade",
-  file: "routes/api.billing.upgrade.ts",
-},
-  {
     path: "/privacy",
     file: "routes/privacy.tsx",
   },
