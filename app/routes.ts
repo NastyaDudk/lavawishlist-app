@@ -1,31 +1,17 @@
 export default [
-{
+ {
     path: "/auth/*",
     file: "routes/auth.$.tsx",
   },
 
   {
     path: "/",
-    file: "app.tsx",
-
-    children: [
-      {
-        index: true,
-        file: "routes/app.pricing.tsx",
-      },
-
-      {
-        path: "app/dashboard",
-        file: "routes/app.dashboard.tsx",
-      },
-
-      {
-        path: "app/billing/return",
-        file: "routes/app.billing.return.tsx",
-      },
-    ],
+    file: "routes/_index.tsx",
   },
-
+  {
+    path: "/app/billing/return",
+    file: "routes/app.billing.return.tsx",
+  },
   {
     path: "/privacy",
     file: "routes/privacy.tsx",

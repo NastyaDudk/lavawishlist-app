@@ -9,7 +9,6 @@ import {
   Button,
 } from "@shopify/polaris";
 
-import { redirect, Link } from "react-router";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({
@@ -21,19 +20,23 @@ export const loader = async ({
   const { billing } =
     await authenticate.admin(request);
 
-  const billingCheck =
+  const check =
     await billing.check({
       plans: ["pro"],
     });
 
-  const isPro =
-    billingCheck.hasActivePayment;
+  // NO ACTIVE PLAN
+  // OPEN SHOPIFY BILLING SCREEN
 
-  // TEMP TEST LIMIT
-  const saves = 55;
+  if (!check.hasActivePayment) {
 
-  if (!isPro && saves >= 50) {
-    return redirect("/app/pricing");
+    return billing.request({
+      plan: "pro",
+      isTest: true,
+      returnUrl:
+        `${process.env.SHOPIFY_APP_URL}/app/billing/return`,
+    });
+
   }
 
   return null;
@@ -70,14 +73,12 @@ export default function Index() {
 
             <InlineStack gap="300">
 
-              <Link to="/app/pricing">
-                <Button variant="primary">
-                  Upgrade to Pro
-                </Button>
-              </Link>
+              <Button variant="primary">
+                Pro Activated ✓
+              </Button>
 
               <Button disabled>
-                Installed ✓
+                Installed
               </Button>
 
             </InlineStack>
@@ -183,7 +184,7 @@ export default function Index() {
                   <div className="img-box">
 
                     <img
-                src={img.src}
+                      src={img.src}
                       alt={img.label}
                     />
 
@@ -292,28 +293,16 @@ export default function Index() {
               as="h2"
               variant="heading2xl"
             >
-              Ready to grow sales? 🔥
+              Lava Favorites is active 🔥
             </Text>
 
             <Text
               as="p"
               variant="bodyLg"
             >
-              Let customers save products
-              they love and return later
-              to complete their purchase.
+              Your store is now ready
+              to collect customer wishlists.
             </Text>
-
-            <Link to="/app/pricing">
-
-              <Button
-                size="large"
-                variant="primary"
-              >
-                View Pricing Plans
-              </Button>
-
-            </Link>
 
           </BlockStack>
 
@@ -388,7 +377,7 @@ export default function Index() {
           }
 
           .card-preview {
-    transition: all .25s ease;
+            transition: all .25s ease;
           }
 
           .card-preview:hover {
