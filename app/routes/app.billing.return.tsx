@@ -1,0 +1,21 @@
+import { redirect } from "react-router";
+import { authenticate } from "../shopify.server";
+
+export const loader = async ({ request }: { request: Request }) => {
+
+  const { billing } = await authenticate.admin(request);
+
+  const billingCheck = await billing.check({
+    plans: ["pro_monthly", "pro_yearly"],
+  });
+
+  if (billingCheck.hasActivePayment) {
+    return redirect("/");
+  }
+
+  return redirect("/app/pricing");
+};
+
+export default function BillingReturn() {
+  return null;
+}

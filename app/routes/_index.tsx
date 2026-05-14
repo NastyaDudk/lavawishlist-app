@@ -4,9 +4,12 @@ import {
   Text,
   BlockStack,
   List,
+  InlineStack,
+  Badge,
+  Button,
 } from "@shopify/polaris";
 
-import { redirect } from "react-router";
+import { redirect, Link } from "react-router";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: { request: Request }) => {
@@ -14,67 +17,118 @@ export const loader = async ({ request }: { request: Request }) => {
   const { billing } = await authenticate.admin(request);
 
   const billingCheck = await billing.check({
-    plans: ["pro"],
+    plans: ["pro_monthly", "pro_yearly"],
   });
 
   const isPro = billingCheck.hasActivePayment;
 
-  // пока тест
+  // TEMP TEST LIMIT
   const saves = 55;
 
- if (!isPro && saves >= 50) {
-  return redirect("/app/pricing");
-}
+  if (!isPro && saves >= 50) {
+    return redirect("/app/pricing");
+  }
 
   return null;
 };
+
 export default function Index() {
+
   return (
-    <Page title="❤️ Wishlist App">
+    <Page title="❤️ Lava Favorites">
+
       <BlockStack gap="500">
 
         {/* HERO */}
-        <Card>
-          <BlockStack gap="300">
-            <Text as="h1" variant="headingXl">
-              Turn visitors into buyers ❤️‍🔥
+        <div className="hero-card">
+
+          <div className="hero-glow"></div>
+
+          <BlockStack gap="400">
+
+            <Badge tone="warning">
+              ❤️‍🔥 Shopify Wishlist App
+            </Badge>
+
+            <Text as="h1" variant="heading2xl">
+              Turn visitors into buyers
             </Text>
 
             <Text as="p" variant="bodyLg">
-              Wishlist App helps customers save favorite products and return later to buy.
-              Increase conversions, repeat visits, and customer engagement.
+              Lava Favorites helps customers save products they love and return later to buy.
+              Increase conversions, repeat visits, and customer loyalty.
             </Text>
+
+            <InlineStack gap="300">
+
+              <Link to="/app/pricing">
+                <Button variant="primary">
+                  Upgrade to Pro
+                </Button>
+              </Link>
+
+              <Button disabled>
+                Installed ✓
+              </Button>
+
+            </InlineStack>
+
           </BlockStack>
-        </Card>
+
+        </div>
 
         {/* BENEFITS */}
         <Card>
-          <BlockStack gap="400">
+          <BlockStack gap="500">
 
-            <Text as="h2" variant="headingLg">
-              Why stores love Wishlist App
-            </Text>
+            <InlineStack align="space-between">
 
-            <List type="bullet">
-              <List.Item>Increase repeat purchases</List.Item>
-              <List.Item>Recover shoppers who were not ready to buy</List.Item>
-              <List.Item>Boost customer loyalty</List.Item>
-              <List.Item>Beautiful lava heart design ❤️‍🔥</List.Item>
-              <List.Item>Works instantly with your Shopify theme</List.Item>
-            </List>
+              <Text as="h2" variant="headingLg">
+                Why stores love Lava Favorites
+              </Text>
+
+              <Badge tone="success">
+                Fast Setup
+              </Badge>
+
+            </InlineStack>
+
+            <div className="benefits-grid">
+
+              {[
+                "Increase repeat purchases",
+                "Recover undecided shoppers",
+                "Boost customer loyalty",
+                "Beautiful lava heart UI ❤️‍🔥",
+                "Works with every Shopify theme",
+                "Mobile optimized experience",
+              ].map((item) => (
+
+                <div className="benefit-item" key={item}>
+                  <span className="benefit-icon">🔥</span>
+
+                  <Text as="p">
+                    {item}
+                  </Text>
+                </div>
+
+              ))}
+
+            </div>
 
           </BlockStack>
         </Card>
 
-        {/* HOW IT LOOKS */}
+        {/* SCREENSHOTS */}
         <Card>
-          <BlockStack gap="400">
+          <BlockStack gap="500">
 
             <Text as="h2" variant="headingLg">
               Beautiful inside your store
             </Text>
 
             <div className="grid">
+
               {[
                 { src: "/images/header.png", label: "Animated lava heart" },
                 { src: "/images/catalog.png", label: "Wishlist on collection pages" },
@@ -83,6 +137,7 @@ export default function Index() {
                 { src: "/images/added.png", label: "Fast add to cart" },
                 { src: "/images/header before.png", label: "Fits every theme" },
               ].map((img) => (
+
                 <div key={img.src} className="card-preview">
 
                   <div className="img-box">
@@ -94,78 +149,174 @@ export default function Index() {
                   </Text>
 
                 </div>
+
               ))}
+
             </div>
 
           </BlockStack>
         </Card>
 
-        {/* VIDEO / GIF */}
+        {/* VIDEO */}
         <Card>
           <BlockStack gap="400">
 
-            <Text as="h2" variant="headingLg">
-              See setup in seconds 🎬
-            </Text>
+            <InlineStack align="space-between">
+
+              <Text as="h2" variant="headingLg">
+                Setup in under 1 minute 🎬
+              </Text>
+
+              <Badge tone="attention">
+                No Coding
+              </Badge>
+
+            </InlineStack>
 
             <div className="video-box">
+
               <img
                 src="/images/setup.gif"
                 alt="Wishlist setup tutorial"
               />
+
             </div>
 
             <Text as="p" tone="subdued">
-              Open Theme Editor → App Embeds → Enable Wishlist → Save
+              Theme Editor → App Embeds → Enable Lava Favorites → Save
             </Text>
 
           </BlockStack>
         </Card>
 
-        {/* HOW TO ENABLE */}
+        {/* QUICK SETUP */}
         <Card>
-          <BlockStack gap="400">
+          <BlockStack gap="500">
 
             <Text as="h2" variant="headingLg">
               Quick setup
             </Text>
 
             <List type="number">
-              <List.Item>Open Shopify Theme Customize (Edit Theme)</List.Item>
-              <List.Item>Enable Wishlist block (App embeds)</List.Item>
-              <List.Item>Turn on your Wishlist</List.Item>
-              <List.Item>Save</List.Item>
-              <List.Item>Start converting more visitors</List.Item>
+
+              <List.Item>
+                Open Shopify Theme Customize
+              </List.Item>
+
+              <List.Item>
+                Enable Lava Favorites App Embed
+              </List.Item>
+
+              <List.Item>
+                Save changes
+              </List.Item>
+
+              <List.Item>
+                Customers can now save favorites ❤️
+              </List.Item>
+
             </List>
 
-            <Text as="p" tone="subdued">
-              No coding required. Takes less than 1 minute.
-            </Text>
+            <div className="setup-banner">
+
+              <Text as="p">
+                ⚡ Average setup time: less than 60 seconds
+              </Text>
+
+            </div>
 
           </BlockStack>
         </Card>
 
         {/* CTA */}
-        <Card>
-          <BlockStack gap="300">
+        <div className="cta-card">
 
-            <Text as="h2" variant="headingLg">
+          <BlockStack gap="400">
+
+            <Text as="h2" variant="heading2xl">
               Ready to grow sales? 🔥
             </Text>
 
             <Text as="p" variant="bodyLg">
-              Enable Wishlist App in your theme and let customers save products they love.
+              Let customers save products they love and return later to complete their purchase.
             </Text>
 
+            <Link to="/app/pricing">
+              <Button size="large" variant="primary">
+                View Pricing Plans
+              </Button>
+            </Link>
+
           </BlockStack>
-        </Card>
+
+        </div>
 
         {/* STYLES */}
         <style>{`
-          .grid {
+
+          .hero-card {
+            position:relative;
+            overflow:hidden;
+
+            padding:48px;
+            border-radius:28px;
+
+            background:
+              linear-gradient(
+                135deg,
+                #ff512f 0%,
+                #dd2476 100%
+              );
+
+            color:white;
+          }
+
+          .hero-glow {
+            position:absolute;
+            inset:-100px;
+
+            background:
+              radial-gradient(
+                circle,
+                rgba(255,255,255,.18) 0%,
+                transparent 70%
+              );
+
+            pointer-events:none;
+          }
+
+          .hero-card h1,
+          .hero-card p {
+            color:white;
+            position:relative;
+            z-index:2;
+          }
+
+          .benefits-grid {
             display:grid;
             grid-template-columns:1fr 1fr;
             gap:16px;
+          }
+
+          .benefit-item {
+            display:flex;
+            align-items:center;
+            gap:12px;
+
+            padding:16px;
+            border-radius:14px;
+
+            background:#f6f6f7;
+          }
+
+          .benefit-icon {
+            font-size:20px;
+          }
+
+          .grid {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:18px;
           }
 
           .card-preview {
@@ -173,29 +324,33 @@ export default function Index() {
           }
 
           .card-preview:hover {
-            transform:scale(1.03);
+            transform:translateY(-4px);
           }
 
           .img-box {
             width:100%;
-            height:180px;
+            height:220px;
+
             overflow:hidden;
-            border-radius:12px;
+            border-radius:18px;
+
             background:#f6f6f7;
+            margin-bottom:10px;
           }
 
           .img-box img {
             width:100%;
             height:100%;
+
             object-fit:cover;
-            object-position:right center;
+            object-position:center;
+
             display:block;
           }
 
           .video-box {
-            width:100%;
-            border-radius:12px;
             overflow:hidden;
+            border-radius:18px;
             background:#f6f6f7;
           }
 
@@ -204,18 +359,61 @@ export default function Index() {
             display:block;
           }
 
+          .setup-banner {
+            padding:16px;
+            border-radius:14px;
+
+            background:
+              linear-gradient(
+                135deg,
+                rgba(255,81,47,.08),
+                rgba(221,36,118,.08)
+              );
+          }
+
+          .cta-card {
+            padding:48px;
+            border-radius:28px;
+
+            text-align:center;
+
+            background:
+              linear-gradient(
+                135deg,
+                #ff512f 0%,
+                #dd2476 100%
+              );
+
+            color:white;
+          }
+
+          .cta-card h2,
+          .cta-card p {
+            color:white;
+          }
+
           @media (max-width:768px) {
-            .grid {
+
+            .hero-card,
+            .cta-card {
+              padding:28px;
+            }
+
+            .grid,
+            .benefits-grid {
               grid-template-columns:1fr;
             }
 
             .img-box {
-              height:220px;
+              height:240px;
             }
+
           }
+
         `}</style>
 
       </BlockStack>
+
     </Page>
   );
 }

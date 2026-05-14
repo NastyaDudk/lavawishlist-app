@@ -7,7 +7,10 @@ export default [
 path: "/app/pricing",
 file: "routes/app.pricing.tsx",
   },
-
+{
+  path: "/app/billing/return",
+  file: "routes/app.billing.return.tsx",
+},
   {
     path: "/privacy",
     file: "routes/privacy.tsx",
