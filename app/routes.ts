@@ -1,35 +1,50 @@
 export default [
- {
+  {
+    path: "/auth/*",
+    file: "routes/auth.$.tsx",
+  },
+
+  {
     path: "/",
-    file: "routes/_index.tsx",
+    file: "routes/app.tsx",
+    children: [
+      {
+        index: true,
+        file: "routes/_index.tsx",
+      },
+
+      {
+        path: "app/pricing",
+        file: "routes/app.pricing.tsx",
+      },
+
+      {
+        path: "app/dashboard",
+        file: "routes/app.dashboard.tsx",
+      },
+
+      {
+        path: "app/billing/return",
+        file: "routes/app.billing.return.tsx",
+      },
+    ],
   },
 
-  {
-    path: "/app/pricing",
-    file: "routes/app.pricing.tsx",
-  },
-
-  {
-    path: "/app/dashboard",
-    file: "routes/app.dashboard.tsx",
-  },
-
-  {
-    path: "/app/billing/return",
-    file: "routes/app.billing.return.tsx",
-  },
   {
     path: "/privacy",
     file: "routes/privacy.tsx",
   },
+
   {
     path: "/faq",
     file: "routes/faq.tsx",
   },
+
   {
     path: "/docs",
     file: "routes/docs.tsx",
   },
+
   {
     path: "/api/wishlist",
     file: "routes/api.wishlist.ts",
