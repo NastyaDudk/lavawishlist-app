@@ -1,16 +1,18 @@
 export default [
-  {
+{
     path: "/",
+    file: "routes/app.pricing.tsx",
+  },
+
+  {
+    path: "/app/dashboard",
     file: "routes/_index.tsx",
   },
-{
-path: "/app/pricing",
-file: "routes/app.pricing.tsx",
+
+  {
+    path: "/app/billing/return",
+    file: "routes/app.billing.return.tsx",
   },
-{
-  path: "/app/billing/return",
-  file: "routes/app.billing.return.tsx",
-},
   {
     path: "/privacy",
     file: "routes/privacy.tsx",

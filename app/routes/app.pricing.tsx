@@ -1,6 +1,5 @@
 import {
   Page,
-  Layout,
   Card,
   Text,
   Button,
@@ -11,110 +10,141 @@ import {
 } from "@shopify/polaris";
 
 import { authenticate } from "../shopify.server";
-import { useFetcher } from "react-router";
+import { useFetcher, redirect } from "react-router";
 
-export const action = async ({ request }: { request: Request }) => {
+export const loader = async ({ request }: { request: Request }) => {
+
   const { billing } = await authenticate.admin(request);
 
-  const formData = await request.formData();
-  const plan = formData.get("plan");
+  const billingCheck = await billing.check({
+    plans: ["pro"],
+  });
 
-  if (plan === "monthly") {
-    await billing.request({
-      plan: "pro",
-      isTest: true,
-      returnUrl: `${process.env.SHOPIFY_APP_URL}/app/billing/return`,
-    });
-  }
-
-  if (plan === "yearly") {
-    await billing.request({
-      plan: "pro",
-      isTest: true,
-      returnUrl: `${process.env.SHOPIFY_APP_URL}/app/billing/return`,
-    });
+  if (billingCheck.hasActivePayment) {
+    return redirect("/app/dashboard");
   }
 
   return null;
 };
 
+export const action = async ({ request }: { request: Request }) => {
+
+  const { billing } = await authenticate.admin(request);
+
+  await billing.request({
+    plan: "pro",
+    isTest: true,
+    returnUrl: `${process.env.SHOPIFY_APP_URL}/app/billing/return`,
+  });
+
+  return null;
+};
+
 export default function PricingPage() {
+
   const fetcher = useFetcher();
 
   return (
     <Page title="Choose your plan ❤️‍🔥">
 
+      {/* HERO */}
       <div className="pricing-hero">
 
         <div className="hero-glow"></div>
 
-        <Text as="h1" variant="heading2xl">
-          ❤️‍🔥 Upgrade Lava Favorites
-        </Text>
+        <BlockStack gap="300">
 
-        <Text as="p" variant="bodyLg" tone="subdued">
-          Turn more visitors into returning buyers with unlimited wishlist saves.
-        </Text>
+          <Badge tone="warning">
+            ❤️‍🔥 Lava Favorites
+          </Badge>
+
+          <Text as="h1" variant="heading2xl">
+            Turn visitors into loyal buyers
+          </Text>
+
+          <Text as="p" variant="bodyLg">
+            Increase repeat purchases with beautiful wishlists customers love using.
+          </Text>
+
+        </BlockStack>
 
       </div>
 
-      <Layout>
+      {/* CARDS */}
+      <div className="pricing-grid">
 
         {/* FREE */}
-        <Layout.Section variant="oneThird">
+        <div className="pricing-card">
 
           <Card>
-            <BlockStack gap="500">
 
-              <InlineStack align="space-between">
-                <Text as="h2" variant="headingLg">
-                  Free
-                </Text>
+            <div className="card-inner">
 
-                <Badge tone="info">
-                  Starter
-                </Badge>
-              </InlineStack>
-
-              <div>
-                <Text as="h3" variant="heading2xl">
-                  $0
-                </Text>
-
-                <Text as="p" tone="subdued">
-                  forever
-                </Text>
-              </div>
-
-              <List type="bullet">
-                <List.Item>Up to 50 wishlist saves</List.Item>
-                <List.Item>Theme App Embed</List.Item>
-                <List.Item>Mobile support</List.Item>
-                <List.Item>Beautiful lava heart UI</List.Item>
-              </List>
-
-              <Button fullWidth disabled>
-                Current plan
-              </Button>
-
-            </BlockStack>
-          </Card>
-
-        </Layout.Section>
-
-        {/* MONTHLY */}
-        <Layout.Section variant="oneThird">
-
-          <div className="plan-popular">
-
-            <div className="popular-badge">
-              MOST POPULAR
-            </div>
-
-            <Card>
               <BlockStack gap="500">
 
                 <InlineStack align="space-between">
+
+                  <Text as="h2" variant="headingLg">
+                    Free
+                  </Text>
+
+                  <Badge tone="info">
+                    Starter
+                  </Badge>
+
+                </InlineStack>
+
+                <div>
+
+                  <Text as="h3" variant="heading2xl">
+                    $0
+                  </Text>
+
+                  <Text as="p" tone="subdued">
+                    forever
+                  </Text>
+
+                </div>
+
+                <div className="features">
+
+                  <List type="bullet">
+                    <List.Item>Up to 50 wishlist saves</List.Item>
+                    <List.Item>Theme App Embed</List.Item>
+                    <List.Item>Mobile support</List.Item>
+                    <List.Item>Beautiful lava UI ❤️‍🔥</List.Item>
+                    <List.Item>Works instantly</List.Item>
+                  </List>
+
+                </div>
+
+                <Button fullWidth disabled>
+                  Current Plan
+                </Button>
+
+              </BlockStack>
+
+            </div>
+
+          </Card>
+
+        </div>
+
+        {/* MONTHLY */}
+        <div className="pricing-card popular-card">
+
+          <div className="popular-badge">
+            MOST POPULAR
+          </div>
+
+          <Card>
+
+            <div className="card-inner">
+
+              <BlockStack gap="500">
+
+                <InlineStack align="space-between">
+
                   <Text as="h2" variant="headingLg">
                     Pro Monthly
                   </Text>
@@ -122,9 +152,11 @@ export default function PricingPage() {
                   <Badge tone="success">
                     Unlimited
                   </Badge>
+
                 </InlineStack>
 
                 <div>
+
                   <InlineStack gap="100" blockAlign="end">
 
                     <Text as="h3" variant="heading2xl">
@@ -136,28 +168,32 @@ export default function PricingPage() {
                     </Text>
 
                   </InlineStack>
+
+                  <Text as="p" tone="subdued">
+                    7-day free trial included
+                  </Text>
+
                 </div>
 
-                <List type="bullet">
-                  <List.Item>Unlimited wishlist saves</List.Item>
-                  <List.Item>Priority support</List.Item>
-                  <List.Item>Fast customer syncing</List.Item>
-                  <List.Item>Works with all Shopify themes</List.Item>
-                  <List.Item>Future premium features</List.Item>
-                </List>
+                <div className="features">
+
+                  <List type="bullet">
+                    <List.Item>Unlimited wishlist saves</List.Item>
+                    <List.Item>Priority support</List.Item>
+                    <List.Item>Fast syncing</List.Item>
+                    <List.Item>Works with all themes</List.Item>
+                    <List.Item>Premium future features</List.Item>
+                  </List>
+
+                </div>
 
                 <fetcher.Form method="post">
-
-                  <input
-                    type="hidden"
-                    name="plan"
-                    value="monthly"
-                  />
 
                   <Button
                     submit
                     fullWidth
                     variant="primary"
+                    size="large"
                   >
                     Upgrade Monthly
                   </Button>
@@ -165,87 +201,90 @@ export default function PricingPage() {
                 </fetcher.Form>
 
               </BlockStack>
-            </Card>
 
-          </div>
+            </div>
 
-        </Layout.Section>
+          </Card>
+
+        </div>
 
         {/* YEARLY */}
-        <Layout.Section variant="oneThird">
+        <div className="pricing-card">
 
           <Card>
-            <BlockStack gap="500">
 
-              <InlineStack align="space-between">
-                <Text as="h2" variant="headingLg">
-                  Pro Yearly
-                </Text>
+            <div className="card-inner">
 
-                <Badge tone="attention">
-                  Save 17%
-                </Badge>
-              </InlineStack>
+              <BlockStack gap="500">
 
-              <div>
+                <InlineStack align="space-between">
 
-                <InlineStack gap="200" blockAlign="center">
-
-                  <Text
-                    as="span"
-                    variant="bodyMd"
-                    tone="subdued"
-                  >
-                    <span className="old-price">
-                      $119.88
-                    </span>
+                  <Text as="h2" variant="headingLg">
+                    Pro Yearly
                   </Text>
 
-                  <Text as="h3" variant="heading2xl">
-                    $99
-                  </Text>
+                  <Badge tone="attention">
+                    Save 17%
+                  </Badge>
 
                 </InlineStack>
 
-                <Text as="p" tone="subdued">
-                  per year
-                </Text>
+                <div>
 
-              </div>
+                  <InlineStack gap="200" blockAlign="center">
 
-              <List type="bullet">
-                <List.Item>Everything in Pro Monthly</List.Item>
-                <List.Item>Unlimited wishlist saves</List.Item>
-                <List.Item>Best value plan</List.Item>
-                <List.Item>Priority future updates</List.Item>
-                <List.Item>Lower yearly cost</List.Item>
-              </List>
+                    <span className="old-price">
+                      $119.88
+                    </span>
 
-              <fetcher.Form method="post">
+                    <Text as="h3" variant="heading2xl">
+                      $99
+                    </Text>
 
-                <input
-                  type="hidden"
-                  name="plan"
-                  value="yearly"
-                />
+                  </InlineStack>
 
-                <Button
-                  submit
-                  fullWidth
-                  variant="primary"
-                >
-                  Upgrade Yearly
-                </Button>
+                  <Text as="p" tone="subdued">
+                    billed yearly
+                  </Text>
 
-              </fetcher.Form>
+                </div>
 
-            </BlockStack>
+                <div className="features">
+
+                  <List type="bullet">
+                    <List.Item>Everything in Pro Monthly</List.Item>
+                    <List.Item>Unlimited wishlist saves</List.Item>
+                    <List.Item>Best value plan</List.Item>
+                    <List.Item>Priority future updates</List.Item>
+                    <List.Item>Lower yearly cost</List.Item>
+                  </List>
+
+                </div>
+
+                <fetcher.Form method="post">
+
+                  <Button
+                    submit
+                    fullWidth
+                    variant="primary"
+                    size="large"
+                  >
+                    Upgrade Yearly
+                  </Button>
+
+                </fetcher.Form>
+
+              </BlockStack>
+
+            </div>
+
           </Card>
 
-        </Layout.Section>
+        </div>
 
-      </Layout>
+      </div>
 
+      {/* FOOTER */}
       <div className="pricing-footer">
 
         <Text as="p" tone="subdued">
@@ -254,14 +293,17 @@ export default function PricingPage() {
 
       </div>
 
+      {/* STYLES */}
       <style>{`
 
         .pricing-hero {
           position:relative;
           overflow:hidden;
-          padding:48px 32px;
+
+          padding:52px 40px;
           border-radius:28px;
-          margin-bottom:28px;
+
+          margin-bottom:32px;
 
           background:
             linear-gradient(
@@ -276,10 +318,11 @@ export default function PricingPage() {
         .hero-glow {
           position:absolute;
           inset:-100px;
+
           background:
             radial-gradient(
               circle,
-              rgba(255,255,255,.18) 0%,
+              rgba(255,255,255,.16) 0%,
               transparent 70%
             );
 
@@ -288,36 +331,71 @@ export default function PricingPage() {
 
         .pricing-hero h1,
         .pricing-hero p {
+          color:white;
           position:relative;
           z-index:2;
-          color:white;
         }
 
-        .plan-popular {
+        .pricing-grid {
+          display:grid;
+          grid-template-columns:repeat(3,1fr);
+          gap:20px;
+
+          align-items:stretch;
+        }
+
+        .pricing-card {
           position:relative;
+          height:100%;
+        }
+
+        .pricing-card .Polaris-Card {
+          height:100%;
+        }
+
+        .card-inner {
+          height:100%;
+
+          display:flex;
+          flex-direction:column;
+        }
+
+        .features {
+          flex:1;
+        }
+
+        .popular-card {
+          transform:scale(1.02);
         }
 
         .popular-badge {
           position:absolute;
+
           top:-12px;
           left:50%;
+
           transform:translateX(-50%);
-          z-index:10;
+
+          z-index:20;
 
           background:#111;
           color:white;
 
           padding:6px 14px;
+
           border-radius:999px;
 
           font-size:12px;
           font-weight:700;
+
           letter-spacing:.08em;
         }
 
         .old-price {
           text-decoration:line-through;
-          opacity:.6;
+          opacity:.55;
+
+          font-size:16px;
         }
 
         .pricing-footer {
@@ -325,10 +403,18 @@ export default function PricingPage() {
           text-align:center;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
+
+          .pricing-grid {
+            grid-template-columns:1fr;
+          }
+
+          .popular-card {
+            transform:none;
+          }
 
           .pricing-hero {
-            padding:32px 20px;
+            padding:36px 24px;
           }
 
         }

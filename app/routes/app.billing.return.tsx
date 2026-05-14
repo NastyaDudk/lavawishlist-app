@@ -10,10 +10,10 @@ export const loader = async ({ request }: { request: Request }) => {
   });
 
   if (billingCheck.hasActivePayment) {
-    return redirect("/");
+    return redirect("/app/dashboard");
   }
 
-  return redirect("/app/pricing");
+  return redirect("/");
 };
 
 export default function BillingReturn() {
