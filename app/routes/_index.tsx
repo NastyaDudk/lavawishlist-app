@@ -9,6 +9,42 @@ import {
   Button,
 } from "@shopify/polaris";
 
+import { authenticate } from "../shopify.server";
+
+export const loader = async ({
+  request,
+}: {
+  request: Request;
+}) => {
+
+  const { billing } =
+    await authenticate.admin(request);
+
+  const billingCheck =
+    await billing.check({
+      plans: ["pro"] as never,
+    });
+
+  /**
+   * NO ACTIVE SUBSCRIPTION
+   * OPEN SHOPIFY BILLING
+   */
+
+  if (!billingCheck.hasActivePayment) {
+
+    return billing.request({
+      plan: "pro",
+      isTest: true,
+
+      returnUrl:
+        `${process.env.SHOPIFY_APP_URL}/app`,
+    });
+
+  }
+
+  return null;
+};
+
 export default function Index() {
 
   return (
@@ -41,11 +77,11 @@ export default function Index() {
             <InlineStack gap="300">
 
               <Button variant="primary">
-                App Installed ✓
+                Pro Activated ✓
               </Button>
 
               <Button disabled>
-                Pro via Shopify Billing
+                Shopify Billing Connected
               </Button>
 
             </InlineStack>

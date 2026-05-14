@@ -36,22 +36,24 @@ export const shopify = shopifyApp({
 
   isEmbeddedApp: true,
 
-  billing: {
+billing: {
 
-    pro: {
+  pro: {
 
-      lineItems: [
-        {
-          amount: 9.99,
-          currencyCode: "USD",
-          interval:
-            BillingInterval.Every30Days,
-        },
-      ],
+    lineItems: [
+      {
+        amount: 9.99,
+        currencyCode: "USD",
+        interval:
+          BillingInterval.Every30Days,
+      },
+    ],
 
-    },
+    trialDays: 3,
 
-  } as const,
+  },
+
+} as const,
 
 });
 
