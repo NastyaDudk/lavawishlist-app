@@ -1,17 +1,17 @@
 export default [
-  {
-  path: "/auth/login",
-  file: "routes/auth.login.tsx",
-},
-
-{
+ {
     path: "/",
+    file: "routes/_index.tsx",
+  },
+
+  {
+    path: "/app/pricing",
     file: "routes/app.pricing.tsx",
   },
 
   {
     path: "/app/dashboard",
-    file: "routes/_index.tsx",
+    file: "routes/app.dashboard.tsx",
   },
 
   {

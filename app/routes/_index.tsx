@@ -12,21 +12,28 @@ import {
 import { redirect, Link } from "react-router";
 import { authenticate } from "../shopify.server";
 
-export const loader = async ({ request }: { request: Request }) => {
+export const loader = async ({
+  request,
+}: {
+  request: Request;
+}) => {
 
-  const { billing } = await authenticate.admin(request);
+  const { billing } =
+    await authenticate.admin(request);
 
-  const billingCheck = await billing.check({
-    plans: ["pro"],
-  });
+  const billingCheck =
+    await billing.check({
+      plans: ["pro"],
+    });
 
-  const isPro = billingCheck.hasActivePayment;
+  const isPro =
+    billingCheck.hasActivePayment;
 
   // TEMP TEST LIMIT
   const saves = 55;
 
   if (!isPro && saves >= 50) {
-    return redirect("/");
+    return redirect("/app/pricing");
   }
 
   return null;
@@ -55,8 +62,10 @@ export default function Index() {
             </Text>
 
             <Text as="p" variant="bodyLg">
-              Lava Favorites helps customers save products they love and return later to buy.
-              Increase conversions, repeat visits, and customer loyalty.
+              Lava Favorites helps customers save
+              products they love and return later
+              to buy. Increase conversions,
+              repeat visits, and customer loyalty.
             </Text>
 
             <InlineStack gap="300">
@@ -79,6 +88,7 @@ export default function Index() {
 
         {/* BENEFITS */}
         <Card>
+
           <BlockStack gap="500">
 
             <InlineStack align="space-between">
@@ -104,12 +114,19 @@ export default function Index() {
                 "Mobile optimized experience",
               ].map((item) => (
 
-                <div className="benefit-item" key={item}>
-                  <span className="benefit-icon">🔥</span>
+                <div
+                  className="benefit-item"
+                  key={item}
+                >
+
+                  <span className="benefit-icon">
+                    🔥
+                  </span>
 
                   <Text as="p">
                     {item}
                   </Text>
+
                 </div>
 
               ))}
@@ -117,10 +134,12 @@ export default function Index() {
             </div>
 
           </BlockStack>
+
         </Card>
 
         {/* SCREENSHOTS */}
         <Card>
+
           <BlockStack gap="500">
 
             <Text as="h2" variant="headingLg">
@@ -130,21 +149,50 @@ export default function Index() {
             <div className="grid">
 
               {[
-                { src: "/images/header.png", label: "Animated lava heart" },
-                { src: "/images/catalog.png", label: "Wishlist on collection pages" },
-                { src: "/images/wishlist drawer.png", label: "Slide-out wishlist drawer" },
-                { src: "/images/icon.png", label: "Clean modern icons" },
-                { src: "/images/added.png", label: "Fast add to cart" },
-                { src: "/images/header before.png", label: "Fits every theme" },
+                {
+                  src: "/images/header.png",
+                  label: "Animated lava heart",
+                },
+                {
+                  src: "/images/catalog.png",
+                  label: "Wishlist on collection pages",
+                },
+                {
+                  src: "/images/wishlist drawer.png",
+                  label: "Slide-out wishlist drawer",
+                },
+                {
+                  src: "/images/icon.png",
+                  label: "Clean modern icons",
+                },
+                {
+                  src: "/images/added.png",
+                  label: "Fast add to cart",
+                },
+                {
+                  src: "/images/header before.png",
+                  label: "Fits every theme",
+                },
               ].map((img) => (
 
-                <div key={img.src} className="card-preview">
+                <div
+                  key={img.src}
+                  className="card-preview"
+                >
 
                   <div className="img-box">
-                    <img src={img.src} alt={img.label} />
+
+                    <img
+                src={img.src}
+                      alt={img.label}
+                    />
+
                   </div>
 
-                  <Text as="p" tone="subdued">
+                  <Text
+                    as="p"
+                    tone="subdued"
+                  >
                     {img.label}
                   </Text>
 
@@ -155,10 +203,12 @@ export default function Index() {
             </div>
 
           </BlockStack>
+
         </Card>
 
         {/* VIDEO */}
         <Card>
+
           <BlockStack gap="400">
 
             <InlineStack align="space-between">
@@ -183,14 +233,17 @@ export default function Index() {
             </div>
 
             <Text as="p" tone="subdued">
-              Theme Editor → App Embeds → Enable Lava Favorites → Save
+              Theme Editor → App Embeds →
+              Enable Lava Favorites → Save
             </Text>
 
           </BlockStack>
+
         </Card>
 
         {/* QUICK SETUP */}
         <Card>
+
           <BlockStack gap="500">
 
             <Text as="h2" variant="headingLg">
@@ -220,12 +273,14 @@ export default function Index() {
             <div className="setup-banner">
 
               <Text as="p">
-                ⚡ Average setup time: less than 60 seconds
+                ⚡ Average setup time:
+                less than 60 seconds
               </Text>
 
             </div>
 
           </BlockStack>
+
         </Card>
 
         {/* CTA */}
@@ -233,18 +288,31 @@ export default function Index() {
 
           <BlockStack gap="400">
 
-            <Text as="h2" variant="heading2xl">
+            <Text
+              as="h2"
+              variant="heading2xl"
+            >
               Ready to grow sales? 🔥
             </Text>
 
-            <Text as="p" variant="bodyLg">
-              Let customers save products they love and return later to complete their purchase.
+            <Text
+              as="p"
+              variant="bodyLg"
+            >
+              Let customers save products
+              they love and return later
+              to complete their purchase.
             </Text>
 
             <Link to="/app/pricing">
-              <Button size="large" variant="primary">
+
+              <Button
+                size="large"
+                variant="primary"
+              >
                 View Pricing Plans
               </Button>
+
             </Link>
 
           </BlockStack>
@@ -255,11 +323,11 @@ export default function Index() {
         <style>{`
 
           .hero-card {
-            position:relative;
-            overflow:hidden;
+            position: relative;
+            overflow: hidden;
 
-            padding:48px;
-            border-radius:28px;
+            padding: 48px;
+            border-radius: 28px;
 
             background:
               linear-gradient(
@@ -268,12 +336,12 @@ export default function Index() {
                 #dd2476 100%
               );
 
-            color:white;
+            color: white;
           }
 
           .hero-glow {
-            position:absolute;
-            inset:-100px;
+            position: absolute;
+            inset: -100px;
 
             background:
               radial-gradient(
@@ -282,86 +350,86 @@ export default function Index() {
                 transparent 70%
               );
 
-            pointer-events:none;
+            pointer-events: none;
           }
 
           .hero-card h1,
           .hero-card p {
-            color:white;
-            position:relative;
-            z-index:2;
+            color: white;
+            position: relative;
+            z-index: 2;
           }
 
           .benefits-grid {
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:16px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
           }
 
           .benefit-item {
-            display:flex;
-            align-items:center;
-            gap:12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
 
-            padding:16px;
-            border-radius:14px;
+            padding: 16px;
+            border-radius: 14px;
 
-            background:#f6f6f7;
+            background: #f6f6f7;
           }
 
           .benefit-icon {
-            font-size:20px;
+            font-size: 20px;
           }
 
           .grid {
-            display:grid;
-            grid-template-columns:1fr 1fr;
-            gap:18px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
           }
 
           .card-preview {
-            transition:all .25s ease;
+    transition: all .25s ease;
           }
 
           .card-preview:hover {
-            transform:translateY(-4px);
+            transform: translateY(-4px);
           }
 
           .img-box {
-            width:100%;
-            height:220px;
+            width: 100%;
+            height: 220px;
 
-            overflow:hidden;
-            border-radius:18px;
+            overflow: hidden;
+            border-radius: 18px;
 
-            background:#f6f6f7;
-            margin-bottom:10px;
+            background: #f6f6f7;
+            margin-bottom: 10px;
           }
 
           .img-box img {
-            width:100%;
-            height:100%;
+            width: 100%;
+            height: 100%;
 
-            object-fit:cover;
-            object-position:center;
+            object-fit: cover;
+            object-position: center;
 
-            display:block;
+            display: block;
           }
 
           .video-box {
-            overflow:hidden;
-            border-radius:18px;
-            background:#f6f6f7;
+            overflow: hidden;
+            border-radius: 18px;
+            background: #f6f6f7;
           }
 
           .video-box img {
-            width:100%;
-            display:block;
+            width: 100%;
+            display: block;
           }
 
           .setup-banner {
-            padding:16px;
-            border-radius:14px;
+            padding: 16px;
+            border-radius: 14px;
 
             background:
               linear-gradient(
@@ -372,10 +440,10 @@ export default function Index() {
           }
 
           .cta-card {
-            padding:48px;
-            border-radius:28px;
+            padding: 48px;
+            border-radius: 28px;
 
-            text-align:center;
+            text-align: center;
 
             background:
               linear-gradient(
@@ -384,28 +452,28 @@ export default function Index() {
                 #dd2476 100%
               );
 
-            color:white;
+            color: white;
           }
 
           .cta-card h2,
           .cta-card p {
-            color:white;
+            color: white;
           }
 
-          @media (max-width:768px) {
+          @media (max-width: 768px) {
 
             .hero-card,
             .cta-card {
-              padding:28px;
+              padding: 28px;
             }
 
             .grid,
             .benefits-grid {
-              grid-template-columns:1fr;
+              grid-template-columns: 1fr;
             }
 
             .img-box {
-              height:240px;
+              height: 240px;
             }
 
           }
