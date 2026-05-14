@@ -9,10 +9,6 @@ export default [
     file: "routes/_index.tsx",
   },
   {
-    path: "/app/billing/return",
-    file: "routes/app.billing.return.tsx",
-  },
-  {
     path: "/privacy",
     file: "routes/privacy.tsx",
   },
