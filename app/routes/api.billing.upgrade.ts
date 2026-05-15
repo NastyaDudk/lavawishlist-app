@@ -1,8 +1,7 @@
 import { json } from "@remix-run/node";
 
-import {
-  authenticate,
-} from "../shopify.server";
+import { authenticate }
+from "../shopify.server";
 
 export async function action({
   request,
@@ -13,16 +12,28 @@ export async function action({
   const { billing } =
     await authenticate.admin(request);
 
-  await billing.require({
-    plans: ["pro"],
-    isTest: true,
-    onFailure: async () =>
-      billing.request({
-        plan: "pro",
-        isTest: true,
-        returnUrl: "/app",
-      }),
-  });
+  const billingCheck =
+    await billing.check({
+      plans: ["pro"],
+      isTest: true,
+    });
+
+  if (!billingCheck.hasActivePayment) {
+
+    await billing.require({
+      plans: ["pro"],
+      isTest: true,
+
+      onFailure: async (
+        error,
+      ) => {
+
+        throw error;
+
+      },
+    });
+
+  }
 
   return json({
     ok: true,

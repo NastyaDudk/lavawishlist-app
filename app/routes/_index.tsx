@@ -10,7 +10,12 @@ import {
   Link,
 } from "@shopify/polaris";
 
+import { useState } from "react";
+
 export default function Index() {
+
+  const [loading, setLoading] =
+    useState(false);
 
   /**
    * SHOPIFY BILLING
@@ -19,6 +24,8 @@ export default function Index() {
   const openUpgrade = async () => {
 
     try {
+
+      setLoading(true);
 
       const res = await fetch(
         "/api/billing/upgrade",
@@ -29,17 +36,20 @@ export default function Index() {
 
       const data = await res.json();
 
-      if (data?.confirmationUrl) {
+    if (data?.confirmationUrl) {
 
-        window.top?.location.assign(
-          data.confirmationUrl,
-        );
+  window.location.href =
+    data.confirmationUrl;
 
-      }
+}
 
     } catch (err) {
 
       console.error(err);
+
+    } finally {
+
+      setLoading(false);
 
     }
 
@@ -84,15 +94,17 @@ export default function Index() {
 
             <InlineStack gap="300">
 
-              <Button variant="primary">
-
+              <Button
+                variant="primary"
+                disabled
+              >
                 App Installed ✓
-
               </Button>
 
               <Button
                 variant="secondary"
                 onClick={openUpgrade}
+                loading={loading}
               >
                 Upgrade to Pro
               </Button>
@@ -351,6 +363,7 @@ export default function Index() {
                 variant="primary"
                 size="large"
                 onClick={openUpgrade}
+                loading={loading}
               >
                 Upgrade to Pro — $9.99/mo
               </Button>
@@ -363,45 +376,37 @@ export default function Index() {
 
         {/* POLICIES */}
 
-        <Card>
+        <div className="footer">
 
-          <BlockStack gap="300">
+          <InlineStack
+            gap="500"
+            align="center"
+          >
 
-            <Text
-              as="h2"
-              variant="headingLg"
+            <Link
+              url="/privacy"
+              removeUnderline
             >
-              Policies
-            </Text>
+              Privacy Policy
+            </Link>
 
-            <BlockStack gap="200">
+            <Link
+              url="/faq"
+              removeUnderline
+            >
+              FAQ
+            </Link>
 
-              <Link
-                url="/policies/privacy"
-                removeUnderline
-              >
-                Privacy Policy
-              </Link>
+            <Link
+              url="/docs"
+              removeUnderline
+            >
+              Documentation
+            </Link>
 
-              <Link
-                url="/policies/terms"
-                removeUnderline
-              >
-                Terms of Service
-              </Link>
+          </InlineStack>
 
-              <Link
-                url="/policies/refund"
-                removeUnderline
-              >
-                Refund Policy
-              </Link>
-
-            </BlockStack>
-
-          </BlockStack>
-
-        </Card>
+        </div>
 
         {/* STYLES */}
 
@@ -494,10 +499,8 @@ export default function Index() {
           .img-box img {
             width: 100%;
             height: 100%;
-
             object-fit: cover;
             object-position: center;
-
             display: block;
           }
 
@@ -543,6 +546,20 @@ export default function Index() {
           .cta-card h2,
           .cta-card p {
             color: white;
+          }
+
+          .footer {
+            padding: 12px 0 24px;
+          }
+
+          .footer a {
+            color: #6d7175;
+            font-weight: 600;
+            transition: all .2s ease;
+          }
+
+          .footer a:hover {
+            color: #dd2476;
           }
 
           @media (max-width: 768px) {

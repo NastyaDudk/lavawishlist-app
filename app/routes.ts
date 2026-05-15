@@ -28,6 +28,10 @@ export default [
     file: "routes/api.wishlist.ts",
   },
   {
+  path: "/api/billing/upgrade",
+  file: "routes/api.billing.upgrade.ts",
+},
+  {
     path: "/webhooks/compliance",
     file: "routes/webhooks.compliance.tsx",
   },
