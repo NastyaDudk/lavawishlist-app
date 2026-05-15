@@ -31,27 +31,57 @@ export default function Index() {
 
       setLoading(true);
 
-      const res = await fetch(
-        "/api/billing/upgrade",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
+      const response =
+        await fetch(
+          "/api/billing/upgrade",
+          {
+            method: "POST",
+
+            credentials:
+              "include",
+
+            headers: {
+              Accept:
+                "application/json",
+
+              "Content-Type":
+                "application/json",
+            },
           },
-        },
-      );
+        );
 
       console.log(
-        "STATUS:",
-        res.status,
+        "RESPONSE:",
+        response,
       );
 
-      const data =
-        await res.json();
+      const text =
+        await response.text();
 
       console.log(
-        "DATA:",
+        "RAW RESPONSE:",
+        text,
+      );
+
+      let data;
+
+      try {
+
+        data =
+          JSON.parse(text);
+
+      } catch {
+
+        alert(
+          "Invalid JSON response",
+        );
+
+        return;
+
+      }
+
+      console.log(
+        "PARSED:",
         data,
       );
 
@@ -59,35 +89,35 @@ export default function Index() {
         data?.confirmationUrl
       ) {
 
-        console.log(
-          "REDIRECTING:",
-          data.confirmationUrl,
-        );
+       if (window.top) {
 
-        window.location.href =
-  data.confirmationUrl;
+  window.top.location.href =
+    data.confirmationUrl;
 
-      } else {
+} else {
 
-        console.error(
-          "NO confirmationUrl",
-        );
+  window.location.href =
+    data.confirmationUrl;
 
-        alert(
-          "No confirmationUrl returned",
-        );
+}
+
+        return;
 
       }
 
-    } catch (err) {
+      alert(
+        "No confirmation URL returned",
+      );
+
+    } catch (error) {
 
       console.error(
         "BILLING ERROR:",
-        err,
+        error,
       );
 
       alert(
-        "Billing failed. Check console.",
+        "Billing request failed",
       );
 
     } finally {
@@ -371,37 +401,15 @@ export default function Index() {
 
                   </BlockStack>
 
-                  {/* WORKING BUTTON */}
-
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
-
-                      console.log(
-                        "CLICK WORKS",
-                      );
-
-                      openUpgrade();
-
-                    }}
-                    onKeyDown={() => {
-
-                      openUpgrade();
-
-                    }}
+                  <Button
+                    variant="primary"
+                    size="large"
+                    fullWidth
+                    onClick={openUpgrade}
+                    loading={loading}
                   >
-
-                    <Button
-                      variant="primary"
-                      size="large"
-                      fullWidth
-                      loading={loading}
-                    >
-                      Upgrade to Pro
-                    </Button>
-
-                  </div>
+                    Upgrade to Pro
+                  </Button>
 
                 </BlockStack>
 
@@ -614,18 +622,15 @@ export default function Index() {
 
             <InlineStack align="center">
 
-
-
-                <Button
-                  variant="primary"
-                  size="large"
-                  loading={loading}
-                >
-                  Upgrade to Pro —
-                  $9.99/mo
-                </Button>
-
-
+              <Button
+                variant="primary"
+                size="large"
+                onClick={openUpgrade}
+                loading={loading}
+              >
+                Upgrade to Pro —
+                $9.99/mo
+              </Button>
 
             </InlineStack>
 
