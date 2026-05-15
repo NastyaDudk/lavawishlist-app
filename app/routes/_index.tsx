@@ -35,6 +35,10 @@ export default function Index() {
         "/api/billing/upgrade",
         {
           method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
         },
       );
 
@@ -51,12 +55,23 @@ export default function Index() {
         data,
       );
 
-      if (data?.confirmationUrl) {
+      if (
+        data?.confirmationUrl
+      ) {
+
+        console.log(
+          "REDIRECTING:",
+          data.confirmationUrl,
+        );
 
         window.location.href =
-          data.confirmationUrl;
+  data.confirmationUrl;
 
       } else {
+
+        console.error(
+          "NO confirmationUrl",
+        );
 
         alert(
           "No confirmationUrl returned",
@@ -117,7 +132,7 @@ export default function Index() {
                 as="h1"
                 variant="heading2xl"
               >
-                Turn visitors into buyers
+                Turn visitors into loyal buyers
               </Text>
 
               <Text
@@ -203,7 +218,9 @@ export default function Index() {
 
           <BlockStack gap="500">
 
-            <InlineStack align="space-between">
+            <InlineStack
+              align="space-between"
+            >
 
               <Text
                 as="h2"
@@ -213,7 +230,8 @@ export default function Index() {
               </Text>
 
               <div className="free-info">
-                Free includes 50 saves/month
+                Free includes
+                50 saves/month
               </div>
 
             </InlineStack>
@@ -353,15 +371,37 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <Button
-                    variant="primary"
-                    size="large"
-                    fullWidth
-                    onClick={openUpgrade}
-                    loading={loading}
+                  {/* WORKING BUTTON */}
+
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+
+                      console.log(
+                        "CLICK WORKS",
+                      );
+
+                      openUpgrade();
+
+                    }}
+                    onKeyDown={() => {
+
+                      openUpgrade();
+
+                    }}
                   >
-                    Upgrade to Pro
-                  </Button>
+
+                    <Button
+                      variant="primary"
+                      size="large"
+                      fullWidth
+                      loading={loading}
+                    >
+                      Upgrade to Pro
+                    </Button>
+
+                  </div>
 
                 </BlockStack>
 
@@ -399,7 +439,8 @@ export default function Index() {
                     "Wishlist on collection pages",
                 },
                 {
-                  src: "/images/wishlist drawer.png",
+                  src:
+                    "/images/wishlist drawer.png",
                   label:
                     "Slide-out wishlist drawer",
                 },
@@ -414,7 +455,8 @@ export default function Index() {
                     "Fast add to cart",
                 },
                 {
-                  src: "/images/header before.png",
+                  src:
+                    "/images/header before.png",
                   label:
                     "Fits every theme",
                 },
@@ -457,13 +499,16 @@ export default function Index() {
 
           <BlockStack gap="400">
 
-            <InlineStack align="space-between">
+            <InlineStack
+              align="space-between"
+            >
 
               <Text
                 as="h2"
                 variant="headingLg"
               >
-                Setup in under 1 minute 🎬
+                Setup in under
+                1 minute 🎬
               </Text>
 
               <Badge tone="attention">
@@ -485,8 +530,10 @@ export default function Index() {
               as="p"
               tone="subdued"
             >
-              Theme Editor → App Embeds →
-              Enable Lava Favorites → Save
+              Theme Editor →
+              App Embeds →
+              Enable Lava Favorites →
+              Save
             </Text>
 
           </BlockStack>
@@ -509,11 +556,13 @@ export default function Index() {
             <List type="number">
 
               <List.Item>
-                Open Shopify Theme Customize
+                Open Shopify
+                Theme Customize
               </List.Item>
 
               <List.Item>
-                Enable Lava Favorites App Embed
+                Enable Lava Favorites
+                App Embed
               </List.Item>
 
               <List.Item>
@@ -521,7 +570,8 @@ export default function Index() {
               </List.Item>
 
               <List.Item>
-                Customers can now save favorites ❤️
+                Customers can now
+                save favorites ❤️
               </List.Item>
 
             </List>
@@ -549,27 +599,41 @@ export default function Index() {
               as="h2"
               variant="heading2xl"
             >
-              Ready for unlimited wishlists? 🔥
+              Ready for unlimited
+              wishlists? 🔥
             </Text>
 
             <Text
               as="p"
               variant="bodyLg"
             >
-              Upgrade to Lava Favorites Pro
-              and unlock unlimited wishlist saves.
+              Upgrade to Lava Favorites
+              Pro and unlock unlimited
+              wishlist saves.
             </Text>
 
             <InlineStack align="center">
 
-              <Button
-                variant="primary"
-                size="large"
-                onClick={openUpgrade}
-                loading={loading}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+
+                  openUpgrade();
+
+                }}
               >
-                Upgrade to Pro — $9.99/mo
-              </Button>
+
+                <Button
+                  variant="primary"
+                  size="large"
+                  loading={loading}
+                >
+                  Upgrade to Pro —
+                  $9.99/mo
+                </Button>
+
+              </div>
 
             </InlineStack>
 
@@ -636,6 +700,8 @@ export default function Index() {
             position: absolute;
             inset: 0;
 
+            pointer-events: none;
+
             background:
               radial-gradient(
                 circle at top right,
@@ -669,12 +735,11 @@ export default function Index() {
 
           .hero-grid {
             display: grid;
+
             grid-template-columns:
               repeat(3,1fr);
 
             gap: 18px;
-
-            margin-top: 10px;
           }
 
           .hero-box {
@@ -708,6 +773,7 @@ export default function Index() {
 
           .plans-grid {
             display: grid;
+
             grid-template-columns:
               1fr 1fr;
 
@@ -718,9 +784,11 @@ export default function Index() {
             position: relative;
 
             padding: 28px;
+
             border-radius: 22px;
 
-            border: 1px solid #e1e3e5;
+            border:
+              1px solid #e1e3e5;
           }
 
           .free-plan {
@@ -735,7 +803,8 @@ export default function Index() {
                 rgba(221,36,118,.08)
               );
 
-            border: 2px solid #dd2476;
+            border:
+              2px solid #dd2476;
           }
 
           .popular-badge {
@@ -749,6 +818,7 @@ export default function Index() {
             border-radius: 999px;
 
             background: #dd2476;
+
             color: white;
 
             font-size: 12px;
@@ -763,6 +833,7 @@ export default function Index() {
 
           .grid {
             display: grid;
+
             grid-template-columns:
               1fr 1fr;
 
@@ -803,7 +874,9 @@ export default function Index() {
 
           .video-box {
             overflow: hidden;
+
             border-radius: 18px;
+
             background: #f6f6f7;
           }
 
@@ -814,6 +887,7 @@ export default function Index() {
 
           .setup-banner {
             padding: 16px;
+
             border-radius: 14px;
 
             background:
@@ -826,6 +900,7 @@ export default function Index() {
 
           .cta-card {
             padding: 48px;
+
             border-radius: 28px;
 
             text-align: center;
@@ -846,10 +921,13 @@ export default function Index() {
           }
 
           .footer {
-            padding: 12px 0 24px;
+            padding:
+              12px 0 24px;
           }
 
-          @media (max-width: 768px) {
+          @media (
+            max-width: 768px
+          ) {
 
             .hero-card,
             .cta-card,
@@ -860,7 +938,8 @@ export default function Index() {
             .grid,
             .plans-grid,
             .hero-grid {
-              grid-template-columns: 1fr;
+              grid-template-columns:
+                1fr;
             }
 
             .img-box {
