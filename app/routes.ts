@@ -30,6 +30,10 @@ export default [
   {
   path: "/api/billing/upgrade",
   file: "routes/api.billing.upgrade.ts",
+  },
+{
+  path: "/robots.txt",
+  file: "routes/robots[.]txt.ts",
 },
   {
     path: "/webhooks/compliance",
