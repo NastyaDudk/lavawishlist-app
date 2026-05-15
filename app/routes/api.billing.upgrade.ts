@@ -1,3 +1,5 @@
+import { json } from "@remix-run/node";
+
 import { authenticate }
 from "../shopify.server";
 
@@ -16,14 +18,25 @@ export async function action({
       isTest: true,
     });
 
-  if (!billingCheck.hasActivePayment) {
+  if (billingCheck.hasActivePayment) {
 
-    await billing.request({
-      plan: "pro",
-      isTest: true,
+    return json({
+      active: true,
     });
 
   }
 
-  return new Response();
+const billingResponse =
+  await billing.request({
+    plan: "pro",
+    isTest: true,
+  }) as {
+    confirmationUrl: string;
+  };
+
+  return json({
+    confirmationUrl:
+      billingResponse.confirmationUrl,
+  });
+
 }

@@ -36,12 +36,12 @@ export default function Index() {
 
       const data = await res.json();
 
-    if (data?.confirmationUrl) {
+      if (data?.confirmationUrl) {
 
-  window.location.href =
-    data.confirmationUrl;
+        window.top!.location.href =
+          data.confirmationUrl;
 
-}
+      }
 
     } catch (err) {
 
@@ -67,7 +67,7 @@ export default function Index() {
 
           <div className="hero-glow" />
 
-          <BlockStack gap="400">
+          <BlockStack gap="500">
 
             <Badge tone="warning">
               ❤️‍🔥 Shopify Wishlist App
@@ -115,7 +115,7 @@ export default function Index() {
 
         </div>
 
-        {/* BENEFITS */}
+        {/* PLANS */}
 
         <Card>
 
@@ -127,42 +127,155 @@ export default function Index() {
                 as="h2"
                 variant="headingLg"
               >
-                Why stores love Lava Favorites
+                Choose your plan
               </Text>
 
               <Badge tone="success">
-                Fast Setup
+                3 Day Free Trial
               </Badge>
 
             </InlineStack>
 
-            <div className="benefits-grid">
+            <div className="plans-grid">
 
-              {[
-                "Free plan includes 50 wishlist saves",
-                "Unlimited wishlist saves in Pro",
-                "Boost customer loyalty",
-                "Beautiful lava heart UI ❤️‍🔥",
-                "Works with every Shopify theme",
-                "Mobile optimized experience",
-              ].map((item) => (
+              {/* FREE */}
 
-                <div
-                  key={item}
-                  className="benefit-item"
-                >
+              <div className="plan-card free-plan">
 
-                  <span className="benefit-icon">
-                    🔥
-                  </span>
+                <BlockStack gap="400">
 
-                  <Text as="p">
-                    {item}
+                  <div>
+
+                    <Text
+                      as="h3"
+                      variant="headingLg"
+                    >
+                      Free Plan
+                    </Text>
+
+                    <Text
+                      as="p"
+                      tone="subdued"
+                    >
+                      Perfect for testing
+                    </Text>
+
+                  </div>
+
+                  <Text
+                    as="h2"
+                    variant="heading2xl"
+                  >
+                    $0
                   </Text>
 
+                  <BlockStack gap="200">
+
+                    {[
+                      "Up to 50 wishlist saves",
+                      "Theme App Embed",
+                      "Mobile optimized",
+                      "Works with all Shopify themes",
+                      "Basic wishlist functionality",
+                    ].map((item) => (
+
+                      <div
+                        key={item}
+                        className="feature-row"
+                      >
+
+                        <span>🔥</span>
+
+                        <Text as="p">
+                          {item}
+                        </Text>
+
+                      </div>
+
+                    ))}
+
+                  </BlockStack>
+
+                </BlockStack>
+
+              </div>
+
+              {/* PRO */}
+
+              <div className="plan-card pro-plan">
+
+                <div className="popular-badge">
+                  MOST POPULAR
                 </div>
 
-              ))}
+                <BlockStack gap="400">
+
+                  <div>
+
+                    <Text
+                      as="h3"
+                      variant="headingLg"
+                    >
+                      Pro Plan
+                    </Text>
+
+                    <Text
+                      as="p"
+                      tone="subdued"
+                    >
+                      For growing stores
+                    </Text>
+
+                  </div>
+
+                  <Text
+                    as="h2"
+                    variant="heading2xl"
+                  >
+                    $9.99/mo
+                  </Text>
+
+                  <BlockStack gap="200">
+
+                    {[
+                      "Unlimited wishlist saves",
+                      "Priority performance",
+                      "Unlimited customer usage",
+                      "Premium lava UI ❤️‍🔥",
+                      "Fast add to cart",
+                      "Future Pro updates included",
+                      "Priority support",
+                    ].map((item) => (
+
+                      <div
+                        key={item}
+                        className="feature-row"
+                      >
+
+                        <span>🚀</span>
+
+                        <Text as="p">
+                          {item}
+                        </Text>
+
+                      </div>
+
+                    ))}
+
+                  </BlockStack>
+
+                  <Button
+                    variant="primary"
+                    size="large"
+                    onClick={openUpgrade}
+                    loading={loading}
+                  >
+                    Upgrade to Pro
+                  </Button>
+
+                </BlockStack>
+
+              </div>
 
             </div>
 
@@ -374,7 +487,7 @@ export default function Index() {
 
         </div>
 
-        {/* POLICIES */}
+        {/* FOOTER */}
 
         <div className="footer">
 
@@ -450,25 +563,55 @@ export default function Index() {
             z-index: 2;
           }
 
-          .benefits-grid {
+          .plans-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 24px;
           }
 
-          .benefit-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+          .plan-card {
+            position: relative;
 
-            padding: 16px;
-            border-radius: 14px;
+            padding: 28px;
+            border-radius: 22px;
 
+            border: 1px solid #e1e3e5;
+          }
+
+          .free-plan {
             background: #f6f6f7;
           }
 
-          .benefit-icon {
-            font-size: 20px;
+          .pro-plan {
+            background:
+              linear-gradient(
+                135deg,
+                rgba(255,81,47,.08),
+                rgba(221,36,118,.08)
+              );
+
+            border: 2px solid #dd2476;
+          }
+
+          .popular-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+
+            padding: 6px 12px;
+            border-radius: 999px;
+
+            background: #dd2476;
+            color: white;
+
+            font-size: 12px;
+            font-weight: 700;
+          }
+
+          .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
           }
 
           .grid {
@@ -499,8 +642,10 @@ export default function Index() {
           .img-box img {
             width: 100%;
             height: 100%;
+
             object-fit: cover;
             object-position: center;
+
             display: block;
           }
 
@@ -565,12 +710,13 @@ export default function Index() {
           @media (max-width: 768px) {
 
             .hero-card,
-            .cta-card {
+            .cta-card,
+            .plan-card {
               padding: 28px;
             }
 
             .grid,
-            .benefits-grid {
+            .plans-grid {
               grid-template-columns: 1fr;
             }
 
