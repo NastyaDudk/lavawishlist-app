@@ -46,6 +46,7 @@ export const shopify = shopifyApp({
       lineItems: [
         {
           amount: 9.99,
+
           currencyCode: "USD",
 
           interval:

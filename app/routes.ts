@@ -15,10 +15,10 @@ export default [
     file: "routes/app.tsx",
   },
 
-  {
-    path: "/app/pricing",
-    file: "routes/app.pricing.tsx",
-  },
+{
+  path: "/app/pricing",
+  file: "routes/app.pricing.tsx",
+},
 
   {
     path: "/app/dashboard",

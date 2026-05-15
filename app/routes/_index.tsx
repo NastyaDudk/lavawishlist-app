@@ -14,7 +14,7 @@ export default function Index() {
 
   return (
 
-    <Page title="❤️ Lava Favorites">
+    <Page title="❤️‍🔥 Lava Wishlist">
 
       <BlockStack gap="500">
 
@@ -30,9 +30,9 @@ export default function Index() {
               align="space-between"
             >
 
-              <Badge tone="warning">
-                ❤️‍🔥 Shopify Wishlist App
-              </Badge>
+             <div className="hero-badge">
+  ❤️‍🔥 Shopify LavaWishlist App
+</div>
 
               <div className="hero-pill">
                 Free Plan Included
@@ -81,7 +81,7 @@ export default function Index() {
                   as="h3"
                   variant="headingLg"
                 >
-                  ❤️
+                  🤍
                 </Text>
 
                 <Text as="p">
@@ -140,7 +140,7 @@ export default function Index() {
                 as="h2"
                 variant="headingLg"
               >
-                Choose your plan
+                Plans
               </Text>
 
               <div className="free-info">
@@ -154,18 +154,30 @@ export default function Index() {
 
               {/* FREE */}
 
-              <div className="plan-card free-plan">
+              <div className="plan-card free-plan current-plan">
+
+                <div className="current-badge">
+                  CURRENT PLAN
+                </div>
 
                 <BlockStack gap="400">
 
                   <div>
 
-                    <Text
-                      as="h3"
-                      variant="headingLg"
-                    >
-                      Free Plan
-                    </Text>
+                    <InlineStack align="space-between">
+
+                      <Text
+                        as="h3"
+                        variant="headingLg"
+                      >
+                        Free Plan
+                      </Text>
+
+                      <Badge tone="success">
+                        Active
+                      </Badge>
+
+                    </InlineStack>
 
                     <Text
                       as="p"
@@ -210,12 +222,14 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <Button
-                    disabled
-                    fullWidth
-                  >
-                    Current Plan
-                  </Button>
+                  <div className="free-plan-note">
+
+                    <Text as="p">
+                      You&apos;re currently using
+                      the free plan
+                    </Text>
+
+                  </div>
 
                 </BlockStack>
 
@@ -292,20 +306,31 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <Link
-                    url="/app/pricing"
-                    removeUnderline
-                  >
+               <Link
+  url="/app/pricing"
+  removeUnderline
+>
 
-                    <Button
-                      variant="primary"
-                      size="large"
-                      fullWidth
-                    >
-                      Upgrade in Shopify
-                    </Button>
+  <Button
+    variant="primary"
+    size="large"
+    fullWidth
+  >
+    Start Free Trial
+  </Button>
 
-                  </Link>
+</Link>
+
+<div className="pro-note">
+
+  <Text
+    as="p"
+    tone="subdued"
+  >
+    3-day free trial included
+  </Text>
+
+</div>
 
                 </BlockStack>
 
@@ -512,28 +537,8 @@ export default function Index() {
               variant="bodyLg"
             >
               Upgrade to Lava Favorites
-              Pro and unlock unlimited
-              wishlist saves.
+              Pro anytime from Shopify billing.
             </Text>
-
-            <InlineStack align="center">
-
-              <Link
-                url="/app/pricing"
-                removeUnderline
-              >
-
-                <Button
-                  variant="primary"
-                  size="large"
-                  fullWidth
-                >
-                  Start Free Trial
-                </Button>
-
-              </Link>
-
-            </InlineStack>
 
           </BlockStack>
 
@@ -576,6 +581,28 @@ export default function Index() {
         {/* STYLES */}
 
         <style>{`
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+
+  width: fit-content;
+
+  padding: 12px 18px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.18);
+
+  color: white;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 4px 18px rgba(0,0,0,.12);
+}
 
           .hero-card {
             position: relative;
@@ -693,6 +720,46 @@ export default function Index() {
             background: #f6f6f7;
           }
 
+          .current-plan {
+            border: 2px solid #16a34a;
+
+            background:
+              linear-gradient(
+                135deg,
+                rgba(22,163,74,.06),
+                rgba(22,163,74,.02)
+              );
+          }
+
+          .current-badge {
+            position: absolute;
+
+            top: -12px;
+            left: 20px;
+
+            padding: 6px 12px;
+
+            border-radius: 999px;
+
+            background: #16a34a;
+
+            color: white;
+
+            font-size: 12px;
+            font-weight: 700;
+          }
+
+          .free-plan-note {
+            padding: 14px;
+
+            border-radius: 14px;
+
+            background:
+              rgba(22,163,74,.08);
+
+            text-align: center;
+          }
+
           .pro-plan {
             background:
               linear-gradient(
@@ -727,6 +794,11 @@ export default function Index() {
             display: flex;
             align-items: center;
             gap: 10px;
+          }
+
+          .pro-note {
+            text-align: center;
+            opacity: .7;
           }
 
           .grid {
