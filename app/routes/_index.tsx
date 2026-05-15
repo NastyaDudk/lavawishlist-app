@@ -17,6 +17,72 @@ export default function Index() {
   const [loading, setLoading] =
     useState(false);
 
+  /**
+   * BILLING
+   */
+
+  const openUpgrade = async () => {
+
+    try {
+
+      console.log(
+        "UPGRADE CLICKED",
+      );
+
+      setLoading(true);
+
+      const res = await fetch(
+        "/api/billing/upgrade",
+        {
+          method: "POST",
+        },
+      );
+
+      console.log(
+        "STATUS:",
+        res.status,
+      );
+
+      const data =
+        await res.json();
+
+      console.log(
+        "DATA:",
+        data,
+      );
+
+      if (data?.confirmationUrl) {
+
+        window.location.href =
+          data.confirmationUrl;
+
+      } else {
+
+        alert(
+          "No confirmationUrl returned",
+        );
+
+      }
+
+    } catch (err) {
+
+      console.error(
+        "BILLING ERROR:",
+        err,
+      );
+
+      alert(
+        "Billing failed. Check console.",
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
   return (
 
     <Page title="❤️ Lava Favorites">
@@ -27,32 +93,45 @@ export default function Index() {
 
         <div className="hero-card">
 
-          <div className="hero-glow" />
+          <div className="hero-overlay" />
 
           <BlockStack gap="500">
 
-            <Badge tone="warning">
-              ❤️‍🔥 Shopify Wishlist App
-            </Badge>
-
-            <Text
-              as="h1"
-              variant="heading2xl"
+            <InlineStack
+              align="space-between"
             >
-              Turn visitors into buyers
-            </Text>
 
-            <Text
-              as="p"
-              variant="bodyLg"
-            >
-              Lava Favorites helps customers
-              save products they love and
-              return later to buy.
-              Increase conversions,
-              repeat visits,
-              and customer loyalty.
-            </Text>
+              <Badge tone="warning">
+                ❤️‍🔥 Shopify Wishlist App
+              </Badge>
+
+              <div className="hero-pill">
+                Free Plan Included
+              </div>
+
+            </InlineStack>
+
+            <BlockStack gap="300">
+
+              <Text
+                as="h1"
+                variant="heading2xl"
+              >
+                Turn visitors into buyers
+              </Text>
+
+              <Text
+                as="p"
+                variant="bodyLg"
+              >
+                Beautiful wishlist experience
+                for Shopify stores.
+                Let customers save products
+                they love and return later
+                to buy.
+              </Text>
+
+            </BlockStack>
 
             <InlineStack gap="300">
 
@@ -63,53 +142,56 @@ export default function Index() {
                 App Installed ✓
               </Button>
 
-              <Button
-                variant="secondary"
-                loading={loading}
-                onClick={async () => {
-
-                  try {
-
-                    setLoading(true);
-
-                    const res =
-                      await fetch(
-                        "/api/billing/upgrade",
-                        {
-                          method: "POST",
-                        },
-                      );
-
-                    const data =
-                      await res.json();
-
-                    console.log(data);
-
-                    if (
-                      data?.confirmationUrl
-                    ) {
-
-                      window.top!.location.href =
-                        data.confirmationUrl;
-
-                    }
-
-                  } catch (e) {
-
-                    console.error(e);
-
-                  } finally {
-
-                    setLoading(false);
-
-                  }
-
-                }}
-              >
-                Upgrade to Pro
-              </Button>
-
             </InlineStack>
+
+            <div className="hero-grid">
+
+              <div className="hero-box">
+
+                <Text
+                  as="h3"
+                  variant="headingLg"
+                >
+                  ❤️
+                </Text>
+
+                <Text as="p">
+                  Beautiful UI
+                </Text>
+
+              </div>
+
+              <div className="hero-box">
+
+                <Text
+                  as="h3"
+                  variant="headingLg"
+                >
+                  Shopify
+                </Text>
+
+                <Text as="p">
+                  Theme compatible
+                </Text>
+
+              </div>
+
+              <div className="hero-box">
+
+                <Text
+                  as="h3"
+                  variant="headingLg"
+                >
+                  60 sec
+                </Text>
+
+                <Text as="p">
+                  Setup time
+                </Text>
+
+              </div>
+
+            </div>
 
           </BlockStack>
 
@@ -130,9 +212,9 @@ export default function Index() {
                 Choose your plan
               </Text>
 
-              <Badge tone="success">
-                3 Day Free Trial
-              </Badge>
+              <div className="free-info">
+                Free includes 50 saves/month
+              </div>
 
             </InlineStack>
 
@@ -157,7 +239,7 @@ export default function Index() {
                       as="p"
                       tone="subdued"
                     >
-                      Perfect for testing
+                      Perfect for small stores
                     </Text>
 
                   </div>
@@ -184,9 +266,7 @@ export default function Index() {
                         className="feature-row"
                       >
 
-                        <span>
-                          🔥
-                        </span>
+                        <span>🔥</span>
 
                         <Text as="p">
                           {item}
@@ -237,6 +317,13 @@ export default function Index() {
                     $9.99/mo
                   </Text>
 
+                  <Text
+                    as="p"
+                    tone="subdued"
+                  >
+                    Includes 3-day free trial
+                  </Text>
+
                   <BlockStack gap="200">
 
                     {[
@@ -254,9 +341,7 @@ export default function Index() {
                         className="feature-row"
                       >
 
-                        <span>
-                          🚀
-                        </span>
+                        <span>🚀</span>
 
                         <Text as="p">
                           {item}
@@ -267,6 +352,16 @@ export default function Index() {
                     ))}
 
                   </BlockStack>
+
+                  <Button
+                    variant="primary"
+                    size="large"
+                    fullWidth
+                    onClick={openUpgrade}
+                    loading={loading}
+                  >
+                    Upgrade to Pro
+                  </Button>
 
                 </BlockStack>
 
@@ -465,6 +560,19 @@ export default function Index() {
               and unlock unlimited wishlist saves.
             </Text>
 
+            <InlineStack align="center">
+
+              <Button
+                variant="primary"
+                size="large"
+                onClick={openUpgrade}
+                loading={loading}
+              >
+                Upgrade to Pro — $9.99/mo
+              </Button>
+
+            </InlineStack>
+
           </BlockStack>
 
         </div>
@@ -524,18 +632,16 @@ export default function Index() {
             color: white;
           }
 
-          .hero-glow {
+          .hero-overlay {
             position: absolute;
-            inset: -100px;
+            inset: 0;
 
             background:
               radial-gradient(
-                circle,
-                rgba(255,255,255,.18) 0%,
-                transparent 70%
+                circle at top right,
+                rgba(255,255,255,.16),
+                transparent 40%
               );
-
-            pointer-events: none;
           }
 
           .hero-card h1,
@@ -545,17 +651,74 @@ export default function Index() {
             z-index: 2;
           }
 
+          .hero-pill {
+            padding: 10px 16px;
+
+            border-radius: 999px;
+
+            background:
+              rgba(255,255,255,.18);
+
+            color: white;
+
+            font-size: 13px;
+            font-weight: 700;
+
+            backdrop-filter: blur(10px);
+          }
+
+          .hero-grid {
+            display: grid;
+            grid-template-columns:
+              repeat(3,1fr);
+
+            gap: 18px;
+
+            margin-top: 10px;
+          }
+
+          .hero-box {
+            padding: 22px;
+
+            border-radius: 22px;
+
+            background:
+              rgba(255,255,255,.12);
+
+            backdrop-filter: blur(12px);
+          }
+
+          .hero-box h3,
+          .hero-box p {
+            color: white;
+          }
+
+          .free-info {
+            padding: 8px 14px;
+
+            border-radius: 999px;
+
+            background: #eef4ff;
+
+            color: #4f6ef7;
+
+            font-size: 13px;
+            font-weight: 700;
+          }
+
           .plans-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns:
+              1fr 1fr;
+
             gap: 24px;
           }
 
           .plan-card {
             position: relative;
 
-            padding: 30px;
-            border-radius: 24px;
+            padding: 28px;
+            border-radius: 22px;
 
             border: 1px solid #e1e3e5;
           }
@@ -573,17 +736,16 @@ export default function Index() {
               );
 
             border: 2px solid #dd2476;
-
-            box-shadow:
-              0 10px 30px rgba(221,36,118,.12);
           }
 
           .popular-badge {
             position: absolute;
+
             top: -12px;
             right: 20px;
 
-            padding: 6px 14px;
+            padding: 6px 12px;
+
             border-radius: 999px;
 
             background: #dd2476;
@@ -601,16 +763,20 @@ export default function Index() {
 
           .grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns:
+              1fr 1fr;
+
             gap: 18px;
           }
 
           .card-preview {
-            transition: all .25s ease;
+            transition:
+              transform .25s ease;
           }
 
           .card-preview:hover {
-            transform: translateY(-4px);
+            transform:
+              translateY(-4px);
           }
 
           .img-box {
@@ -618,9 +784,11 @@ export default function Index() {
             height: 220px;
 
             overflow: hidden;
+
             border-radius: 18px;
 
             background: #f6f6f7;
+
             margin-bottom: 10px;
           }
 
@@ -629,7 +797,6 @@ export default function Index() {
             height: 100%;
 
             object-fit: cover;
-            object-position: center;
 
             display: block;
           }
@@ -682,17 +849,6 @@ export default function Index() {
             padding: 12px 0 24px;
           }
 
-          .footer a {
-            color: #6d7175;
-            font-weight: 600;
-
-            transition: all .2s ease;
-          }
-
-          .footer a:hover {
-            color: #dd2476;
-          }
-
           @media (max-width: 768px) {
 
             .hero-card,
@@ -702,7 +858,8 @@ export default function Index() {
             }
 
             .grid,
-            .plans-grid {
+            .plans-grid,
+            .hero-grid {
               grid-template-columns: 1fr;
             }
 

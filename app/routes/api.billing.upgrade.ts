@@ -1,42 +1,33 @@
 import { json } from "@remix-run/node";
 
-import { authenticate }
-from "../shopify.server";
+export async function action() {
 
-export async function action({
-  request,
-}: {
-  request: Request;
-}) {
+  console.log(
+    "🔥 BILLING ROUTE HIT",
+  );
 
-  const { billing } =
-    await authenticate.admin(request);
-
-  const billingCheck =
-    await billing.check({
-      plans: ["pro"],
-      isTest: true,
-    });
-
-  if (billingCheck.hasActivePayment) {
+  try {
 
     return json({
-      active: true,
+      success: true,
+
+      confirmationUrl:
+        "https://admin.shopify.com",
     });
 
+  } catch (err) {
+
+    console.error(err);
+
+    return json(
+      {
+        success: false,
+      },
+      {
+        status: 500,
+      },
+    );
+
   }
-
-const billingResponse =
-  await billing.request({
-    plan: "pro",
-    isTest: true,
-  }) as {
-    confirmationUrl: string;
-  };
-
-  return json({
-    confirmationUrl:
-      billingResponse.confirmationUrl,
-  });
 
 }
