@@ -10,135 +10,7 @@ import {
   Link,
 } from "@shopify/polaris";
 
-import { useState } from "react";
-
 export default function Index() {
-
-  const [loading, setLoading] =
-    useState(false);
-
-  /**
-   * BILLING
-   */
-
-  const openUpgrade = async () => {
-
-    try {
-
-      console.log(
-        "UPGRADE CLICKED",
-      );
-
-      setLoading(true);
-
-      const response =
-        await fetch(
-          "/api/billing/upgrade",
-          {
-            method: "POST",
-
-            credentials:
-              "include",
-
-            headers: {
-              Accept:
-                "application/json",
-
-              "Content-Type":
-                "application/json",
-            },
-          },
-        );
-
-      console.log(
-        "RESPONSE:",
-        response,
-      );
-
-      const text =
-        await response.text();
-
-      console.log(
-        "RAW RESPONSE:",
-        text,
-      );
-
-      let data;
-
-      try {
-
-        data =
-          JSON.parse(text);
-
-      } catch {
-
-        alert(
-          "Invalid JSON response",
-        );
-
-        return;
-
-      }
-
-      console.log(
-        "PARSED:",
-        data,
-      );
-
-      if (
-  data?.confirmationUrl
-) {
-
-  const redirect =
-    data.confirmationUrl;
-
-  if (
-    typeof window !== "undefined"
-  ) {
-
-    if (
-      window.top &&
-      window.top !== window
-    ) {
-
-      window.top.location.href =
-        redirect;
-
-    } else {
-
-      window.location.href =
-        redirect;
-
-    }
-
-  }
-
-  return;
-
-}
-
-      alert(
-        "No confirmation URL returned",
-      );
-
-    } catch (error) {
-
-      console.error(
-        "BILLING ERROR:",
-        error,
-      );
-
-      alert(
-        "Billing request failed",
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
 
   return (
 
@@ -413,15 +285,21 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <Button
-                    variant="primary"
-                    size="large"
-                    fullWidth
-                    onClick={openUpgrade}
-                    loading={loading}
+                  <form
+                    method="POST"
+                    action="/api/billing/upgrade"
                   >
-                    Upgrade to Pro
-                  </Button>
+
+                    <Button
+                      submit
+                      variant="primary"
+                      size="large"
+                      fullWidth
+                    >
+                      Start Free Trial
+                    </Button>
+
+                  </form>
 
                 </BlockStack>
 
@@ -634,15 +512,20 @@ export default function Index() {
 
             <InlineStack align="center">
 
-              <Button
-                variant="primary"
-                size="large"
-                onClick={openUpgrade}
-                loading={loading}
+              <form
+                method="POST"
+                action="/api/billing/upgrade"
               >
-                Upgrade to Pro —
-                $9.99/mo
-              </Button>
+
+                <Button
+                  submit
+                  variant="primary"
+                  size="large"
+                >
+                  Start Free Trial
+                </Button>
+
+              </form>
 
             </InlineStack>
 
