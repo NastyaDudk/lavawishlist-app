@@ -210,6 +210,13 @@ export default function Index() {
 
                   </BlockStack>
 
+                  <Button
+                    disabled
+                    fullWidth
+                  >
+                    Current Plan
+                  </Button>
+
                 </BlockStack>
 
               </div>
@@ -285,13 +292,14 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <form
-                    method="POST"
-                    action="/api/billing/upgrade"
+                  <a
+                    href="/api/billing/upgrade"
+                    style={{
+                      textDecoration: "none",
+                    }}
                   >
 
                     <Button
-                      submit
                       variant="primary"
                       size="large"
                       fullWidth
@@ -299,7 +307,7 @@ export default function Index() {
                       Start Free Trial
                     </Button>
 
-                  </form>
+                  </a>
 
                 </BlockStack>
 
@@ -512,20 +520,21 @@ export default function Index() {
 
             <InlineStack align="center">
 
-              <form
-                method="POST"
-                action="/api/billing/upgrade"
+              <a
+                href="/api/billing/upgrade"
+                style={{
+                  textDecoration: "none",
+                }}
               >
 
                 <Button
-                  submit
                   variant="primary"
                   size="large"
                 >
                   Start Free Trial
                 </Button>
 
-              </form>
+              </a>
 
             </InlineStack>
 
