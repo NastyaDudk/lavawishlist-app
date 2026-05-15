@@ -27,10 +27,6 @@ export default [
     path: "/api/wishlist",
     file: "routes/api.wishlist.ts",
   },
-  {
-  path: "/api/billing/upgrade",
-  file: "routes/api.billing.upgrade.ts",
-  },
 {
   path: "/robots.txt",
   file: "routes/robots[.]txt.ts",
