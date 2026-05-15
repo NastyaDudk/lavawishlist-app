@@ -614,15 +614,7 @@ export default function Index() {
 
             <InlineStack align="center">
 
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => {
 
-                  openUpgrade();
-
-                }}
-              >
 
                 <Button
                   variant="primary"
@@ -633,7 +625,7 @@ export default function Index() {
                   $9.99/mo
                 </Button>
 
-              </div>
+
 
             </InlineStack>
 
