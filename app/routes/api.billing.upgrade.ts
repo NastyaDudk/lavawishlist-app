@@ -18,7 +18,7 @@ export async function action({
   const url =
     new URL(request.url);
 
-  const response =
+  const response: unknown =
     await billing.request({
       plan: "pro",
 
@@ -28,8 +28,15 @@ export async function action({
         `${url.origin}/app`,
     });
 
+  const confirmationUrl =
+    (
+      response as {
+        confirmationUrl: string;
+      }
+    ).confirmationUrl;
+
   return redirect(
-    response,
+    confirmationUrl,
   );
 
 }
