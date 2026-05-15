@@ -1,5 +1,6 @@
 export default [
- {
+
+  {
     path: "/auth/*",
     file: "routes/auth.$.tsx",
   },
@@ -8,6 +9,22 @@ export default [
     path: "/",
     file: "routes/_index.tsx",
   },
+
+  {
+    path: "/app",
+    file: "routes/app.tsx",
+  },
+
+  {
+    path: "/app/pricing",
+    file: "routes/app.pricing.tsx",
+  },
+
+  {
+    path: "/app/dashboard",
+    file: "routes/app.dashboard.tsx",
+  },
+
   {
     path: "/privacy",
     file: "routes/privacy.tsx",
@@ -27,10 +44,13 @@ export default [
     path: "/api/wishlist",
     file: "routes/api.wishlist.ts",
   },
-{
-  path: "/robots.txt",
-  file: "routes/robots[.]txt.ts",
-},
+
+  {
+    path: "/robots.txt",
+    file: "routes/robots[.]txt.ts",
+  },
+
+
   {
     path: "/webhooks/compliance",
     file: "routes/webhooks.compliance.tsx",

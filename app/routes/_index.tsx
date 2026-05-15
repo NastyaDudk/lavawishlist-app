@@ -292,12 +292,20 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <Button
-  variant="primary"
-  size="large"
->
-  Upgrade in Shopify
-</Button>
+                  <Link
+                    url="/app/pricing"
+                    removeUnderline
+                  >
+
+                    <Button
+                      variant="primary"
+                      size="large"
+                      fullWidth
+                    >
+                      Upgrade in Shopify
+                    </Button>
+
+                  </Link>
 
                 </BlockStack>
 
@@ -510,13 +518,21 @@ export default function Index() {
 
             <InlineStack align="center">
 
-              <Button
-  variant="primary"
-  size="large"
-  fullWidth
->
-  Start Free Trial
-</Button>
+              <Link
+                url="/app/pricing"
+                removeUnderline
+              >
+
+                <Button
+                  variant="primary"
+                  size="large"
+                  fullWidth
+                >
+                  Start Free Trial
+                </Button>
+
+              </Link>
+
             </InlineStack>
 
           </BlockStack>
