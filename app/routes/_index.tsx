@@ -292,19 +292,12 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <form
-  method="POST"
-  action="/api/billing/upgrade"
+                  <Button
+  variant="primary"
+  size="large"
 >
-  <Button
-    submit
-    variant="primary"
-    size="large"
-    fullWidth
-  >
-    Start Free Trial
-  </Button>
-</form>
+  Upgrade in Shopify
+</Button>
 
                 </BlockStack>
 
@@ -517,19 +510,13 @@ export default function Index() {
 
             <InlineStack align="center">
 
-              <form
-  method="POST"
-  action="/api/billing/upgrade"
+              <Button
+  variant="primary"
+  size="large"
+  fullWidth
 >
-  <Button
-    submit
-    variant="primary"
-    size="large"
-    fullWidth
-  >
-    Start Free Trial
-  </Button>
-</form>
+  Start Free Trial
+</Button>
             </InlineStack>
 
           </BlockStack>
