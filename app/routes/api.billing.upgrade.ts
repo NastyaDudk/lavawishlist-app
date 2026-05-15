@@ -1,9 +1,10 @@
-import { redirect } from "@remix-run/node";
+import { redirect }
+  from "@remix-run/node";
 
 import { authenticate }
   from "../shopify.server";
 
-export async function loader({
+export async function action({
   request,
 }: {
   request: Request;
@@ -14,27 +15,21 @@ export async function loader({
       request,
     );
 
-  const billingCheck =
-    await billing.require({
-      plans: ["pro"],
+  const url =
+    new URL(request.url);
+
+  const response =
+    await billing.request({
+      plan: "pro",
+
       isTest: true,
-      onFailure: async () => {
 
-        return billing.request({
-          plan: "pro",
-          isTest: true,
-
-          returnUrl:
-            "https://app.lavawish.com/app",
-        });
-
-      },
+      returnUrl:
+        `${url.origin}/app`,
     });
 
-  console.log(
-    "BILLING CHECK:",
-    billingCheck,
+  return redirect(
+    response,
   );
 
-  return redirect("/app");
 }

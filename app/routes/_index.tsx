@@ -292,22 +292,19 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <a
-                    href="/api/billing/upgrade"
-                    style={{
-                      textDecoration: "none",
-                    }}
-                  >
-
-                    <Button
-                      variant="primary"
-                      size="large"
-                      fullWidth
-                    >
-                      Start Free Trial
-                    </Button>
-
-                  </a>
+                  <form
+  method="POST"
+  action="/api/billing/upgrade"
+>
+  <Button
+    submit
+    variant="primary"
+    size="large"
+    fullWidth
+  >
+    Start Free Trial
+  </Button>
+</form>
 
                 </BlockStack>
 
@@ -520,22 +517,19 @@ export default function Index() {
 
             <InlineStack align="center">
 
-              <a
-                href="/api/billing/upgrade"
-                style={{
-                  textDecoration: "none",
-                }}
-              >
-
-                <Button
-                  variant="primary"
-                  size="large"
-                >
-                  Start Free Trial
-                </Button>
-
-              </a>
-
+              <form
+  method="POST"
+  action="/api/billing/upgrade"
+>
+  <Button
+    submit
+    variant="primary"
+    size="large"
+    fullWidth
+  >
+    Start Free Trial
+  </Button>
+</form>
             </InlineStack>
 
           </BlockStack>
