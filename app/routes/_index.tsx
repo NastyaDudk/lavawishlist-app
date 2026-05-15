@@ -17,44 +17,6 @@ export default function Index() {
   const [loading, setLoading] =
     useState(false);
 
-  /**
-   * SHOPIFY BILLING
-   */
-
-  const openUpgrade = async () => {
-
-    try {
-
-      setLoading(true);
-
-      const res = await fetch(
-        "/api/billing/upgrade",
-        {
-          method: "POST",
-        },
-      );
-
-      const data = await res.json();
-
-      if (data?.confirmationUrl) {
-
-        window.top!.location.href =
-          data.confirmationUrl;
-
-      }
-
-    } catch (err) {
-
-      console.error(err);
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
-
   return (
 
     <Page title="❤️ Lava Favorites">
@@ -103,8 +65,46 @@ export default function Index() {
 
               <Button
                 variant="secondary"
-                onClick={openUpgrade}
                 loading={loading}
+                onClick={async () => {
+
+                  try {
+
+                    setLoading(true);
+
+                    const res =
+                      await fetch(
+                        "/api/billing/upgrade",
+                        {
+                          method: "POST",
+                        },
+                      );
+
+                    const data =
+                      await res.json();
+
+                    console.log(data);
+
+                    if (
+                      data?.confirmationUrl
+                    ) {
+
+                      window.top!.location.href =
+                        data.confirmationUrl;
+
+                    }
+
+                  } catch (e) {
+
+                    console.error(e);
+
+                  } finally {
+
+                    setLoading(false);
+
+                  }
+
+                }}
               >
                 Upgrade to Pro
               </Button>
@@ -184,7 +184,9 @@ export default function Index() {
                         className="feature-row"
                       >
 
-                        <span>🔥</span>
+                        <span>
+                          🔥
+                        </span>
 
                         <Text as="p">
                           {item}
@@ -252,7 +254,9 @@ export default function Index() {
                         className="feature-row"
                       >
 
-                        <span>🚀</span>
+                        <span>
+                          🚀
+                        </span>
 
                         <Text as="p">
                           {item}
@@ -263,15 +267,6 @@ export default function Index() {
                     ))}
 
                   </BlockStack>
-
-                  <Button
-                    variant="primary"
-                    size="large"
-                    onClick={openUpgrade}
-                    loading={loading}
-                  >
-                    Upgrade to Pro
-                  </Button>
 
                 </BlockStack>
 
@@ -470,19 +465,6 @@ export default function Index() {
               and unlock unlimited wishlist saves.
             </Text>
 
-            <InlineStack align="center">
-
-              <Button
-                variant="primary"
-                size="large"
-                onClick={openUpgrade}
-                loading={loading}
-              >
-                Upgrade to Pro — $9.99/mo
-              </Button>
-
-            </InlineStack>
-
           </BlockStack>
 
         </div>
@@ -572,8 +554,8 @@ export default function Index() {
           .plan-card {
             position: relative;
 
-            padding: 28px;
-            border-radius: 22px;
+            padding: 30px;
+            border-radius: 24px;
 
             border: 1px solid #e1e3e5;
           }
@@ -591,6 +573,9 @@ export default function Index() {
               );
 
             border: 2px solid #dd2476;
+
+            box-shadow:
+              0 10px 30px rgba(221,36,118,.12);
           }
 
           .popular-badge {
@@ -598,7 +583,7 @@ export default function Index() {
             top: -12px;
             right: 20px;
 
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 999px;
 
             background: #dd2476;
@@ -700,6 +685,7 @@ export default function Index() {
           .footer a {
             color: #6d7175;
             font-weight: 600;
+
             transition: all .2s ease;
           }
 
