@@ -1,5 +1,3 @@
-import { json } from "@remix-run/node";
-
 import { authenticate }
 from "../shopify.server";
 
@@ -20,23 +18,12 @@ export async function action({
 
   if (!billingCheck.hasActivePayment) {
 
-    await billing.require({
-      plans: ["pro"],
+    await billing.request({
+      plan: "pro",
       isTest: true,
-
-      onFailure: async (
-        error,
-      ) => {
-
-        throw error;
-
-      },
     });
 
   }
 
-  return json({
-    ok: true,
-  });
-
+  return new Response();
 }
