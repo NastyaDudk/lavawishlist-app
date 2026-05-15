@@ -306,20 +306,14 @@ export default function Index() {
 
                   </BlockStack>
 
-               <Link
+               <Button
+  variant="primary"
+  size="large"
+  fullWidth
   url="/app/pricing"
-  removeUnderline
 >
-
-  <Button
-    variant="primary"
-    size="large"
-    fullWidth
-  >
-    Start Free Trial
-  </Button>
-
-</Link>
+  Start Free Trial
+</Button>
 
 <div className="pro-note">
 

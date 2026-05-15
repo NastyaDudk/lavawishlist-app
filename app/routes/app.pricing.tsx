@@ -1,19 +1,30 @@
-import { authenticate } from "../shopify.server";
+import type {
+  LoaderFunctionArgs,
+} from "react-router";
+
+import {
+  authenticate,
+} from "../shopify.server";
 
 export const loader = async ({
   request,
-}: {
-  request: Request;
-}) => {
+}: LoaderFunctionArgs) => {
 
   const { billing } =
     await authenticate.admin(request);
 
-  return billing.request({
-    plan: "pro",
+  await billing.require({
+    plans: ["pro"],
     isTest: true,
+
+    onFailure: async () =>
+      billing.request({
+        plan: "pro",
+        isTest: true,
+      }),
   });
 
+  return null;
 };
 
 export default function Pricing() {
