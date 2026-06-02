@@ -3,10 +3,6 @@ import type {
 } from "react-router";
 
 import {
-  redirect,
-} from "@remix-run/node";
-
-import {
   authenticate,
 } from "../shopify.server";
 
@@ -17,40 +13,22 @@ export const loader = async ({
   const { billing } =
     await authenticate.admin(request);
 
-  /**
-   * CHECK ACTIVE SUBSCRIPTION
-   */
-
   const billingCheck =
     await billing.check({
       plans: ["pro"],
       isTest: true,
     });
 
-  /**
-   * IF ACTIVE
-   */
+  if (!billingCheck.hasActivePayment) {
 
-  if (
-    billingCheck.hasActivePayment
-  ) {
-
-    return redirect(
-      "/app/dashboard",
-    );
-
-  }
-
-  const confirmationUrl =
-    await billing.request({
+    return billing.request({
       plan: "pro",
       isTest: true,
     });
 
-  return redirect(
-    confirmationUrl,
-  );
+  }
 
+  return null;
 };
 
 export default function Pricing() {
