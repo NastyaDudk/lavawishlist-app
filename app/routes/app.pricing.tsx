@@ -41,19 +41,11 @@ export const loader = async ({
 
   }
 
-  /**
-   * CREATE BILLING URL
-   */
-
   const confirmationUrl =
     await billing.request({
       plan: "pro",
       isTest: true,
     });
-
-  /**
-   * REDIRECT SHOPIFY
-   */
 
   return redirect(
     confirmationUrl,
