@@ -3,6 +3,10 @@ import type {
 } from "react-router";
 
 import {
+  redirect,
+} from "@remix-run/node";
+
+import {
   authenticate,
 } from "../shopify.server";
 
@@ -13,18 +17,48 @@ export const loader = async ({
   const { billing } =
     await authenticate.admin(request);
 
-  await billing.require({
-    plans: ["pro"],
-    isTest: true,
+  /**
+   * CHECK ACTIVE SUBSCRIPTION
+   */
 
-    onFailure: async () =>
-      billing.request({
-        plan: "pro",
-        isTest: true,
-      }),
-  });
+  const billingCheck =
+    await billing.check({
+      plans: ["pro"],
+      isTest: true,
+    });
 
-  return null;
+  /**
+   * IF ACTIVE
+   */
+
+  if (
+    billingCheck.hasActivePayment
+  ) {
+
+    return redirect(
+      "/app/dashboard",
+    );
+
+  }
+
+  /**
+   * CREATE BILLING URL
+   */
+
+  const confirmationUrl =
+    await billing.request({
+      plan: "pro",
+      isTest: true,
+    });
+
+  /**
+   * REDIRECT SHOPIFY
+   */
+
+  return redirect(
+    confirmationUrl,
+  );
+
 };
 
 export default function Pricing() {
