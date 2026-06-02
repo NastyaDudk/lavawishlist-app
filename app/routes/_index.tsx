@@ -72,7 +72,6 @@ export default function Index() {
               <Button
                 variant="primary"
 
-
                 disabled
               >
                 App Installed ✓
