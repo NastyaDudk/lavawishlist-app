@@ -40,6 +40,8 @@ export const shopify = shopifyApp({
 
   isEmbeddedApp: true,
 
+  useOnlineTokens: true,
+
 billing: {
   pro: {
     trialDays: 3,
