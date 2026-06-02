@@ -12,6 +12,7 @@ import {
 
 
 
+
 export default function Index() {
 
 
@@ -70,6 +71,8 @@ export default function Index() {
 
               <Button
                 variant="primary"
+
+
                 disabled
               >
                 App Installed ✓
@@ -310,16 +313,16 @@ export default function Index() {
 
                   </BlockStack>
 
- <Button
-  variant="primary"
-  size="large"
-  fullWidth
-  onClick={() => {
-    window.location.href = "/app/pricing";
-  }}
->
-  Start Free Trial
-</Button>
+                  <Button
+                    variant="primary"
+                    size="large"
+                    fullWidth
+                    url="/app/pricing"
+                     >
+                  Start Free Trial
+                  </Button>
+
+
 <div className="pro-note">
 
   <Text
