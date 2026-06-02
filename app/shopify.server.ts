@@ -22,6 +22,8 @@ export const shopify = shopifyApp({
   apiSecretKey:
     process.env.SHOPIFY_API_SECRET!,
 
+
+
   scopes:
     (process.env.SCOPES || "")
       .split(",")
