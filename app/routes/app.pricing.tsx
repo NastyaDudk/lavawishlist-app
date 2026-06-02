@@ -1,31 +1,20 @@
-import type { LoaderFunctionArgs } from "react-router";
+import { redirect } from "@remix-run/node";
+import { authenticate } from "../shopify.server";
 
-import {
-  authenticate,
-} from "../shopify.server";
+export const loader = async ({ request }) => {
+  const { billing } = await authenticate.admin(request);
 
-export const loader = async ({
-  request,
-}: LoaderFunctionArgs) => {
-
-  const { billing } =
-    await authenticate.admin(request);
-
-  return billing.require({
-    plans: ["pro"],
+  await billing.require({
+    plans: ["pro Plan"],
     isTest: true,
-
-    onFailure: async () => {
-
-      return billing.request({
-        plan: "pro",
+    onFailure: async () =>
+      billing.request({
+        plan: "pro Plan",
         isTest: true,
-        returnUrl: "/app",
-      });
-
-    },
+      }),
   });
 
+  return redirect("/app");
 };
 
 export default function Pricing() {
