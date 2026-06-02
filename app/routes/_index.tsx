@@ -310,11 +310,13 @@ export default function Index() {
 
                   </BlockStack>
 
-  <Button
+ <Button
   variant="primary"
   size="large"
   fullWidth
-  onClick={() => navigate("/app/pricing")}
+  onClick={() => {
+    window.location.href = "/app/pricing";
+  }}
 >
   Start Free Trial
 </Button>
