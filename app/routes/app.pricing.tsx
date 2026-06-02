@@ -1,12 +1,8 @@
-import { authenticate } from "../shopify.server";
+import { json } from "@remix-run/node";
 
-export const loader = async ({ request }: any) => {
-  const { billing } =
-    await authenticate.admin(request);
-
-  return billing.request({
-    plan: "pro",
-    isTest: true,
+export const loader = async () => {
+  return json({
+    ok: true,
   });
 };
 
