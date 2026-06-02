@@ -1,20 +1,17 @@
-import { redirect } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 
-export const loader = async ({ request }) => {
+export const loader = async ({ request }: any) => {
   const { billing } = await authenticate.admin(request);
 
-  await billing.require({
-    plans: ["pro"],
+  return billing.request({
+    plan: {
+      interval: "EVERY_30_DAYS",
+      amount: 9.99,
+      currencyCode: "USD",
+      name: "Pro Plan",
+    } as any,
     isTest: true,
-    onFailure: async () =>
-      billing.request({
-        plan: "pro",
-        isTest: true,
-      }),
   });
-
-  return redirect("/app");
 };
 
 export default function Pricing() {
