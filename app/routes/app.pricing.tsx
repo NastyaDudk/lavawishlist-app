@@ -5,12 +5,15 @@ export const loader = async ({ request }: any) => {
   const { billing } =
     await authenticate.admin(request);
 
-  const response = await billing.request({
-    plan: "pro",
-    isTest: true,
-  });
+  const response: any =
+    await billing.request({
+      plan: "pro",
+      isTest: true,
+    });
 
-  return redirect(response.confirmationUrl);
+  return redirect(
+    response.confirmationUrl,
+  );
 };
 
 export default function Pricing() {
