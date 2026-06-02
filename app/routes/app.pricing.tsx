@@ -1,6 +1,4 @@
-import type {
-  LoaderFunctionArgs,
-} from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 
 import {
   authenticate,
@@ -13,22 +11,21 @@ export const loader = async ({
   const { billing } =
     await authenticate.admin(request);
 
-  const billingCheck =
-    await billing.check({
-      plans: ["pro"],
-      isTest: true,
-    });
+  return billing.require({
+    plans: ["pro"],
+    isTest: true,
 
-  if (!billingCheck.hasActivePayment) {
+    onFailure: async () => {
 
-    return billing.request({
-      plan: "pro",
-      isTest: true,
-    });
+      return billing.request({
+        plan: "pro",
+        isTest: true,
+        returnUrl: "/app",
+      });
 
-  }
+    },
+  });
 
-  return null;
 };
 
 export default function Pricing() {
