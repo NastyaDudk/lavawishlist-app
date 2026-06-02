@@ -10,7 +10,7 @@ import {
   Link,
 } from "@shopify/polaris";
 
-import { useNavigate } from "@remix-run/react";
+import { useNavigate } from "react-router";
 
 export default function Index() {
 
