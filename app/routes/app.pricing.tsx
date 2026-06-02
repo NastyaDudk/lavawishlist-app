@@ -1,19 +1,38 @@
+import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: any) => {
-  const { billing } =
-    await authenticate.admin(request);
+  try {
+    const { billing } =
+      await authenticate.admin(request);
 
-  const response = await billing.request({
-    plan: "pro",
-    isTest: true,
-  } as never);
+    const response =
+      await billing.request({
+        plan: "pro",
+        isTest: true,
+      } as never);
 
-  return Response.json({
-    url: (response as any).confirmationUrl,
-  });
+    return json({
+      success: true,
+      confirmationUrl:
+        (response as any)
+          .confirmationUrl,
+    });
+  } catch (error: any) {
+    console.error(
+      "SHOPIFY BILLING ERROR:",
+      error,
+    );
+
+    return json({
+      success: false,
+      error:
+        error?.message ||
+        "Unknown error",
+    });
+  }
 };
 
 export default function Pricing() {
-  return <div>loading...</div>;
+  return null;
 }
