@@ -5,11 +5,11 @@ export const loader = async ({ request }) => {
   const { billing } = await authenticate.admin(request);
 
   await billing.require({
-    plans: ["pro Plan"],
+    plans: ["pro"],
     isTest: true,
     onFailure: async () =>
       billing.request({
-        plan: "pro Plan",
+        plan: "pro",
         isTest: true,
       }),
   });
