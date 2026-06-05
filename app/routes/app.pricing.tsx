@@ -1,15 +1,13 @@
-import { redirect } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: any) => {
-  const { billing } = await authenticate.admin(request);
+  console.log("PRICING ROUTE HIT");
 
-  const confirmation = await billing.request({
-    plan: "pro",
-    isTest: true,
-  }) as any;
+  await authenticate.admin(request);
 
-  return redirect(confirmation.confirmationUrl);
+  console.log("AUTH RESULT OK");
+
+  return new Response("OK");
 };
 
 export default function Pricing() {
