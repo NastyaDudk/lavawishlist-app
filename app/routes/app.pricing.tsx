@@ -1,15 +1,7 @@
-import { authenticate } from "../shopify.server";
-
-export const loader = async ({ request }: any) => {
-  console.log("PRICING ROUTE HIT");
-
-  await authenticate.admin(request);
-
-  console.log("AUTH RESULT OK");
-
-  return new Response("OK");
+export const loader = async () => {
+  throw new Error("PRICING TEST");
 };
 
 export default function Pricing() {
-  return null;
+  return <div>PRICING TEST</div>;
 }
