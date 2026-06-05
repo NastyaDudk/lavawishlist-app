@@ -38,7 +38,7 @@ export const shopify = shopifyApp({
   sessionStorage:
     sessionStorage as never,
 
-  isEmbeddedApp: false,
+  isEmbeddedApp: true,
 
   useOnlineTokens: true,
 
