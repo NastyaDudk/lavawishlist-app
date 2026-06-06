@@ -10,12 +10,12 @@ import {
   Link,
 } from "@shopify/polaris";
 
-
+import { useNavigate } from "@remix-run/react";
 
 
 export default function Index() {
 
-
+const navigate = useNavigate();
 
   return (
 
@@ -312,14 +312,16 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <Button
-                    variant="primary"
-                    size="large"
-                    fullWidth
-                    url="/app/pricing"
-                     >
-                  Start Free Trial
-                  </Button>
+
+
+<Button
+  variant="primary"
+  size="large"
+  fullWidth
+  onClick={() => navigate("/app/pricing")}
+>
+  Start Free Trial
+</Button>
 
 
 <div className="pro-note">

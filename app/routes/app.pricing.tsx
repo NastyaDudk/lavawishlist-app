@@ -1,20 +1,15 @@
+import { redirect } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 
 export const loader = async ({ request }: any) => {
-  try {
-    console.log("STEP 1");
+  const { billing } = await authenticate.admin(request);
 
-    const result =
-      await authenticate.admin(request);
+  const confirmation = await billing.request({
+    plan: "pro",
+    isTest: true,
+  }) as any;
 
-    console.log("STEP 2");
-
-    return new Response("OK");
-  } catch (e) {
-    console.error("AUTH ERROR", e);
-
-    return new Response("AUTH FAILED");
-  }
+  return redirect(confirmation.confirmationUrl);
 };
 
 export default function Pricing() {
