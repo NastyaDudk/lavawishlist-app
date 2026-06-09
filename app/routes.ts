@@ -4,7 +4,10 @@ export default [
     path: "/",
     file: "routes/_index.tsx",
   },
-
+{
+  path: "/auth/*",
+  file: "routes/auth.$.tsx",
+},
   {
     path: "/app",
     file: "routes/app.tsx",
