@@ -1,11 +1,6 @@
 export default [
 
   {
-    path: "/auth/*",
-    file: "routes/auth.$.tsx",
-  },
-
-  {
     path: "/",
     file: "routes/_index.tsx",
   },

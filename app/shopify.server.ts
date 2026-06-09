@@ -42,7 +42,7 @@ export const shopify = shopifyApp({
 
   isEmbeddedApp: true,
 
-  useOnlineTokens: true,
+ useOnlineTokens: false,
 
 billing: {
   pro: {
