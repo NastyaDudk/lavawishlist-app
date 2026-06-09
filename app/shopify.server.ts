@@ -11,6 +11,8 @@ import {
   PrismaSessionStorage,
 } from "@shopify/shopify-app-session-storage-prisma";
 
+console.log("APP URL:", process.env.SHOPIFY_APP_URL);
+
 const sessionStorage =
   new PrismaSessionStorage(prisma);
 
