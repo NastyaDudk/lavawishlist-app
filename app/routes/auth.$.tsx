@@ -1,5 +1,5 @@
 export const loader = async () => {
-  throw new Error("AUTH TEST");
+  return new Response("AUTH ROUTE WORKS");
 };
 
 export default function Auth() {
