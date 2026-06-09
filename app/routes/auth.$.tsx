@@ -1,11 +1,5 @@
-import type { LoaderFunctionArgs } from "react-router";
-
-export const loader = async ({
-  request,
-}: LoaderFunctionArgs) => {
-  console.log("AUTH ROUTE HIT");
-
-  return new Response("AUTH ROUTE WORKS");
+export const loader = async () => {
+  throw new Error("AUTH TEST");
 };
 
 export default function Auth() {
