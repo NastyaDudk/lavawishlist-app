@@ -1,12 +1,11 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { shopify } from "../shopify.server";
 
 export const loader = async ({
   request,
 }: LoaderFunctionArgs) => {
-  await shopify.login(request);
+  console.log("AUTH ROUTE HIT");
 
-  return null;
+  return new Response("AUTH ROUTE WORKS");
 };
 
 export default function Auth() {
