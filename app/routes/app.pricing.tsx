@@ -10,11 +10,13 @@ export const loader = async ({ request }) => {
     console.log("AUTH OK");
     console.log(auth.session);
 
-    const confirmation =
-      await auth.billing.request({
-        plan: "pro",
-        isTest: true,
-      });
+  const confirmation =
+  await auth.billing.request({
+    plan: "pro",
+    isTest: true,
+    returnUrl:
+      `https://${auth.session.shop}/admin/apps`,
+  });
 
     console.log("BILLING RESPONSE");
     console.dir(confirmation, {
