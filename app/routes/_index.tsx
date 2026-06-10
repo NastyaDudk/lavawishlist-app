@@ -11,6 +11,7 @@ import {
 } from "@shopify/polaris";
 
 
+
 export default function Index() {
 
   return (
@@ -308,13 +309,14 @@ export default function Index() {
 
                   </BlockStack>
 
-                <button
-  onClick={() => {
-    window.location.href = "/app/pricing";
-  }}
->
-  Start Free Trial
-</button>
+                  <Button
+                    variant="primary"
+                    size="large"
+                    fullWidth
+                    url="/app/pricing"
+                     >
+                  Start Free Trial
+                  </Button>
 
 
 <div className="pro-note">
