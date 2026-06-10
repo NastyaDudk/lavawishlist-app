@@ -10,12 +10,8 @@ import {
   Link,
 } from "@shopify/polaris";
 
-import { useNavigate } from "react-router";
-
 
 export default function Index() {
-
-const navigate = useNavigate();
 
   return (
 
@@ -312,14 +308,13 @@ const navigate = useNavigate();
 
                   </BlockStack>
 
-                <Button
-  variant="primary"
-  size="large"
-  fullWidth
-  onClick={() => navigate("/app/pricing")}
+                <button
+  onClick={() => {
+    window.location.href = "/app/pricing";
+  }}
 >
   Start Free Trial
-</Button>
+</button>
 
 
 <div className="pro-note">
