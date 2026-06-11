@@ -313,10 +313,14 @@ export default function Index() {
   variant="primary"
   fullWidth
   onClick={() => {
-    window.open(
-      "https://admin.shopify.com/store/wishlist-test-pwgysjju/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS",
-      "_self"
-    );
+    const params = new URLSearchParams(window.location.search);
+
+    const shop =
+      params.get("shop")?.replace(".myshopify.com", "");
+
+    if (!shop) return;
+window.top!.location.href =
+  `https://admin.shopify.com/store/${shop}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
   }}
 >
   Start Free Trial
