@@ -1,22 +1,21 @@
+import { redirect } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
-import type { LoaderFunctionArgs } from "react-router";
 
-export const loader = async (
-  { request }: LoaderFunctionArgs
-) => {
-
+export const loader = async ({ request }) => {
   const auth =
     await authenticate.admin(request);
 
-  console.log("AUTH OK");
+  const confirmation =
+    await auth.billing.request({
+      plan: "pro",
+      isTest: true,
+    });
 
-  console.dir(auth.billing, {
-    depth: null,
-  });
-
-  return null;
+  throw redirect(
+    confirmation.confirmationUrl,
+  );
 };
 
 export default function Pricing() {
-  return <div>pricing page</div>;
+  return null;
 }
