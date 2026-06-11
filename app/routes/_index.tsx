@@ -10,9 +10,25 @@ import {
   Link,
 } from "@shopify/polaris";
 
+import { useLoaderData } from "react-router";
+import { authenticate } from "../shopify.server";
 
+export async function loader({ request }) {
+  const { session } =
+    await authenticate.admin(request);
+
+  return {
+    shop: session.shop,
+  };
+}
 
 export default function Index() {
+
+  const { shop } =
+  useLoaderData<typeof loader>();
+
+const store =
+  shop.replace(".myshopify.com", "");
 
   return (
 
@@ -312,14 +328,7 @@ export default function Index() {
 <Button
   variant="primary"
   fullWidth
-  onClick={() => {
-    console.log("CLICK");
-
-    window.open(
-      "https://google.com",
-      "_blank"
-    );
-  }}
+  url={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`}
 >
   Start Free Trial
 </Button>
