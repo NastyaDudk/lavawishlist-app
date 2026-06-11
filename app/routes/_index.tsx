@@ -314,8 +314,8 @@ export default function Index() {
   fullWidth
   onClick={() => {
     window.open(
-      "https://apps.shopify.com/services/pricing/76b72a7575fcfc731bba4562cf360733",
-      "_blank"
+      "https://admin.shopify.com/store/wishlist-test-pwgysjju/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS",
+      "_self"
     );
   }}
 >
