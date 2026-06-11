@@ -313,14 +313,12 @@ export default function Index() {
   variant="primary"
   fullWidth
   onClick={() => {
-    const params = new URLSearchParams(window.location.search);
+    console.log("CLICK");
 
-    const shop =
-      params.get("shop")?.replace(".myshopify.com", "");
-
-    if (!shop) return;
-window.top!.location.href =
-  `https://admin.shopify.com/store/${shop}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
+    window.open(
+      "https://google.com",
+      "_blank"
+    );
   }}
 >
   Start Free Trial
