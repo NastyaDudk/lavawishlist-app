@@ -325,9 +325,11 @@ const store =
 
                   </BlockStack>
 
-<Button
+                  <Button
+  variant="primary"
+  fullWidth
   onClick={() => {
-    alert("CLICK");
+    console.log("BUTTON CLICKED");
   }}
 >
   Test
