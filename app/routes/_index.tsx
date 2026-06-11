@@ -309,14 +309,15 @@ export default function Index() {
 
                   </BlockStack>
 
-                  <Button
-                    variant="primary"
-                    size="large"
-                    fullWidth
-                    url="/app/pricing"
-                     >
-                  Start Free Trial
-                  </Button>
+               <Button
+  variant="primary"
+  fullWidth
+  onClick={() => {
+  window.location.href = "/app/pricing";
+}}
+>
+  Start Free Trial
+</Button>
 
 
 <div className="pro-note">
