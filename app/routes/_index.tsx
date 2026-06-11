@@ -309,12 +309,15 @@ export default function Index() {
 
                   </BlockStack>
 
-               <Button
+<Button
   variant="primary"
   fullWidth
   onClick={() => {
-  window.location.href = "/app/pricing";
-}}
+    window.open(
+      "https://apps.shopify.com/services/pricing/76b72a7575fcfc731bba4562cf360733",
+      "_blank"
+    );
+  }}
 >
   Start Free Trial
 </Button>
