@@ -326,26 +326,25 @@ const store =
                   </BlockStack>
 
                   <Button
-  variant="primary"
-  fullWidth
-  onClick={() => {
-    console.log("BUTTON CLICKED");
-  }}
->
-  Test
-</Button>
+                  variant="primary"
+                  fullWidth
+                  url={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`}
+                   >
+                 Start Free Trial
+                 </Button>
 
 
-<div className="pro-note">
 
-  <Text
-    as="p"
-    tone="subdued"
-  >
-    3-day free trial included
-  </Text>
+           <div className="pro-note">
 
-</div>
+           <Text
+           as="p"
+          tone="subdued"
+             >
+           3-day free trial included
+           </Text>
+
+            </div>
 
                 </BlockStack>
 
