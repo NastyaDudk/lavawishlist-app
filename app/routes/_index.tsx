@@ -335,12 +335,7 @@ console.log("store =", store);
 <Button
   variant="primary"
   fullWidth
-  onClick={() => {
-    const url =
-      "https://admin.shopify.com/store/wishlist-test-pwgysjju/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS";
-
-    window.open(url, "_blank", "noopener,noreferrer");
-  }}
+  url="/app/pricing"
 >
   Start Free Trial
 </Button>

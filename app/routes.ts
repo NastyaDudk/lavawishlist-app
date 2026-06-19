@@ -16,7 +16,10 @@ export default [
     path: "/app/dashboard",
     file: "routes/app.dashboard.tsx",
   },
-
+{
+  path: "/app/pricing",
+  file: "routes/app.pricing.ts",
+},
   {
     path: "/privacy",
     file: "routes/privacy.tsx",
