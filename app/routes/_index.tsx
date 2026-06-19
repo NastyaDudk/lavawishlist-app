@@ -13,9 +13,12 @@ import {
 import { useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
 
-export async function loader() {
+export async function loader({ request }) {
+  const { session } =
+    await authenticate.admin(request);
+
   return {
-    shop: "test.myshopify.com",
+    shop: session.shop,
   };
 }
 
@@ -322,20 +325,13 @@ const store =
 
                   </BlockStack>
 
-                  <Button
+<Button
   variant="primary"
   fullWidth
-  onClick={() => {
-    console.log("STORE =", store);
-
-    (window.top || window).location.href =
-      `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
-  }}
+  url={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`}
 >
   Start Free Trial
 </Button>
-
-
 
 
 
