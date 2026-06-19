@@ -331,26 +331,20 @@ console.log("store =", store);
 
                   </BlockStack>
 
-<Text as="p">
-  shop: {shop}
-</Text>
-
-<Text as="p">
-  store: {store}
-</Text>
 
 <Button
   variant="primary"
   fullWidth
   onClick={() => {
-    window.open(
-      "https://admin.shopify.com/store/wishlist-test-pwgysjju/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS",
-      "_blank"
-    );
+    const url =
+      "https://admin.shopify.com/store/wishlist-test-pwgysjju/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS";
+
+    window.open(url, "_blank", "noopener,noreferrer");
   }}
 >
   Start Free Trial
 </Button>
+
 
 
 
