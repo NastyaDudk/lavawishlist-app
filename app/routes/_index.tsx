@@ -339,16 +339,14 @@ console.log("store =", store);
   store: {store}
 </Text>
 
-  <Button
+<Button
   variant="primary"
   fullWidth
   onClick={() => {
-    const url =
-      `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
-
-    if (window.top) {
-      window.top.location.assign(url);
-    }
+    window.open(
+      "https://admin.shopify.com/store/wishlist-test-pwgysjju/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS",
+      "_blank"
+    );
   }}
 >
   Start Free Trial
