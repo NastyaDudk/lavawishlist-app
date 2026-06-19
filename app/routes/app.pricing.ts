@@ -1,4 +1,4 @@
-import { redirect } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 
 export async function loader({ request }) {
@@ -11,13 +11,8 @@ export async function loader({ request }) {
       ""
     );
 
-  return redirect(
-    `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`,
-    {
-      headers: {
-        "X-Shopify-API-Request-Failure-Reauthorize":
-          "1",
-      },
-    }
-  );
+  return json({
+    url:
+      `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`,
+  });
 }

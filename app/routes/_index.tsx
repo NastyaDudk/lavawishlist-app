@@ -18,13 +18,19 @@ export async function loader({ request }) {
   const { session } =
     await authenticate.admin(request);
 
-
-
   return {
     shop: session.shop,
   };
 }
 
+
+const goToPricing = async () => {
+  const res = await fetch("/app/pricing");
+  const { url } = await res.json();
+
+  // именно replace, не assign
+  window.location.replace(url);
+};
 export default function Index() {
 
   const { shop } =
@@ -332,14 +338,15 @@ console.log("store =", store);
                   </BlockStack>
 
 
+
+
 <Button
   variant="primary"
   fullWidth
-  url="/app/pricing"
+  onClick={goToPricing}
 >
   Start Free Trial
 </Button>
-
 
 
 
