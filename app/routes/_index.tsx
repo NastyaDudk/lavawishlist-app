@@ -10,12 +10,15 @@ import {
   Link,
 } from "@shopify/polaris";
 
+
 import { useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
 
 export async function loader({ request }) {
   const { session } =
     await authenticate.admin(request);
+
+
 
   return {
     shop: session.shop,
@@ -29,6 +32,9 @@ export default function Index() {
 
 const store =
   shop.replace(".myshopify.com", "");
+
+console.log("shop =", shop);
+console.log("store =", store);
 
   return (
 
@@ -325,13 +331,29 @@ const store =
 
                   </BlockStack>
 
-<Button
+<Text as="p">
+  shop: {shop}
+</Text>
+
+<Text as="p">
+  store: {store}
+</Text>
+
+  <Button
   variant="primary"
   fullWidth
-  url={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`}
+  onClick={() => {
+    const url =
+      `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
+
+    if (window.top) {
+      window.top.location.assign(url);
+    }
+  }}
 >
   Start Free Trial
 </Button>
+
 
 
 
