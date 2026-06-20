@@ -23,14 +23,14 @@ export async function loader({ request }) {
   };
 }
 
+const goToPricing = () => {
+  const shop =
+    "wishlist-test-pwgysjju.myshopify.com";
 
-const goToPricing = async () => {
-  const res = await fetch("/app/pricing");
-  const { url } = await res.json();
-
-  // именно replace, не assign
-  window.location.replace(url);
+  window.location.href =
+    `/auth?shop=${shop}`;
 };
+
 export default function Index() {
 
   const { shop } =
@@ -343,14 +343,7 @@ console.log("store =", store);
 <Button
   variant="primary"
   fullWidth
-  onClick={() => {
-    console.log("CLICK");
-
-    window.top!.location.href =
-      "https://admin.shopify.com/store/wishlist-test-pwgysjju/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS";
-
-    console.log("AFTER");
-  }}
+  onClick={goToPricing}
 >
   Start Free Trial
 </Button>

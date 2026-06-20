@@ -1,4 +1,4 @@
-import { json } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 
 export async function loader({ request }) {
@@ -11,8 +11,7 @@ export async function loader({ request }) {
       ""
     );
 
-  return json({
-    url:
-      `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`,
-  });
+  return redirect(
+    `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`
+  );
 }
