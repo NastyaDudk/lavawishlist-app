@@ -39,6 +39,14 @@ export default function Index() {
 const store =
   shop.replace(".myshopify.com", "");
 
+  const goToPricing = () => {
+  const shop =
+    "wishlist-test-pwgysjju.myshopify.com";
+
+  window.location.href =
+    `/auth?shop=${shop}`;
+};
+
 console.log("shop =", shop);
 console.log("store =", store);
 
