@@ -26,17 +26,17 @@ export async function loader({ request }) {
 export default function Index() {
 
   const { shop } =
-    useLoaderData<typeof loader>();
+  useLoaderData() as {
+    shop: string;
+  };
 
   const store =
     shop.replace(".myshopify.com", "");
 
   const goToPricing = () => {
-    window.open(
-      `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`,
-      "_top"
-    );
-  };
+  window.top!.location.href =
+    `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`;
+};
 
   console.log("shop =", shop);
   console.log("store =", store);
