@@ -343,7 +343,14 @@ console.log("store =", store);
 <Button
   variant="primary"
   fullWidth
-  onClick={goToPricing}
+  onClick={() => {
+    console.log("CLICK");
+
+    window.top!.location.href =
+      "https://admin.shopify.com/store/wishlist-test-pwgysjju/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS";
+
+    console.log("AFTER");
+  }}
 >
   Start Free Trial
 </Button>
