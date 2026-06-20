@@ -12,6 +12,6 @@ export async function loader({ request }) {
     );
 
   return redirect(
-    `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`
+    `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`
   );
 }

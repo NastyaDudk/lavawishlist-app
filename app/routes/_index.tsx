@@ -12,43 +12,25 @@ import {
 
 
 import { useLoaderData } from "react-router";
-import { authenticate } from "../shopify.server";
 
-export async function loader({ request }) {
-  const { session } =
-    await authenticate.admin(request);
-
-  return {
-    shop: session.shop,
-  };
-}
-
-const goToPricing = () => {
-  const shop =
-    "wishlist-test-pwgysjju.myshopify.com";
-
-  window.location.href =
-    `/auth?shop=${shop}`;
-};
 
 export default function Index() {
 
   const { shop } =
-  useLoaderData<typeof loader>();
+    useLoaderData<typeof loader>();
 
-const store =
-  shop.replace(".myshopify.com", "");
+  const store =
+    shop.replace(".myshopify.com", "");
 
   const goToPricing = () => {
-  const shop =
-    "wishlist-test-pwgysjju.myshopify.com";
+    window.open(
+      `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`,
+      "_top"
+    );
+  };
 
-  window.location.href =
-    `/auth?shop=${shop}`;
-};
-
-console.log("shop =", shop);
-console.log("store =", store);
+  console.log("shop =", shop);
+  console.log("store =", store);
 
   return (
 
