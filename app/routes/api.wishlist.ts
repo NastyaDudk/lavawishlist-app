@@ -98,7 +98,29 @@ const store =
   );
 
 if (count >= 3) {
+await prisma.shopStats.upsert({
 
+  where: {
+    shop,
+  },
+
+  update: {
+
+    limitHits: {
+      increment: 1,
+    },
+
+  },
+
+  create: {
+
+    shop,
+
+    limitHits: 1,
+
+  },
+
+});
   return json(
     {
       error:

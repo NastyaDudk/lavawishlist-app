@@ -38,3 +38,12 @@ model WishlistItem {
   handle  String
   createdAt DateTime @default(now())
 }
+model ShopStats {
+
+  shop String @id
+
+  limitHits Int @default(0)
+
+  updatedAt DateTime @updatedAt
+
+}

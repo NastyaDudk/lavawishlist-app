@@ -11,23 +11,42 @@ import {
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
 import { useLoaderData } from "react-router";
+import prisma from "../db.server";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 
 
+export async function loader({
+  request,
+}: LoaderFunctionArgs) {
 
-
-export async function loader({ request }) {
   const { session } =
     await authenticate.admin(request);
 
-  return {
-    shop: session.shop,
-  };
-}
+  const stats =
+    await prisma.shopStats.findUnique({
 
+      where: {
+        shop: session.shop,
+      },
+
+    });
+
+  return {
+
+    shop: session.shop,
+
+    limitHits:
+      stats?.limitHits || 0,
+
+  };
+
+}
 export default function Index() {
 
-const { shop } =
-  useLoaderData<typeof loader>();
+const {
+  shop,
+  limitHits,
+} = useLoaderData<typeof loader>();
 
 const store =
   shop.replace(
@@ -173,6 +192,18 @@ console.log("store =", store);
                 Free includes
                 50 saves/month
               </div>
+
+              {limitHits > 0 && (
+
+  <div className="free-info">
+
+    🔥 Customers hit the limit
+
+    {limitHits} times
+
+  </div>
+
+)}
 
             </InlineStack>
 

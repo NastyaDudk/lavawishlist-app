@@ -223,7 +223,33 @@
 
     btn.innerText = list.some((i) => i.handle === handle) ? "❤️‍🔥" : "♡";
   }
+  function showLavaToast(text) {
+    const old = document.querySelector(".wl-toast");
 
+    if (old) old.remove();
+
+    const toast = document.createElement("div");
+
+    toast.className = "wl-toast";
+
+    toast.innerHTML = `
+    ❤️‍🔥 ${text}
+  `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add("show");
+    }, 50);
+
+    setTimeout(() => {
+      toast.classList.remove("show");
+
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 3500);
+  }
   /* ======================
    TOGGLE
   ====================== */
@@ -261,7 +287,7 @@
 
         // 🔥 лимит достигнут
         if (!res.ok || data.upgrade) {
-          alert("You can't save more items right now.");
+          showLavaToast("Wishlist limit reached ❤️‍🔥");
 
           // откатываем визуально последнее добавление
           wishlistCache = list;
@@ -279,7 +305,11 @@
           sync();
         });
       })
-      .catch(console.error);
+      .catch((err) => {
+        alert("FETCH ERROR");
+
+        console.log(err);
+      });
   }
   async function sync() {
     const list = await getWishlist(); // ✅
@@ -771,6 +801,60 @@ header,
   .wl-item .wl-add,
 .wl-item .wl-remove {
   margin-top: 10px;
+}
+  .wl-toast {
+
+  position: fixed;
+
+  top: 50%;
+  left: 50%;
+
+  transform:
+    translate(-50%, -50%)
+    scale(.9);
+
+  opacity: 0;
+
+  padding: 22px 30px;
+
+  border-radius: 24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ff3b5c,
+      #ff6a00,
+      #ff0000
+    );
+
+  color: white;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  text-align: center;
+
+  box-shadow:
+    0 0 25px rgba(255,80,50,.45),
+    0 0 60px rgba(255,60,60,.35);
+
+  z-index: 999999;
+
+  transition:
+    opacity .3s ease,
+    transform .3s ease;
+
+  max-width: 360px;
+}
+
+.wl-toast.show {
+
+  opacity: 1;
+
+  transform:
+    translate(-50%, -50%)
+    scale(1);
+
 }
 `;
 
