@@ -855,25 +855,30 @@ console.log("store =", store);
               translateY(-4px);
           }
 
-       .img-box {
-        width: 100%;
-        height: 300px;   /* было 220 */
-        overflow: hidden;
+          .img-box {
+            width: 100%;
+            height: 220px;
 
-        border-radius: 18px;
-        background: #f6f6f7;
+            overflow: hidden;
 
-        margin-bottom: 10px;
-         }
+            border-radius: 18px;
+
+            background: #f6f6f7;
+
+            margin-bottom: 10px;
+          }
 
           .img-box img {
-            width: 100%;
-            height: 100%;
+  width: 100%;
+  height: 100%;
 
-            object-fit: cover;
+  object-fit: contain;
+  object-position: center;
 
-            display: block;
-          }
+  display: block;
+
+  background: #f6f6f7;
+}
 
           .video-box {
             overflow: hidden;

@@ -259,20 +259,13 @@
       .then(async (res) => {
         const data = await res.json();
 
-        // 🔥 достигнут лимит
+        // 🔥 лимит достигнут
         if (data.upgrade) {
-          const ok = confirm(
-            "❤️‍🔥 You reached the Free Plan limit (50 wishlist saves).\n\nUpgrade to Pro for unlimited wishlists?",
-          );
-
-          if (ok) {
-            window.top.location.href = data.upgradeUrl;
-          }
+          alert("You can't save more items right now.");
 
           return;
         }
 
-        // обычная синхронизация
         getWishlist(true).then(() => {
           updateCount();
           sync();
