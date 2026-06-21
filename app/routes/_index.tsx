@@ -12,8 +12,10 @@ import {
 import { authenticate } from "../shopify.server";
 import { useLoaderData } from "react-router";
 import prisma from "../db.server";
-import type { LoaderFunctionArgs } from "@remix-run/node";
 
+
+
+import type { LoaderFunctionArgs } from "@remix-run/node";
 
 export async function loader({
   request,
@@ -22,44 +24,30 @@ export async function loader({
   const { session } =
     await authenticate.admin(request);
 
-  let limitHits = 0;
-
-  try {
-
-    const stats =
-      await prisma.shopStats.findUnique({
-
-        where: {
-          shop: session.shop,
-        },
-
-      });
-
-    limitHits =
-      stats?.limitHits || 0;
-
-  } catch (e) {
-
-    console.log(e);
-
-  }
+  const stats =
+    await prisma.shopStats.findUnique({
+      where: {
+        shop: session.shop,
+      },
+    });
 
   return {
-
     shop: session.shop,
-
-    limitHits,
-
+    limitHits: stats?.limitHits ?? 0,
   };
-
 }
+
+
 
 export default function Index() {
 
 const {
   shop,
   limitHits,
-} = useLoaderData<typeof loader>();
+} = useLoaderData() as {
+  shop: string;
+  limitHits: number;
+};
 
 const store =
   shop.replace(
@@ -203,20 +191,8 @@ console.log("store =", store);
 
               <div className="free-info">
                 Free includes
-                50 saves/month
+                3 saves/month
               </div>
-
-              {limitHits > 0 && (
-
-  <div className="free-info">
-
-    🔥 Customers hit the limit
-
-    {limitHits} times
-
-  </div>
-
-)}
 
             </InlineStack>
 
@@ -268,7 +244,7 @@ console.log("store =", store);
                   <BlockStack gap="200">
 
                     {[
-                      "Up to 50 wishlist saves",
+                      "Up to 3 wishlist saves",
                       "Theme App Embed",
                       "Mobile optimized",
                       "Works with all Shopify themes",
@@ -292,14 +268,21 @@ console.log("store =", store);
 
                   </BlockStack>
 
-                  <div className="free-plan-note">
+                 <div className="free-plan-note">
 
-                    <Text as="p">
-                      You&apos;re currently using
-                      the free plan
-                    </Text>
+  <Text as="p">
+    You&apos;re currently using
+    the free plan
+  </Text>
 
-                  </div>
+  <Text
+    as="p"
+    tone="subdued"
+  >
+    Limit reached {limitHits} times
+  </Text>
+
+</div>
 
                 </BlockStack>
 

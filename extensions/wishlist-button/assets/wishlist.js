@@ -283,7 +283,19 @@
       }),
     })
       .then(async (res) => {
-        const data = await res.json();
+        const text = await res.text();
+
+        console.log(res.status);
+        console.log(text);
+
+        let data = {};
+
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.log("NOT JSON", text);
+          throw e;
+        }
 
         // 🔥 лимит достигнут
         if (!res.ok || data.upgrade) {
