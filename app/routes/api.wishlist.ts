@@ -97,7 +97,7 @@ const store =
     ""
   );
 
-if (count >= 50) {
+if (count >= 3) {
 
   return json(
     {
