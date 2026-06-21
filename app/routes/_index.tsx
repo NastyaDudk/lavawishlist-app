@@ -336,7 +336,7 @@ console.log("store =", store);
 
 
 <a
-  href={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`}
+  href={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`}
   target="_top"
   style={{
     display: "block",
@@ -347,6 +347,7 @@ console.log("store =", store);
     color: "white",
     borderRadius: "10px",
     textDecoration: "none",
+    fontWeight: 600,
   }}
 >
   Start Free Trial
