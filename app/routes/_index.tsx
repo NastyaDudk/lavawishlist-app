@@ -22,25 +22,38 @@ export async function loader({
   const { session } =
     await authenticate.admin(request);
 
-  const stats =
-    await prisma.shopStats.findUnique({
+  let limitHits = 0;
 
-      where: {
-        shop: session.shop,
-      },
+  try {
 
-    });
+    const stats =
+      await prisma.shopStats.findUnique({
+
+        where: {
+          shop: session.shop,
+        },
+
+      });
+
+    limitHits =
+      stats?.limitHits || 0;
+
+  } catch (e) {
+
+    console.log(e);
+
+  }
 
   return {
 
     shop: session.shop,
 
-    limitHits:
-      stats?.limitHits || 0,
+    limitHits,
 
   };
 
 }
+
 export default function Index() {
 
 const {
