@@ -13,8 +13,7 @@ export async function loader({
 
   const url = new URL(request.url);
 
-  const health =
-    url.searchParams.get("health");
+  const health = url.searchParams.get("health");
 
   if (health === "1") {
 
@@ -27,19 +26,12 @@ export async function loader({
 
   }
 
-  const shop =
-    request.headers.get(
-      "x-shopify-shop-domain"
-    );
+  const shop = url.searchParams.get("shop");
 
   if (!shop) {
 
     return json(
-      {
-        error:
-          "Shop not found",
-      },
-
+      { error: "No shop provided" },
       { status: 400 },
     );
 
@@ -47,13 +39,10 @@ export async function loader({
 
   const items =
     await prisma.wishlistItem.findMany({
-      where: {
-        shop,
-      },
+      where: { shop },
     });
 
   return json(items);
-
 }
 
 /**
@@ -64,23 +53,18 @@ export async function action({
   request,
 }: ActionFunctionArgs) {
 
-const shop =
-  request.headers.get(
-    "x-shopify-shop-domain"
-  );
+  const url = new URL(request.url);
 
-if (!shop) {
+  const shop = url.searchParams.get("shop");
 
-  return json(
-    {
-      error:
-        "Shop not found",
-    },
+  if (!shop) {
 
-    { status: 400 },
-  );
+    return json(
+      { error: "No shop provided" },
+      { status: 400 },
+    );
 
-}
+  }
 
   const body = await request.json();
 
