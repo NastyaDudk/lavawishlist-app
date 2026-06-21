@@ -855,18 +855,16 @@ console.log("store =", store);
               translateY(-4px);
           }
 
-          .img-box {
-            width: 100%;
-            height: 220px;
+       .img-box {
+        width: 100%;
+        height: 300px;   /* было 220 */
+        overflow: hidden;
 
-            overflow: hidden;
+        border-radius: 18px;
+        background: #f6f6f7;
 
-            border-radius: 18px;
-
-            background: #f6f6f7;
-
-            margin-bottom: 10px;
-          }
+        margin-bottom: 10px;
+         }
 
           .img-box img {
             width: 100%;

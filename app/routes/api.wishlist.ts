@@ -13,7 +13,8 @@ export async function loader({
 
   const url = new URL(request.url);
 
-  const health = url.searchParams.get("health");
+  const health =
+    url.searchParams.get("health");
 
   if (health === "1") {
 
@@ -26,12 +27,19 @@ export async function loader({
 
   }
 
-  const shop = url.searchParams.get("shop");
+  const shop =
+    request.headers.get(
+      "x-shopify-shop-domain"
+    );
 
   if (!shop) {
 
     return json(
-      { error: "No shop provided" },
+      {
+        error:
+          "Shop not found",
+      },
+
       { status: 400 },
     );
 
@@ -39,10 +47,13 @@ export async function loader({
 
   const items =
     await prisma.wishlistItem.findMany({
-      where: { shop },
+      where: {
+        shop,
+      },
     });
 
   return json(items);
+
 }
 
 /**
@@ -53,18 +64,23 @@ export async function action({
   request,
 }: ActionFunctionArgs) {
 
-  const url = new URL(request.url);
+const shop =
+  request.headers.get(
+    "x-shopify-shop-domain"
+  );
 
-  const shop = url.searchParams.get("shop");
+if (!shop) {
 
-  if (!shop) {
+  return json(
+    {
+      error:
+        "Shop not found",
+    },
 
-    return json(
-      { error: "No shop provided" },
-      { status: 400 },
-    );
+    { status: 400 },
+  );
 
-  }
+}
 
   const body = await request.json();
 
@@ -82,13 +98,7 @@ export async function action({
 
   }
 
-  /**
-   * FREE PLAN LIMIT
-   * max 50 wishlist items
-   *
-   * Shopify App Pricing
-   * no billing.check anymore
-   */
+
 
   if (actionType === "toggle") {
 
