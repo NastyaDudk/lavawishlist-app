@@ -92,28 +92,34 @@ export async function action({
 
   if (actionType === "toggle") {
 
-    const count =
-      await prisma.wishlistItem.count({
-        where: { shop },
-      });
+ const count =
+  await prisma.wishlistItem.count({
+    where: { shop },
+  });
 
-    /**
-     * TEMPORARY:
-     * all stores treated as free
-     */
+const store =
+  shop.replace(
+    ".myshopify.com",
+    ""
+  );
 
-    if (count >= 50) {
+if (count >= 50) {
 
-      return json(
-        {
-          error:
-            "Free plan limit reached",
-          upgrade: true,
-        },
-        { status: 403 },
-      );
+  return json(
+    {
+      error:
+        "You reached the free plan limit (50 wishlist saves).",
 
-    }
+      upgrade: true,
+
+      upgradeUrl:
+        `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`,
+    },
+
+    { status: 403 },
+  );
+
+}
 
   }
 

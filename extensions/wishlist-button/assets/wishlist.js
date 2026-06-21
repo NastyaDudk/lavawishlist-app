@@ -245,23 +245,40 @@
     updateCount();
     sync();
 
-    // 👉 2. сервер (НЕ блокируем UI)
     fetch("/apps/wishlist", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+
       body: JSON.stringify({
         handle,
         actionType: "toggle",
       }),
-    }).then(() => {
-      // 👉 3. мягкая синхронизация
-      getWishlist(true).then(() => {
-        updateCount();
-        sync();
-      });
-    });
+    })
+      .then(async (res) => {
+        const data = await res.json();
+
+        // 🔥 достигнут лимит
+        if (data.upgrade) {
+          const ok = confirm(
+            "❤️‍🔥 You reached the Free Plan limit (50 wishlist saves).\n\nUpgrade to Pro for unlimited wishlists?",
+          );
+
+          if (ok) {
+            window.top.location.href = data.upgradeUrl;
+          }
+
+          return;
+        }
+
+        // обычная синхронизация
+        getWishlist(true).then(() => {
+          updateCount();
+          sync();
+        });
+      })
+      .catch(console.error);
   }
   async function sync() {
     const list = await getWishlist(); // ✅
