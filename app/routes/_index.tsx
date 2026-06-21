@@ -335,13 +335,22 @@ console.log("store =", store);
 
 
 
-<Button
-  variant="primary"
-  fullWidth
-  url={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`}
+<a
+  href={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`}
+  target="_top"
+  style={{
+    display: "block",
+    width: "100%",
+    textAlign: "center",
+    padding: "10px",
+    background: "#111",
+    color: "white",
+    borderRadius: "10px",
+    textDecoration: "none",
+  }}
 >
   Start Free Trial
-</Button>
+</a>
 
 
 
