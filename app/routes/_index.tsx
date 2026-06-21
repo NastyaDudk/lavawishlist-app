@@ -9,10 +9,11 @@ import {
   Button,
   Link,
 } from "@shopify/polaris";
-
-
-import { useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
+import { useLoaderData } from "react-router";
+
+
+
 
 export async function loader({ request }) {
   const { session } =
@@ -25,22 +26,17 @@ export async function loader({ request }) {
 
 export default function Index() {
 
-  const { shop } =
-  useLoaderData() as {
-    shop: string;
-  };
+const { shop } =
+  useLoaderData<typeof loader>();
 
-  const store =
-    shop.replace(".myshopify.com", "");
+const store =
+  shop.replace(
+    ".myshopify.com",
+    ""
+  );
 
-  const goToPricing = () => {
-  window.top!.location.href =
-    `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`;
-};
-
-  console.log("shop =", shop);
-  console.log("store =", store);
-
+console.log("shop =", shop);
+console.log("store =", store);
   return (
 
     <Page title="❤️‍🔥 Lava Wishlist">
@@ -342,7 +338,7 @@ export default function Index() {
 <Button
   variant="primary"
   fullWidth
-  onClick={goToPricing}
+  url={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/pricing_plans`}
 >
   Start Free Trial
 </Button>
