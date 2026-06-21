@@ -260,8 +260,16 @@
         const data = await res.json();
 
         // 🔥 лимит достигнут
-        if (data.upgrade) {
+        if (!res.ok || data.upgrade) {
           alert("You can't save more items right now.");
+
+          // откатываем визуально последнее добавление
+          wishlistCache = list;
+
+          localStorage.setItem(LS_KEY, JSON.stringify(list));
+
+          updateCount();
+          sync();
 
           return;
         }
