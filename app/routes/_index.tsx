@@ -9,47 +9,34 @@ import {
   Button,
   Link,
 } from "@shopify/polaris";
-// import { authenticate } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 import { useLoaderData } from "react-router";
-// import prisma from "../db.server";
+import prisma from "../db.server";
 
 
 
-// import type { LoaderFunctionArgs } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 
-export async function loader() {
+export async function loader({
+  request,
+}: LoaderFunctionArgs) {
+
+  const { session } =
+    await authenticate.admin(request);
+
+  const stats =
+    await prisma.shopStats.findUnique({
+      where: {
+        shop: session.shop,
+      },
+    });
+
   return {
-    shop: "test",
-    limitHits: 0,
+    shop: session.shop,
+    limitHits: stats?.limitHits ?? 0,
   };
 }
 
-// export async function loader({
-//   request,
-// }: LoaderFunctionArgs) {
-
-//   const { session } =
-//     await authenticate.admin(request);
-
-//   const stats =
-//     await prisma.shopStats.findUnique({
-
-//       where: {
-//         shop: session.shop,
-//       },
-
-//     });
-
-//   return {
-
-//     shop: session.shop,
-
-//     limitHits:
-//       stats?.limitHits || 0,
-
-//   };
-
-// }
 
 
 export default function Index() {
