@@ -98,8 +98,7 @@ const stats =
     },
   });
 
-const isPro =
-  stats?.isPro ?? false;
+const isPro = true;
 
 
 const store =
