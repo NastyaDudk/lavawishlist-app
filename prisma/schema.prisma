@@ -44,6 +44,8 @@ model ShopStats {
 
   limitHits Int @default(0)
 
+  isPro Boolean @default(false)
+
   updatedAt DateTime @updatedAt
 
 }

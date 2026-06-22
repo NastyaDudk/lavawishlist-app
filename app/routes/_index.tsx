@@ -17,6 +17,9 @@ import prisma from "../db.server";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
+import prisma from "../db.server";
+import { authenticate } from "../shopify.server";
+
 export async function loader({
   request,
 }: LoaderFunctionArgs) {
@@ -31,38 +34,41 @@ export async function loader({
       },
     });
 
-  // пока вручную
+  // Временно.
+  // Потом заменим на автоматическую проверку Shopify Pricing.
   const isPro = true;
 
   return {
     shop: session.shop,
-    limitHits: stats?.limitHits ?? 0,
+    limitHits:
+      stats?.limitHits ?? 0,
+
     isPro,
   };
 }
 
-
 export default function Index() {
 
-const {
-  shop,
-  limitHits,
-  isPro,
-} = useLoaderData() as {
-  shop: string;
-  limitHits: number;
-  isPro: boolean;
-};
+  const {
+    shop,
+    limitHits,
+    isPro,
+  } = useLoaderData<{
+    shop: string;
+    limitHits: number;
+    isPro: boolean;
+  }>();
 
+  const store =
+    shop.replace(
+      ".myshopify.com",
+      ""
+    );
 
-const store =
-  shop.replace(
-    ".myshopify.com",
-    ""
-  );
+  console.log("shop =", shop);
+  console.log("store =", store);
+  console.log("isPro =", isPro);
 
-console.log("shop =", shop);
-console.log("store =", store);
   return (
 
     <Page title="❤️‍🔥 Lava Wishlist">

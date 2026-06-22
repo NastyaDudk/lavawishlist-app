@@ -91,13 +91,24 @@ export async function action({
     where: { shop },
   });
 
+const stats =
+  await prisma.shopStats.findUnique({
+    where: {
+      shop,
+    },
+  });
+
+const isPro =
+  stats?.isPro ?? false;
+
+
 const store =
   shop.replace(
     ".myshopify.com",
     ""
   );
 
-if (count >= 3) {
+if (!isPro && count >= 3) {
 await prisma.shopStats.upsert({
 
   where: {
