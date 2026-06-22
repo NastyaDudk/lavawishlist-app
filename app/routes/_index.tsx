@@ -26,17 +26,23 @@ export async function loader({
 
   const stats =
     await prisma.shopStats.findUnique({
+
       where: {
         shop: session.shop,
       },
+
     });
 
   return {
-    shop: session.shop,
-    limitHits: stats?.limitHits ?? 0,
-  };
-}
 
+    shop: session.shop,
+
+    limitHits:
+      stats?.limitHits || 0,
+
+  };
+
+}
 
 
 export default function Index() {
