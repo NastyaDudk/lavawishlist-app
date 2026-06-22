@@ -9,9 +9,8 @@ import {
   Button,
   Link,
 } from "@shopify/polaris";
-import { authenticate } from "../shopify.server";
 import { useLoaderData } from "react-router";
-import prisma from "../db.server";
+
 
 
 
