@@ -31,12 +31,15 @@ export async function loader({
       },
     });
 
+  // пока вручную
+  const isPro = true;
+
   return {
     shop: session.shop,
     limitHits: stats?.limitHits ?? 0,
+    isPro,
   };
 }
-
 
 
 export default function Index() {
@@ -44,10 +47,13 @@ export default function Index() {
 const {
   shop,
   limitHits,
+  isPro,
 } = useLoaderData() as {
   shop: string;
   limitHits: number;
+  isPro: boolean;
 };
+
 
 const store =
   shop.replace(
@@ -200,11 +206,17 @@ console.log("store =", store);
 
               {/* FREE */}
 
-              <div className="plan-card free-plan current-plan">
+              <div className={`plan-card free-plan ${!isPro ? "current-plan" : ""}`}>
 
-                <div className="current-badge">
-                  CURRENT PLAN
-                </div>
+                {!isPro && (
+
+<div className="current-badge">
+  CURRENT PLAN
+</div>
+
+)}
+
+
 
                 <BlockStack gap="400">
 
@@ -219,9 +231,9 @@ console.log("store =", store);
                         Free Plan
                       </Text>
 
-                      <Badge tone="success">
-                        Active
-                      </Badge>
+                     <Badge tone={isPro ? "critical" : "success"}>
+  {!isPro ? "Active" : "Inactive"}
+</Badge>
 
                     </InlineStack>
 
@@ -290,11 +302,21 @@ console.log("store =", store);
 
               {/* PRO */}
 
-              <div className="plan-card pro-plan">
+             <div className={`plan-card pro-plan ${isPro ? "current-plan" : ""}`}>
 
-                <div className="popular-badge">
-                  MOST POPULAR
-                </div>
+               {isPro ? (
+
+<div className="current-badge">
+  CURRENT PLAN
+</div>
+
+) : (
+
+<div className="popular-badge">
+  MOST POPULAR
+</div>
+
+)}
 
                 <BlockStack gap="400">
 
@@ -362,6 +384,8 @@ console.log("store =", store);
 
 
 
+{!isPro ? (
+
 <a
   href={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`}
   target="_top"
@@ -379,6 +403,18 @@ console.log("store =", store);
 >
   Start Free Trial
 </a>
+
+) : (
+
+<Button
+  variant="primary"
+  disabled
+  fullWidth
+>
+  Pro Active ✓
+</Button>
+
+)}
 
 
 
