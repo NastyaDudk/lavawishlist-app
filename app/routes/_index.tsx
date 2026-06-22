@@ -17,32 +17,39 @@ import prisma from "../db.server";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
-export async function loader({
-  request,
-}: LoaderFunctionArgs) {
-
-  const { session } =
-    await authenticate.admin(request);
-
-  const stats =
-    await prisma.shopStats.findUnique({
-
-      where: {
-        shop: session.shop,
-      },
-
-    });
-
+export async function loader() {
   return {
-
-    shop: session.shop,
-
-    limitHits:
-      stats?.limitHits || 0,
-
+    shop: "test",
+    limitHits: 0,
   };
-
 }
+
+// export async function loader({
+//   request,
+// }: LoaderFunctionArgs) {
+
+//   const { session } =
+//     await authenticate.admin(request);
+
+//   const stats =
+//     await prisma.shopStats.findUnique({
+
+//       where: {
+//         shop: session.shop,
+//       },
+
+//     });
+
+//   return {
+
+//     shop: session.shop,
+
+//     limitHits:
+//       stats?.limitHits || 0,
+
+//   };
+
+// }
 
 
 export default function Index() {
