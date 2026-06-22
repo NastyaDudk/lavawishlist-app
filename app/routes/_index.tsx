@@ -9,13 +9,13 @@ import {
   Button,
   Link,
 } from "@shopify/polaris";
-import { authenticate } from "../shopify.server";
+// import { authenticate } from "../shopify.server";
 import { useLoaderData } from "react-router";
-import prisma from "../db.server";
+// import prisma from "../db.server";
 
 
 
-import type { LoaderFunctionArgs } from "@remix-run/node";
+// import type { LoaderFunctionArgs } from "@remix-run/node";
 
 export async function loader() {
   return {
