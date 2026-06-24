@@ -26,30 +26,6 @@ export async function loader({
   const { session } =
     await authenticate.admin(request);
 
-  const { admin } =
-  await authenticate.admin(request);
-
-const response =
-  await admin.graphql(`
-    query {
-      appInstallation {
-        activeSubscriptions {
-          id
-          name
-          status
-        }
-      }
-    }
-  `);
-
-console.log(
-  JSON.stringify(
-    await response.json(),
-    null,
-    2
-  )
-);
-
   const stats =
     await prisma.shopStats.findUnique({
       where: {
