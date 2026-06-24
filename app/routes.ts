@@ -16,10 +16,6 @@ export default [
     path: "/app/dashboard",
     file: "routes/app.dashboard.tsx",
   },
-  {
-  path: "/app/activate-pro",
-  file: "routes/app.activate-pro.tsx",
-},
 {
   path: "/app/pricing",
   file: "routes/app.pricing.ts",
