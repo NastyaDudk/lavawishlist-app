@@ -35,7 +35,7 @@ export async function loader({
 
   // Временно.
   // Потом заменим на автоматическую проверку Shopify Pricing.
-  const isPro = true;
+  const isPro = false;
 
   return {
     shop: session.shop,
