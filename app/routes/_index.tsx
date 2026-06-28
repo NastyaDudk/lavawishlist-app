@@ -23,10 +23,8 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
- const { session, billing } =
+const { session } =
   await authenticate.admin(request);
-
-console.log(await billing.check());
 
   const stats =
     await prisma.shopStats.findUnique({
