@@ -23,8 +23,22 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-const { session } =
-  await authenticate.admin(request);
+  const { admin, session } =
+    await authenticate.admin(request);
+
+  const response = await admin.graphql(`
+    {
+      currentAppInstallation {
+        activeSubscriptions {
+          id
+          name
+          status
+        }
+      }
+    }
+  `);
+
+  console.log(await response.json());
 
   const stats =
     await prisma.shopStats.findUnique({
@@ -33,16 +47,13 @@ const { session } =
       },
     });
 
-  // Временно.
-  // Потом заменим на автоматическую проверку Shopify Pricing.
   const isPro =
-  stats?.isPro ?? false;
+    stats?.isPro ?? false;
 
   return {
     shop: session.shop,
     limitHits:
       stats?.limitHits ?? 0,
-
     isPro,
   };
 }
