@@ -23,22 +23,23 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-const { session, billing } =
+ const { session, billing } =
   await authenticate.admin(request);
 
-const stats =
-  await prisma.shopStats.findUnique({
-    where: {
-      shop: session.shop,
-    },
-  });
+console.log(await billing.check());
 
-const billingStatus = await billing.check();
+  const stats =
+    await prisma.shopStats.findUnique({
+      where: {
+        shop: session.shop,
+      },
+    });
 
-console.log("BILLING =", billingStatus);
+  // Временно.
+  // Потом заменим на автоматическую проверку Shopify Pricing.
+  const isPro =
+  stats?.isPro ?? false;
 
-const isPro =
-  billingStatus.hasActivePayment;
   return {
     shop: session.shop,
     limitHits:
