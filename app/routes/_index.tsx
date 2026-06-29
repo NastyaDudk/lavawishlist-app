@@ -26,6 +26,20 @@ export async function loader({
   const { session } =
     await authenticate.admin(request);
 
+  await prisma.shopStats.upsert({
+  where: {
+    shop: session.shop,
+  },
+  update: {
+    isPro: true,
+  },
+  create: {
+    shop: session.shop,
+    isPro: true,
+    limitHits: 0,
+  },
+});
+
   const stats =
     await prisma.shopStats.findUnique({
       where: {
