@@ -102,9 +102,32 @@
   function injectHeader() {
     if (document.querySelector(".wl-header")) return;
 
-    const target =
-      document.querySelector("header .header__icons") ||
-      document.querySelector("header");
+    const selectors = [
+      "header .header__icons",
+      "header .header-icons",
+      "header .header__utility",
+      "header .header__actions",
+      "header .header__right",
+      ".header__icons",
+      ".header-icons",
+      ".header-actions",
+      ".header__utility",
+      ".header__right",
+      ".site-header__icons",
+      ".site-header__utilities",
+      ".site-nav__icons",
+      ".header-toolbar",
+      ".header-wrapper",
+      ".header",
+      "header",
+    ];
+
+    let target = null;
+
+    for (const selector of selectors) {
+      target = document.querySelector(selector);
+      if (target) break;
+    }
 
     if (!target) return;
 
@@ -152,7 +175,36 @@
   ====================== */
   async function injectHearts() {
     document.querySelectorAll("a[href*='/products/']").forEach((link) => {
-      const card = link.closest(".card-wrapper");
+      const selectors = [
+        ".card-wrapper",
+        ".card",
+        ".product-card",
+        ".product-item",
+        ".product-grid-item",
+        ".grid__item",
+        ".grid-product",
+        ".product-block",
+        ".collection-product-card",
+        ".collection-grid-item",
+        ".boost-pfs-filter-product-item",
+        ".product",
+        ".product-grid__item",
+        ".product-loop",
+        ".item-product",
+        ".product-card-wrapper",
+        ".thumbnail",
+        "li[class*=product]",
+        "[data-product-id]",
+        "[data-product-handle]",
+      ];
+
+      let card = null;
+
+      for (const selector of selectors) {
+        card = link.closest(selector);
+        if (card) break;
+      }
+
       if (!card) return;
 
       if (card.querySelector(".wl-btn")) return;
@@ -194,9 +246,31 @@
     const handle = location.pathname.split("/products/")[1]?.split("/")[0];
     if (!handle) return;
 
-    const media = document.querySelector(
-      ".product__media, .product-media-container",
-    );
+    const selectors = [
+      ".product__media",
+      ".product-media-container",
+      ".product-gallery",
+      ".product-gallery__image",
+      ".product-main-image",
+      ".product__image-wrapper",
+      ".media-gallery",
+      ".product__photos",
+      ".product-single__media",
+      ".product-gallery__main",
+      ".product__media-wrapper",
+      ".featured-media",
+      ".featured-image",
+      ".product-images",
+      ".product-image",
+    ];
+
+    let media = null;
+
+    for (const selector of selectors) {
+      media = document.querySelector(selector);
+      if (media) break;
+    }
+
     if (!media) return;
 
     const btn = document.createElement("button");
@@ -600,9 +674,7 @@
   cursor:pointer;
 }
 
-.wl-btn {
-  z-index: 1 !important;
-}
+
 
 header,
 .header,
@@ -655,29 +727,10 @@ header,
   border-radius:50%;
   padding:2px 6px;
 }
-.wl-count {
-  position:absolute;
-  top:-6px;
-  right:-8px;
-  background:#ff3b5c;
-  color:#fff;
-  font-size:10px;
-  border-radius:50%;
-  padding:2px 6px;
-}
+
 
 /* CARD */
-.wl-btn {
-  position:absolute;
-  top:10px;
-  right:10px;
-  width:34px;
-  height:34px;
-  border-radius:50%;
-  background:#fff;
-  border:1px solid #eee;
-  cursor:pointer;
-}
+
 
 /* PRODUCT PAGE */
 .wl-product-btn {
@@ -748,6 +801,17 @@ header,
   position: absolute;
   inset: 0;
   pointer-events: none; /* 🔥 пропускаем клики */
+}
+
+.card-wrapper,
+.card,
+.product-card,
+.product-item,
+.product-grid-item,
+.product,
+.product-block,
+.product-card-wrapper {
+  position: relative;
 }
 
 .wl-btn {
@@ -875,15 +939,33 @@ header,
   /* ======================
    INIT
   ====================== */
-  document.addEventListener("DOMContentLoaded", () => {
+
+  function refreshWishlistUI() {
     injectHeader();
     injectHearts();
     injectProductHeart();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    refreshWishlistUI();
     cleanupWishlist();
   });
 
-  document.addEventListener("shopify:section:load", () => {
-    injectHearts();
-    injectProductHeart();
+  document.addEventListener("shopify:section:load", refreshWishlistUI);
+  document.addEventListener("shopify:section:select", refreshWishlistUI);
+  document.addEventListener("shopify:section:reorder", refreshWishlistUI);
+  document.addEventListener("shopify:block:select", refreshWishlistUI);
+
+  let refreshTimer;
+
+  new MutationObserver(() => {
+    clearTimeout(refreshTimer);
+
+    refreshTimer = setTimeout(() => {
+      refreshWishlistUI();
+    }, 120);
+  }).observe(document.body, {
+    childList: true,
+    subtree: true,
   });
 })();
