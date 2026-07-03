@@ -176,6 +176,7 @@
   async function injectHearts() {
     document.querySelectorAll("a[href*='/products/']").forEach((link) => {
       const selectors = [
+        ".resource-card",
         ".card-wrapper",
         ".card",
         ".product-card",
@@ -230,7 +231,8 @@
       wrapper.appendChild(btn);
 
       // 🔥 ВАЖНО: вставляем поверх, а не внутрь ссылки
-      card.appendChild(wrapper);
+      card.style.position = "relative";
+      card.insertBefore(wrapper, card.firstChild);
     });
 
     await sync();
@@ -803,6 +805,7 @@ header,
   pointer-events: none; /* 🔥 пропускаем клики */
 }
 
+.resource-card,
 .card-wrapper,
 .card,
 .product-card,
