@@ -230,9 +230,24 @@
 
       wrapper.appendChild(btn);
 
-      // 🔥 ВАЖНО: вставляем поверх, а не внутрь ссылки
-      card.style.position = "relative";
-      card.insertBefore(wrapper, card.firstChild);
+      wrapper.appendChild(btn);
+
+      // ищем контейнер изображения
+      const media =
+        card.querySelector(".product-media") ||
+        card.querySelector(".product-media-container") ||
+        card.querySelector(".product__media") ||
+        card.querySelector(".card__media") ||
+        card.querySelector(".card-media") ||
+        card.querySelector(".media") ||
+        card.querySelector(".resource-card__media") ||
+        card.querySelector(".resource-card__image") ||
+        card.querySelector("img")?.parentElement;
+
+      const target = media || card;
+
+      target.style.position = "relative";
+      target.appendChild(wrapper);
     });
 
     await sync();
@@ -799,10 +814,12 @@ header,
 .wl-item img {
   width:60px;
 }
-.wl-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none; /* 🔥 пропускаем клики */
+.wl-overlay{
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:999;
+  pointer-events:none;
 }
 
 .resource-card,
@@ -818,16 +835,18 @@ header,
 }
 
 .wl-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+  position: relative;
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: white;
+  background: #fff;
   border: 1px solid #eee;
-  pointer-events: auto; /* 🔥 ТОЛЬКО кнопка кликается */
-  z-index: 20;
+  pointer-events: auto;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
   /* 🔥 ОБЩИЕ КНОПКИ */
 .wl-add,
