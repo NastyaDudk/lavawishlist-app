@@ -23,27 +23,38 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { session } =
-    await authenticate.admin(request);
+const { admin, session } =
+  await authenticate.admin(request);
 
+const stats =
+  await prisma.shopStats.findUnique({
+    where: {
+      shop: session.shop,
+    },
+  });
 
+const response = await admin.graphql(`
+  query {
+    currentAppInstallation {
+      activeSubscriptions {
+        status
+      }
+    }
+  }
+`);
 
-  const stats =
-    await prisma.shopStats.findUnique({
-      where: {
-        shop: session.shop,
-      },
-    });
-  console.log("stats =", stats);
+const data = await response.json();
 
-  const isPro =
-    stats?.isPro ?? false;
+const isPro =
+  data.data.currentAppInstallation.activeSubscriptions.some(
+    (sub: { status: string }) => sub.status === "ACTIVE"
+  );
 
-  return {
-    shop: session.shop,
-    limitHits: stats?.limitHits ?? 0,
-    isPro,
-  };
+return {
+  shop: session.shop,
+  limitHits: stats?.limitHits ?? 0,
+  isPro,
+};
 }
 
 export default function Index() {
