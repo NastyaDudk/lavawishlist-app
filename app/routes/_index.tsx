@@ -34,6 +34,7 @@ export async function loader({
         shop: session.shop,
       },
     });
+  console.log("stats =", stats);
 
   const isPro =
     stats?.isPro ?? false;

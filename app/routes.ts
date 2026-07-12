@@ -16,6 +16,10 @@ export default [
     path: "/app/dashboard",
     file: "routes/app.dashboard.tsx",
   },
+  {
+  path: "/webhooks/app_subscriptions_update",
+  file: "routes/webhooks.app_subscriptions_update.tsx",
+  },
 {
   path: "/app/cancel-plan",
   file: "routes/app.cancel-plan.ts",
