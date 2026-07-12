@@ -3,37 +3,35 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
-export async function action({
+export const action = async ({
   request,
-}: ActionFunctionArgs) {
+}: ActionFunctionArgs) => {
 
   const { topic, shop, payload } =
     await authenticate.webhook(request);
 
-  console.log(topic);
-  console.log(shop);
+  console.log("Webhook:", topic);
   console.log(payload);
 
   const subscription =
     payload.app_subscription;
 
-  const active =
+  const isPro =
     subscription?.status === "ACTIVE";
 
   await prisma.shopStats.upsert({
     where: {
       shop,
     },
-
     update: {
-      isPro: active,
+      isPro,
     },
-
     create: {
       shop,
-      isPro: active,
+      isPro,
+      limitHits: 0,
     },
   });
 
   return new Response();
-}
+};
