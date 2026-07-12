@@ -89,9 +89,9 @@ export default function Index() {
   ❤️‍🔥 Shopify LavaWishlist App
 </div>
 
-              <div className="hero-pill">
-                Free Plan Included
-              </div>
+            <div className="hero-pill">
+  {isPro ? "Pro Plan Active" : "Free Plan Included"}
+</div>
 
             </InlineStack>
 
@@ -284,21 +284,22 @@ export default function Index() {
 
                   </BlockStack>
 
-                 <div className="free-plan-note">
+             {!isPro && (
+  <div className="free-plan-note">
 
-  <Text as="p">
-    You&apos;re currently using
-    the free plan
-  </Text>
+    <Text as="p">
+      You are currently using the free plan
+    </Text>
 
-  <Text
-    as="p"
-    tone="subdued"
-  >
-    Limit reached {limitHits} times
-  </Text>
+    <Text
+      as="p"
+      tone="subdued"
+    >
+      Limit reached {limitHits} times
+    </Text>
 
-</div>
+  </div>
+)}
 
                 </BlockStack>
 
@@ -410,13 +411,38 @@ export default function Index() {
 
 ) : (
 
-<Button
-  variant="primary"
-  disabled
-  fullWidth
+<BlockStack gap="300">
+
+  <Button
+    variant="primary"
+    disabled
+    fullWidth
+  >
+    Pro Active ✓
+  </Button>
+
+<form
+  method="post"
+  action="/app/cancel-plan"
 >
-  Pro Active ✓
-</Button>
+  <button
+    type="submit"
+    style={{
+      width: "100%",
+      background: "#d82c0d",
+      color: "white",
+      border: "none",
+      padding: "10px",
+      borderRadius: "10px",
+      cursor: "pointer",
+      fontWeight: 600,
+    }}
+  >
+    Cancel Plan
+  </button>
+</form>
+
+</BlockStack>
 
 )}
 
