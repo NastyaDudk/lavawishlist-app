@@ -421,26 +421,23 @@ export default function Index() {
     Pro Active ✓
   </Button>
 
-<form
-  method="post"
-  action="/app/cancel-plan"
+<a
+  href={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/free?interval=EVERY_30_DAYS`}
+  target="_top"
+  style={{
+    display: "block",
+    width: "100%",
+    textAlign: "center",
+    padding: "10px",
+    background: "#d82c0d",
+    color: "white",
+    borderRadius: "10px",
+    textDecoration: "none",
+    fontWeight: 600,
+  }}
 >
-  <button
-    type="submit"
-    style={{
-      width: "100%",
-      background: "#d82c0d",
-      color: "white",
-      border: "none",
-      padding: "10px",
-      borderRadius: "10px",
-      cursor: "pointer",
-      fontWeight: 600,
-    }}
-  >
-    Cancel Plan
-  </button>
-</form>
+  Switch to Free Plan
+</a>
 
 </BlockStack>
 
