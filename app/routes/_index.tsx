@@ -23,13 +23,12 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
- const auth =
+const auth =
   await authenticate.admin(request);
 
 console.log(Object.keys(auth));
 
 const { session } = auth;
-
 
 
   const stats =
