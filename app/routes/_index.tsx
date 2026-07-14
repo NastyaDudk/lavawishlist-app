@@ -23,8 +23,12 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { session } =
-    await authenticate.admin(request);
+ const auth =
+  await authenticate.admin(request);
+
+console.log(Object.keys(auth));
+
+const { session } = auth;
 
 
 
