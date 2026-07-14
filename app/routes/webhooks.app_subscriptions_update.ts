@@ -11,7 +11,9 @@ export const action = async ({
     await authenticate.webhook(request);
 
   console.log("Webhook:", topic);
-  console.log(payload);
+  console.log(
+  JSON.stringify(payload, null, 2)
+);
 
   const subscription =
     payload.app_subscription;
