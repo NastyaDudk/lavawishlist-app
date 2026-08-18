@@ -260,120 +260,162 @@
 
     if (!handle) return;
 
-    // 1. Сначала ищем основное изображение / gallery
-    const mediaSelectors = [
-      ".product__media",
-      ".product-media-container",
-      ".product-gallery",
-      ".product-gallery__image",
-      ".product-main-image",
-      ".product__image-wrapper",
-      ".media-gallery",
-      ".product__photos",
-      ".product-single__media",
-      ".product-gallery__main",
-      ".product__media-wrapper",
-      ".featured-media",
-      ".featured-image",
-      ".product-images",
-      ".product-image",
+    /*
+     * FIND MAIN PRODUCT IMAGE
+     *
+     * Не привязываемся к конкретной Shopify theme.
+     * Ищем реальные <img> и выбираем самое крупное
+     * изображение в product area.
+     */
 
-      // дополнительные варианты для разных Shopify themes
-      "[data-product-media]",
-      "[data-product-gallery]",
-      "[data-product-image]",
-      "[data-media-id]",
-      ".product-media",
-      ".product__media-list",
-      ".product__media-item",
-      ".product__gallery",
-      ".product-gallery__media",
-      ".product-single__photos",
-      ".product-single__media-group",
-      "product-gallery",
-      "media-gallery",
-    ];
+    const images = Array.from(
+      document.querySelectorAll("main img, [role='main'] img, img"),
+    );
 
-    let media = null;
-
-    for (const selector of mediaSelectors) {
-      media = document.querySelector(selector);
-
-      if (media) break;
-    }
-
-    // 2. Если gallery не нашли — ищем основной product container
-    if (!media) {
-      const productContainers = [
-        ".product",
-        ".product-section",
-        ".product-template",
-        ".product-main",
-        ".product-information",
-        ".product__info-container",
-        ".product__info-wrapper",
-        ".product__details",
-        ".product-details",
-        "[data-product-section]",
-        "[data-product-handle]",
-        "main[id*='product']",
-        "section[id*='product']",
-      ];
-
-      for (const selector of productContainers) {
-        media = document.querySelector(selector);
-
-        if (media) break;
-      }
-    }
-
-    // 3. Последний fallback — первое большое изображение товара
-    if (!media) {
-      const images = Array.from(
-        document.querySelectorAll(
-          "main img, .product img, [class*='product'] img",
-        ),
-      );
-
-      media = images.find((img) => {
+    const candidates = images
+      .map((img) => {
         const rect = img.getBoundingClientRect();
 
-        return rect.width > 250 && rect.height > 250;
-      });
+        if (!rect.width || !rect.height) return null;
 
-      if (media) {
-        media = media.parentElement;
+        const src =
+          img.currentSrc || img.src || img.getAttribute("data-src") || "";
+
+        const alt = (img.alt || "").toLowerCase();
+
+        const className = (img.className || "").toString().toLowerCase();
+
+        /*
+         * Исключаем маленькие изображения:
+         * logo, icons, thumbnails, swatches и т.д.
+         */
+        const forbidden =
+          /logo|icon|avatar|swatch|thumbnail|thumb|payment|badge|rating|star|cart|search|menu/.test(
+            `${alt} ${className} ${src}`.toLowerCase(),
+          );
+
+        if (forbidden) return null;
+
+        /*
+         * Основное изображение обычно достаточно большое.
+         */
+        if (rect.width < 180 || rect.height < 180) {
+          return null;
+        }
+
+        const area = rect.width * rect.height;
+
+        /*
+         * Предпочитаем изображения, находящиеся
+         * внутри product-related блока.
+         */
+        const productParent = img.closest(
+          [
+            "[data-product]",
+            "[data-product-id]",
+            "[data-product-handle]",
+            ".product",
+            ".product-section",
+            ".product-template",
+            ".product-main",
+            ".product-page",
+            ".product-gallery",
+            ".product__media",
+            ".product-media",
+            ".product-images",
+            ".product-image",
+            ".media-gallery",
+            "product-gallery",
+            "media-gallery",
+          ].join(","),
+        );
+
+        const productBonus = productParent ? 100000000 : 0;
+
+        return {
+          img,
+          rect,
+          area,
+          score: area + productBonus,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score);
+
+    if (!candidates.length) return;
+
+    const image = candidates[0].img;
+
+    /*
+     * FIND A SUITABLE POSITIONING CONTAINER
+     */
+
+    let container = image.parentElement;
+
+    if (!container) return;
+
+    /*
+     * Если картинка находится внутри <a>,
+     * используем сам <a>, чтобы сердце было
+     * привязано именно к изображению.
+     */
+    if (container.tagName === "A") {
+      container.style.position = "relative";
+    } else {
+      /*
+       * Если родитель слишком маленький/не подходит,
+       * поднимаемся на один уровень.
+       */
+      const imageRect = image.getBoundingClientRect();
+      const parentRect = container.getBoundingClientRect();
+
+      if (
+        parentRect.width < imageRect.width * 0.8 ||
+        parentRect.height < imageRect.height * 0.8
+      ) {
+        const parent = container.parentElement;
+
+        if (parent) {
+          container = parent;
+        }
+      }
+
+      const position = window.getComputedStyle(container).position;
+
+      if (position === "static") {
+        container.style.position = "relative";
       }
     }
 
-    if (!media) return;
+    /*
+     * CREATE BUTTON
+     */
 
     const btn = document.createElement("button");
 
     btn.className = "wl-product-btn";
     btn.type = "button";
+
     btn.setAttribute("aria-label", "Add to wishlist");
 
     btn.innerHTML = `
     <span class="wl-product-heart">♡</span>
   `;
 
-    btn.onclick = (e) => {
+    /*
+     * IMPORTANT:
+     * Не даём клику по сердцу открыть товар/zoom,
+     * если изображение находится внутри ссылки.
+     */
+    btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
 
       toggle(handle);
       updateProductHeart();
-    };
+    });
 
-    // Контейнер должен позволять абсолютное позиционирование
-    const computedPosition = window.getComputedStyle(media).position;
-
-    if (computedPosition === "static") {
-      media.style.position = "relative";
-    }
-
-    media.appendChild(btn);
+    container.appendChild(btn);
 
     updateProductHeart();
   }
@@ -403,6 +445,35 @@
   /* ======================
    TOGGLE
   ====================== */
+
+  function showLavaToast(text) {
+    const old = document.querySelector(".wl-toast");
+
+    if (old) old.remove();
+
+    const toast = document.createElement("div");
+
+    toast.className = "wl-toast";
+
+    toast.innerHTML = `
+    ❤️‍🔥 ${text}
+  `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add("show");
+    }, 50);
+
+    setTimeout(() => {
+      toast.classList.remove("show");
+
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 3500);
+  }
+
   async function toggle(handle) {
     const list = await getWishlist();
 
