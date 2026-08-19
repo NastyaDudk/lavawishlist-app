@@ -100,44 +100,55 @@
    HEADER
   ====================== */
   function injectHeader() {
-    // Если кнопка уже существует — ничего не делаем
-    if (document.querySelector(".wl-header-btn")) return;
+    const headerColumns = document.querySelector(".header__columns.spacing");
 
-    // Находим контейнер с иконками хедера
-    const headerActions = document.querySelector(".header-actions");
+    if (!headerColumns) return;
 
-    if (!headerActions) return;
+    let button = document.querySelector(".wl-header-btn");
 
-    // Находим поиск
+    if (!button) {
+      button = document.createElement("button");
+
+      button.className = "wl-header-btn";
+      button.type = "button";
+      button.setAttribute("aria-label", "Wishlist");
+
+      button.innerHTML = `
+      <span class="wl-header-heart">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 21s-6.7-4.3-9.3-8C-.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"/>
+        </svg>
+      </span>
+
+      <span class="wl-count">0</span>
+    `;
+
+      button.addEventListener("click", openDrawer);
+    }
+
+    /*
+     * Сначала переносим кнопку в настоящий header.
+     */
     const search =
-      headerActions.querySelector(".header-actions__search-icon") ||
-      headerActions.querySelector("[aria-label*='Search' i]") ||
-      headerActions.querySelector("a[href*='/search']");
+      headerColumns.querySelector(".header-actions__search-icon") ||
+      headerColumns.querySelector('[aria-label*="search" i]') ||
+      headerColumns.querySelector('a[href*="/search"]') ||
+      headerColumns.querySelector('button[aria-label*="search" i]');
 
-    if (!search) return;
+    if (search) {
+      headerColumns.insertBefore(button, search);
+    } else {
+      headerColumns.appendChild(button);
+    }
 
-    const button = document.createElement("button");
-
-    button.className = "wl-header-btn";
-    button.type = "button";
-    button.setAttribute("aria-label", "Wishlist");
-
-    button.innerHTML = `
-    <span class="wl-header-heart">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          d="M12 21s-6.7-4.3-9.3-8C-.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
-        />
-      </svg>
-    </span>
-
-    <span class="wl-count">0</span>
-  `;
-
-    button.addEventListener("click", openDrawer);
-
-    // Ставим wishlist ПЕРЕД поиском
-    headerActions.insertBefore(button, search);
+    /*
+     * И только ПОСЛЕ переноса удаляем старый .wl-header.
+     */
+    document.querySelectorAll(".wl-header").forEach((el) => {
+      if (el !== headerColumns && !headerColumns.contains(el)) {
+        el.remove();
+      }
+    });
   }
   /* ======================
    HEARTS (CATALOG)
@@ -258,7 +269,9 @@
 
     btn.setAttribute("aria-label", "Add to wishlist");
 
-    btn.innerText = "♡";
+    btn.innerHTML = `
+  <span class="wl-product-heart">♡</span>
+`;
 
     btn.onclick = (e) => {
       e.preventDefault();
@@ -662,25 +675,25 @@
   const style = document.createElement("style");
   style.innerHTML = `
 
-.wl-header {
-  position: fixed !important;
-  width: auto !important;
-  height: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  z-index: 99999 !important;
-}
 
 .wl-header-btn {
-  width: 34px !important;
-  height: 34px !important;
+  position: static !important;
+
+  width: 44px !important;
+  height: 44px !important;
+
   padding: 0 !important;
   margin: 0 !important;
-  display: flex !important;
+
+  display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+
+  flex: 0 0 44px !important;
+
   background: transparent !important;
   border: 0 !important;
+
   cursor: pointer;
 }
 
