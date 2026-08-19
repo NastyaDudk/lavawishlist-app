@@ -100,140 +100,44 @@
    HEADER
   ====================== */
   function injectHeader() {
-    const existing = document.querySelector(".wl-header");
+    // Если кнопка уже существует — ничего не делаем
+    if (document.querySelector(".wl-header-btn")) return;
 
-    const cartSelectors = [
-      ".header__icon--cart",
-      "a[href*='/cart']",
-      "button[name='cart']",
-      "[aria-label*='cart' i]",
-      ".cart-link",
-      ".cart-icon",
-      ".site-header__cart",
-      ".header-cart",
-      "[data-cart-toggle]",
-      "[data-action='open-cart']",
-      "cart-drawer-trigger",
-    ];
+    // Находим контейнер с иконками хедера
+    const headerActions = document.querySelector(".header-actions");
 
-    let cart = null;
+    if (!headerActions) return;
 
-    for (const selector of cartSelectors) {
-      cart = document.querySelector(selector);
+    // Находим поиск
+    const search =
+      headerActions.querySelector(".header-actions__search-icon") ||
+      headerActions.querySelector("[aria-label*='Search' i]") ||
+      headerActions.querySelector("a[href*='/search']");
 
-      if (cart) break;
-    }
+    if (!search) return;
 
-    if (!cart) return;
+    const button = document.createElement("button");
 
-    /*
-     * Если wishlist уже существует —
-     * просто обновляем его позицию относительно корзины.
-     */
-    let el = existing;
+    button.className = "wl-header-btn";
+    button.type = "button";
+    button.setAttribute("aria-label", "Wishlist");
 
-    if (!el) {
-      el = document.createElement("div");
-      el.className = "wl-header";
+    button.innerHTML = `
+    <span class="wl-header-heart">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 21s-6.7-4.3-9.3-8C-.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
+        />
+      </svg>
+    </span>
 
-      el.innerHTML = `
-      <button
-        class="wl-header-btn"
-        type="button"
-        aria-label="Wishlist"
-      >
-        <span class="wl-header-heart">
+    <span class="wl-count">0</span>
+  `;
 
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+    button.addEventListener("click", openDrawer);
 
-            <defs>
-              <linearGradient
-                id="lavaGradient"
-                x1="0"
-                y1="1"
-                x2="0"
-                y2="0"
-              >
-                <stop offset="0%" stop-color="#ff3b5c"/>
-                <stop offset="50%" stop-color="#ff6a00"/>
-                <stop offset="100%" stop-color="#ff0000"/>
-              </linearGradient>
-            </defs>
-
-            <path
-              class="heart-fill"
-              d="M12 21s-6.7-4.3-9.3-8C-0.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
-            />
-
-            <path
-              class="heart-outline"
-              d="M12 21s-6.7-4.3-9.3-8C-0.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
-            />
-
-          </svg>
-
-        </span>
-
-        <span class="wl-count">0</span>
-      </button>
-    `;
-
-      el.querySelector(".wl-header-btn").onclick = openDrawer;
-
-      document.body.appendChild(el);
-    }
-
-    /*
-     * Позиционируем wishlist непосредственно
-     * относительно реальной позиции корзины.
-     */
-    const rect = cart.getBoundingClientRect();
-
-    const heartWidth = 34;
-    const gap = 8;
-
-    el.style.left = Math.max(4, rect.left - heartWidth - gap) + "px";
-
-    el.style.top = rect.top + (rect.height - 34) / 2 + "px";
-  }
-
-  function updateWishlistHeaderPosition() {
-    const wishlist = document.querySelector(".wl-header");
-
-    if (!wishlist) return;
-
-    const cartSelectors = [
-      ".header__icon--cart",
-      "a[href*='/cart']",
-      "button[name='cart']",
-      "[aria-label*='cart' i]",
-      ".cart-link",
-      ".cart-icon",
-      ".site-header__cart",
-      ".header-cart",
-      "[data-cart-toggle]",
-      "[data-action='open-cart']",
-      "cart-drawer-trigger",
-    ];
-
-    let cart = null;
-
-    for (const selector of cartSelectors) {
-      cart = document.querySelector(selector);
-
-      if (cart) break;
-    }
-
-    if (!cart) return;
-
-    const rect = cart.getBoundingClientRect();
-
-    const heartWidth = 34;
-    const gap = 8;
-
-    wishlist.style.left = Math.max(4, rect.left - heartWidth - gap) + "px";
-
-    wishlist.style.top = rect.top + (rect.height - 34) / 2 + "px";
+    // Ставим wishlist ПЕРЕД поиском
+    headerActions.insertBefore(button, search);
   }
   /* ======================
    HEARTS (CATALOG)
@@ -1098,12 +1002,8 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     refreshWishlistUI();
-    updateWishlistHeaderPosition();
     cleanupWishlist();
   });
-
-  window.addEventListener("resize", updateWishlistHeaderPosition);
-  window.addEventListener("scroll", updateWishlistHeaderPosition);
 
   document.addEventListener("shopify:section:load", refreshWishlistUI);
   document.addEventListener("shopify:section:select", refreshWishlistUI);
