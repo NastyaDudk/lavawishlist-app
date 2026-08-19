@@ -100,48 +100,51 @@
    HEADER
   ====================== */
   function injectHeader() {
+    const existing = document.querySelector(".wl-header");
+
     const cartSelectors = [
-      'a[href="/cart"]',
-      'a[href*="/cart"]',
-      'button[name="cart"]',
-      'button[aria-label*="cart" i]',
-      'button[aria-label*="bag" i]',
-      '[aria-label*="cart" i]',
-      '[aria-label*="bag" i]',
       ".header__icon--cart",
+      "a[href*='/cart']",
+      "button[name='cart']",
+      "[aria-label*='cart' i]",
+      ".cart-link",
       ".cart-icon",
-      "[data-cart-icon]",
+      ".site-header__cart",
+      ".header-cart",
+      "[data-cart-toggle]",
+      "[data-action='open-cart']",
+      "cart-drawer-trigger",
     ];
 
     let cart = null;
 
     for (const selector of cartSelectors) {
-      const element = document.querySelector(selector);
+      cart = document.querySelector(selector);
 
-      if (element) {
-        cart = element;
-        break;
-      }
+      if (cart) break;
     }
 
     if (!cart) return;
 
-    let el = document.querySelector(".wl-header");
+    /*
+     * Если wishlist уже существует —
+     * просто обновляем его позицию относительно корзины.
+     */
+    let el = existing;
 
     if (!el) {
       el = document.createElement("div");
-
       el.className = "wl-header";
 
       el.innerHTML = `
       <button
-        type="button"
         class="wl-header-btn"
+        type="button"
         aria-label="Wishlist"
       >
         <span class="wl-header-heart">
 
-          <svg viewBox="0 0 24 24">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
 
             <defs>
               <linearGradient
@@ -175,22 +178,62 @@
       </button>
     `;
 
-      el.querySelector(".wl-header-btn").addEventListener("click", openDrawer);
+      el.querySelector(".wl-header-btn").onclick = openDrawer;
+
+      document.body.appendChild(el);
     }
-
-    const parent = cart.parentElement;
-
-    if (!parent) return;
 
     /*
-     * Сердце всегда находится
-     * непосредственно перед корзиной.
+     * Позиционируем wishlist непосредственно
+     * относительно реальной позиции корзины.
      */
-    if (el.parentElement !== parent || el.nextElementSibling !== cart) {
-      parent.insertBefore(el, cart);
+    const rect = cart.getBoundingClientRect();
+
+    const heartWidth = 34;
+    const gap = 8;
+
+    el.style.left = Math.max(4, rect.left - heartWidth - gap) + "px";
+
+    el.style.top = rect.top + (rect.height - 34) / 2 + "px";
+  }
+
+  function updateWishlistHeaderPosition() {
+    const wishlist = document.querySelector(".wl-header");
+
+    if (!wishlist) return;
+
+    const cartSelectors = [
+      ".header__icon--cart",
+      "a[href*='/cart']",
+      "button[name='cart']",
+      "[aria-label*='cart' i]",
+      ".cart-link",
+      ".cart-icon",
+      ".site-header__cart",
+      ".header-cart",
+      "[data-cart-toggle]",
+      "[data-action='open-cart']",
+      "cart-drawer-trigger",
+    ];
+
+    let cart = null;
+
+    for (const selector of cartSelectors) {
+      cart = document.querySelector(selector);
+
+      if (cart) break;
     }
 
-    updateCount();
+    if (!cart) return;
+
+    const rect = cart.getBoundingClientRect();
+
+    const heartWidth = 34;
+    const gap = 8;
+
+    wishlist.style.left = Math.max(4, rect.left - heartWidth - gap) + "px";
+
+    wishlist.style.top = rect.top + (rect.height - 34) / 2 + "px";
   }
   /* ======================
    HEARTS (CATALOG)
@@ -279,89 +322,52 @@
   function injectProductHeart() {
     if (!location.pathname.includes("/products/")) return;
 
-    const handle = location.pathname.split("/products/")[1]?.split("/")[0];
+    if (document.querySelector(".wl-product-btn")) return;
 
-    if (!handle) return;
-
-    // Если кнопка уже есть — только обновляем состояние
-    const existing = document.querySelector(".wl-product-btn");
-
-    if (existing) {
-      updateProductHeart();
-      return;
-    }
-
-    /*
-     * Ищем название товара.
-     * Это намного универсальнее, чем искать картинку.
-     */
     const titleSelectors = [
-      "main h1",
-      ".product__title h1",
-      ".product-title",
       ".product__title",
+      ".product-title",
       "[data-product-title]",
+      ".product__heading",
+      ".product-info h1",
+      ".product-information h1",
+      ".product__info h1",
+      "main h1",
       "h1",
     ];
 
     let title = null;
 
     for (const selector of titleSelectors) {
-      const element = document.querySelector(selector);
+      title = document.querySelector(selector);
 
-      if (element && element.textContent.trim()) {
-        title = element;
-        break;
-      }
+      if (title) break;
     }
 
     if (!title) return;
 
-    /*
-     * Создаём кнопку отдельно.
-     * Она НЕ находится внутри ссылки на картинку.
-     */
     const btn = document.createElement("button");
 
     btn.className = "wl-product-btn";
+
     btn.type = "button";
-    btn.dataset.handle = handle;
+
+    btn.setAttribute("aria-label", "Add to wishlist");
 
     btn.innerText = "♡";
 
-    btn.addEventListener(
-      "pointerdown",
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      },
-      true,
-    );
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-    btn.addEventListener(
-      "click",
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
+      const handle = location.pathname.split("/products/")[1]?.split("/")[0];
 
-        toggle(handle);
-      },
-      true,
-    );
+      if (!handle) return;
 
-    /*
-     * Обёртка для title + heart
-     */
-    const wrapper = document.createElement("div");
+      toggle(handle);
+    };
 
-    wrapper.className = "wl-product-title-row";
-
-    title.parentNode.insertBefore(wrapper, title);
-
-    wrapper.appendChild(title);
-    wrapper.appendChild(btn);
+    title.insertAdjacentElement("afterend", btn);
 
     updateProductHeart();
   }
@@ -752,47 +758,47 @@
   const style = document.createElement("style");
   style.innerHTML = `
 
-.wl-header {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  position: relative;
-
-  margin: 0 6px;
-
-  z-index: 10000;
+  .wl-header {
+  position: fixed;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0;
+  z-index: 1000000;
+  pointer-events: none;
 }
 
 .wl-header-btn {
   position: relative;
+  top: 0;
+  left: 0;
 
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
 
   padding: 0;
+  margin: 0;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background: transparent;
+  background: none;
   border: none;
 
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .wl-header-heart {
-  width: 26px;
-  height: 26px;
-
+  width: 27px;
+  height: 27px;
   display: block;
 }
 
 .wl-header-heart svg {
   width: 100%;
   height: 100%;
-
   display: block;
 }
 
@@ -857,32 +863,36 @@
 }
 
 .wl-product-btn {
-  flex: 0 0 auto;
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
 
   width: 34px;
   height: 34px;
+
+  margin-left: 10px;
 
   padding: 0;
 
   border-radius: 50%;
 
   background: #fff;
-  border: 1px solid #ddd;
 
-  font-size: 21px;
+  border: 1px solid #eee;
+
+  font-size: 22px;
   line-height: 1;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 
   cursor: pointer;
 
-  z-index: 1000;
+  vertical-align: middle;
+
+  z-index: 10;
 }
 
 .wl-product-btn:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .wl-product-btn:active {
@@ -1098,8 +1108,12 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     refreshWishlistUI();
+    updateWishlistHeaderPosition();
     cleanupWishlist();
   });
+
+  window.addEventListener("resize", updateWishlistHeaderPosition);
+  window.addEventListener("scroll", updateWishlistHeaderPosition);
 
   document.addEventListener("shopify:section:load", refreshWishlistUI);
   document.addEventListener("shopify:section:select", refreshWishlistUI);
