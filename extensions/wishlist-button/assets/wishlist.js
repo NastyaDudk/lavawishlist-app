@@ -758,36 +758,26 @@
   const style = document.createElement("style");
   style.innerHTML = `
 
-  .wl-header {
-  position: fixed;
-  width: 34px;
-  height: 34px;
-  margin: 0;
-  padding: 0;
-  z-index: 1000000;
-  pointer-events: none;
+.wl-header {
+  position: fixed !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 99999 !important;
 }
 
 .wl-header-btn {
-  position: relative;
-  top: 0;
-  left: 0;
-
-  width: 34px;
-  height: 34px;
-
-  padding: 0;
-  margin: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: none;
-  border: none;
-
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: 0 !important;
   cursor: pointer;
-  pointer-events: auto;
 }
 
 .wl-header-heart {
