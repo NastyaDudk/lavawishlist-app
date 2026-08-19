@@ -100,19 +100,48 @@
    HEADER
   ====================== */
   function injectHeader() {
-    const headerColumns = document.querySelector(".header__columns.spacing");
+    /*
+     * Ищем настоящий header actions container
+     */
+    const possibleContainers = [
+      ".header-actions",
+      ".header__actions",
+      ".header__icons",
+      ".header-actions__icons",
+      ".header__columns.spacing",
+      ".header__column--right",
+      ".header__column--actions",
+    ];
 
-    if (!headerColumns) return;
+    let actionsContainer = null;
 
-    // Удаляем любые старые/лишние wishlist-контейнеры
-    document.querySelectorAll(".wl-header").forEach((el) => {
-      el.remove();
-    });
+    for (const selector of possibleContainers) {
+      const container = document.querySelector(selector);
 
-    // Ищем существующую кнопку
-    let button = document.querySelector(".wl-header-btn");
+      if (!container) continue;
 
-    // Если кнопки нет — создаём
+      const search = container.querySelector(
+        'a[href*="/search"], [aria-label*="search" i], .search-modal__toggle',
+      );
+
+      const cart = container.querySelector(
+        'a[href*="/cart"], [aria-label*="cart" i], .header__icon--cart, .cart-icon',
+      );
+
+      if (search || cart) {
+        actionsContainer = container;
+        break;
+      }
+    }
+
+    if (!actionsContainer) return;
+
+    /*
+     * Ищем нашу кнопку.
+     * Если уже существует — повторно не создаём.
+     */
+    let button = actionsContainer.querySelector(".wl-header-btn");
+
     if (!button) {
       button = document.createElement("button");
 
@@ -123,7 +152,9 @@
       button.innerHTML = `
       <span class="wl-header-heart">
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 21s-6.7-4.3-9.3-8C-.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"/>
+          <path
+            d="M12 21s-6.7-4.3-9.3-8C-.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
+          />
         </svg>
       </span>
 
@@ -133,19 +164,102 @@
       button.addEventListener("click", openDrawer);
     }
 
-    // Ищем именно поиск
-    const search =
-      headerColumns.querySelector(".header-actions__search-icon") ||
-      headerColumns.querySelector('[aria-label*="search" i]') ||
-      headerColumns.querySelector('a[href*="/search"]') ||
-      headerColumns.querySelector('button[aria-label*="search" i]');
+    /*
+     * Ищем Cart
+     */
+    const cart = actionsContainer.querySelector(
+      'a[href*="/cart"], [aria-label*="cart" i], .header__icon--cart, .cart-icon',
+    );
 
-    // Wishlist -> ПЕРЕД поиском
-    if (search) {
-      headerColumns.insertBefore(button, search);
+    /*
+     * Вставляем Wishlist непосредственно перед Cart
+     */
+    if (cart) {
+      actionsContainer.insertBefore(button, cart);
     } else {
-      headerColumns.appendChild(button);
+      actionsContainer.appendChild(button);
     }
+  }
+
+  /* ======================
+   HEARTS (CATALOG)
+  ====================== */
+  async function injectHearts() {
+    document.querySelectorAll("a[href*='/products/']").forEach((link) => {
+      const selectors = [
+        ".resource-card",
+        ".card-wrapper",
+        ".card",
+        ".product-card",
+        ".product-item",
+        ".product-grid-item",
+        ".grid__item",
+        ".grid-product",
+        ".product-block",
+        ".collection-product-card",
+        ".collection-grid-item",
+        ".boost-pfs-filter-product-item",
+        ".product",
+        ".product-grid__item",
+        ".product-loop",
+        ".item-product",
+        ".product-card-wrapper",
+        ".thumbnail",
+        "li[class*=product]",
+        "[data-product-id]",
+        "[data-product-handle]",
+      ];
+
+      let card = null;
+
+      for (const selector of selectors) {
+        card = link.closest(selector);
+        if (card) break;
+      }
+
+      if (!card) return;
+
+      if (card.querySelector(".wl-btn")) return;
+
+      const handle = link.href.split("/products/")[1]?.split("/")[0];
+      if (!handle) return;
+
+      // 🔥 СОЗДАЕМ ОВЕРЛЕЙ (НЕ ВНУТРИ <a>)
+      const wrapper = document.createElement("div");
+      wrapper.className = "wl-overlay";
+
+      const btn = document.createElement("button");
+      btn.className = "wl-btn";
+      btn.dataset.handle = handle;
+      btn.innerText = "♡";
+
+      btn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggle(handle);
+      };
+
+      wrapper.appendChild(btn);
+
+      // ищем контейнер изображения
+      const media =
+        card.querySelector(".product-media") ||
+        card.querySelector(".product-media-container") ||
+        card.querySelector(".product__media") ||
+        card.querySelector(".card__media") ||
+        card.querySelector(".card-media") ||
+        card.querySelector(".media") ||
+        card.querySelector(".resource-card__media") ||
+        card.querySelector(".resource-card__image") ||
+        card.querySelector("img")?.parentElement;
+
+      const target = media || card;
+
+      target.style.position = "relative";
+      target.appendChild(wrapper);
+    });
+
+    await sync();
   }
   /* ======================
    PRODUCT PAGE HEART
@@ -154,54 +268,89 @@
   function injectProductHeart() {
     if (!location.pathname.includes("/products/")) return;
 
-    if (document.querySelector(".wl-product-btn")) return;
+    const handle = location.pathname.split("/products/")[1]?.split("/")[0];
 
+    if (!handle) return;
+
+    // Если кнопка уже есть — только обновляем состояние
+    const existing = document.querySelector(".wl-product-btn");
+
+    if (existing) {
+      updateProductHeart();
+      return;
+    }
+
+    /*
+     * Ищем название товара.
+     * Это намного универсальнее, чем искать картинку.
+     */
     const titleSelectors = [
-      ".product__title",
-      ".product-title",
-      "[data-product-title]",
-      ".product__heading",
-      ".product-info h1",
-      ".product-information h1",
-      ".product__info h1",
       "main h1",
+      ".product__title h1",
+      ".product-title",
+      ".product__title",
+      "[data-product-title]",
       "h1",
     ];
 
     let title = null;
 
     for (const selector of titleSelectors) {
-      title = document.querySelector(selector);
+      const element = document.querySelector(selector);
 
-      if (title) break;
+      if (element && element.textContent.trim()) {
+        title = element;
+        break;
+      }
     }
 
     if (!title) return;
 
+    /*
+     * Создаём кнопку отдельно.
+     * Она НЕ находится внутри ссылки на картинку.
+     */
     const btn = document.createElement("button");
 
     btn.className = "wl-product-btn";
-
     btn.type = "button";
+    btn.dataset.handle = handle;
 
-    btn.setAttribute("aria-label", "Add to wishlist");
+    btn.innerText = "♡";
 
-    btn.innerHTML = `
-  <span class="wl-product-heart">♡</span>
-`;
+    btn.addEventListener(
+      "pointerdown",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      },
+      true,
+    );
 
-    btn.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    btn.addEventListener(
+      "click",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
 
-      const handle = location.pathname.split("/products/")[1]?.split("/")[0];
+        toggle(handle);
+      },
+      true,
+    );
 
-      if (!handle) return;
+    /*
+     * Обёртка для title + heart
+     */
+    const wrapper = document.createElement("div");
 
-      toggle(handle);
-    };
+    wrapper.className = "wl-product-title-row";
 
-    title.insertAdjacentElement("afterend", btn);
+    title.parentNode.insertBefore(wrapper, title);
+
+    wrapper.appendChild(title);
+    wrapper.appendChild(btn);
 
     updateProductHeart();
   }
@@ -592,25 +741,27 @@
   const style = document.createElement("style");
   style.innerHTML = `
 
+
 .wl-header-btn {
-  position: relative !important;
+  position: relative;
+  top: 0;
+  left: 0;
 
-  width: 44px !important;
-  height: 44px !important;
+  width: 34px;
+  height: 34px;
 
-  padding: 0 !important;
-  margin: 0 !important;
+  padding: 0;
+  margin: 0;
 
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  flex: 0 0 44px !important;
-
-  background: transparent !important;
-  border: 0 !important;
+  background: none;
+  border: none;
 
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .wl-header-heart {
@@ -686,36 +837,32 @@
 }
 
 .wl-product-btn {
-  display: inline-flex;
-
-  align-items: center;
-  justify-content: center;
+  flex: 0 0 auto;
 
   width: 34px;
   height: 34px;
-
-  margin-left: 10px;
 
   padding: 0;
 
   border-radius: 50%;
 
   background: #fff;
+  border: 1px solid #ddd;
 
-  border: 1px solid #eee;
-
-  font-size: 22px;
+  font-size: 21px;
   line-height: 1;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   cursor: pointer;
 
-  vertical-align: middle;
-
-  z-index: 10;
+  z-index: 1000;
 }
 
 .wl-product-btn:hover {
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
 .wl-product-btn:active {
