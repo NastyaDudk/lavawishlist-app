@@ -251,9 +251,11 @@
   /* ======================
    PRODUCT PAGE HEART
   ====================== */
+
   function injectProductHeart() {
     if (!location.pathname.includes("/products/")) return;
 
+    // Если уже есть — ничего не создаём
     if (document.querySelector(".wl-product-btn")) return;
 
     const handle = location.pathname.split("/products/")[1]?.split("/")[0];
@@ -261,161 +263,100 @@
     if (!handle) return;
 
     /*
-     * FIND MAIN PRODUCT IMAGE
+     * Ищем главное изображение товара.
+     * Не привязываемся к конкретной теме Shopify.
+     */
+    const images = Array.from(document.querySelectorAll("main img"));
+
+    if (!images.length) return;
+
+    const visibleImages = images.filter((img) => {
+      const rect = img.getBoundingClientRect();
+
+      return (
+        rect.width > 150 &&
+        rect.height > 150 &&
+        rect.bottom > 0 &&
+        rect.right > 0
+      );
+    });
+
+    if (!visibleImages.length) return;
+
+    // Берём самое большое видимое изображение
+    const image = visibleImages.sort((a, b) => {
+      const aRect = a.getBoundingClientRect();
+      const bRect = b.getBoundingClientRect();
+
+      return bRect.width * bRect.height - aRect.width * aRect.height;
+    })[0];
+
+    /*
+     * Кнопка создаётся в BODY,
+     * а НЕ внутри ссылки с картинкой.
      *
-     * Не привязываемся к конкретной Shopify theme.
-     * Ищем реальные <img> и выбираем самое крупное
-     * изображение в product area.
+     * Поэтому клик по сердцу больше
+     * не должен открывать image/lightbox.
      */
-
-    const images = Array.from(
-      document.querySelectorAll("main img, [role='main'] img, img"),
-    );
-
-    const candidates = images
-      .map((img) => {
-        const rect = img.getBoundingClientRect();
-
-        if (!rect.width || !rect.height) return null;
-
-        const src =
-          img.currentSrc || img.src || img.getAttribute("data-src") || "";
-
-        const alt = (img.alt || "").toLowerCase();
-
-        const className = (img.className || "").toString().toLowerCase();
-
-        /*
-         * Исключаем маленькие изображения:
-         * logo, icons, thumbnails, swatches и т.д.
-         */
-        const forbidden =
-          /logo|icon|avatar|swatch|thumbnail|thumb|payment|badge|rating|star|cart|search|menu/.test(
-            `${alt} ${className} ${src}`.toLowerCase(),
-          );
-
-        if (forbidden) return null;
-
-        /*
-         * Основное изображение обычно достаточно большое.
-         */
-        if (rect.width < 180 || rect.height < 180) {
-          return null;
-        }
-
-        const area = rect.width * rect.height;
-
-        /*
-         * Предпочитаем изображения, находящиеся
-         * внутри product-related блока.
-         */
-        const productParent = img.closest(
-          [
-            "[data-product]",
-            "[data-product-id]",
-            "[data-product-handle]",
-            ".product",
-            ".product-section",
-            ".product-template",
-            ".product-main",
-            ".product-page",
-            ".product-gallery",
-            ".product__media",
-            ".product-media",
-            ".product-images",
-            ".product-image",
-            ".media-gallery",
-            "product-gallery",
-            "media-gallery",
-          ].join(","),
-        );
-
-        const productBonus = productParent ? 100000000 : 0;
-
-        return {
-          img,
-          rect,
-          area,
-          score: area + productBonus,
-        };
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.score - a.score);
-
-    if (!candidates.length) return;
-
-    const image = candidates[0].img;
-
-    /*
-     * FIND A SUITABLE POSITIONING CONTAINER
-     */
-
-    let container = image.parentElement;
-
-    if (!container) return;
-
-    /*
-     * Если картинка находится внутри <a>,
-     * используем сам <a>, чтобы сердце было
-     * привязано именно к изображению.
-     */
-    if (container.tagName === "A") {
-      container.style.position = "relative";
-    } else {
-      /*
-       * Если родитель слишком маленький/не подходит,
-       * поднимаемся на один уровень.
-       */
-      const imageRect = image.getBoundingClientRect();
-      const parentRect = container.getBoundingClientRect();
-
-      if (
-        parentRect.width < imageRect.width * 0.8 ||
-        parentRect.height < imageRect.height * 0.8
-      ) {
-        const parent = container.parentElement;
-
-        if (parent) {
-          container = parent;
-        }
-      }
-
-      const position = window.getComputedStyle(container).position;
-
-      if (position === "static") {
-        container.style.position = "relative";
-      }
-    }
-
-    /*
-     * CREATE BUTTON
-     */
-
     const btn = document.createElement("button");
 
     btn.className = "wl-product-btn";
     btn.type = "button";
+    btn.dataset.handle = handle;
 
-    btn.setAttribute("aria-label", "Add to wishlist");
-
-    btn.innerHTML = `
-    <span class="wl-product-heart">♡</span>
-  `;
+    btn.innerText = "♡";
 
     /*
-     * IMPORTANT:
-     * Не даём клику по сердцу открыть товар/zoom,
-     * если изображение находится внутри ссылки.
+     * Очень важно:
+     * останавливаем события ещё на pointerdown,
+     * чтобы тема не успевала открыть image gallery.
      */
-    btn.addEventListener("click", (e) => {
+    const stopEvent = (e) => {
       e.preventDefault();
       e.stopPropagation();
 
-      toggle(handle);
-      updateProductHeart();
-    });
+      if (e.stopImmediatePropagation) {
+        e.stopImmediatePropagation();
+      }
+    };
 
-    container.appendChild(btn);
+    btn.addEventListener("pointerdown", stopEvent, true);
+
+    btn.addEventListener("mousedown", stopEvent, true);
+
+    btn.addEventListener("touchstart", stopEvent, true);
+
+    btn.addEventListener(
+      "click",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        toggle(handle);
+      },
+      true,
+    );
+
+    document.body.appendChild(btn);
+
+    /*
+     * Позиционируем кнопку относительно изображения.
+     */
+    function positionProductHeart() {
+      const rect = image.getBoundingClientRect();
+
+      btn.style.position = "fixed";
+
+      btn.style.top = `${rect.top + 16}px`;
+
+      btn.style.left = `${rect.right - 58}px`;
+    }
+
+    positionProductHeart();
+
+    window.addEventListener("resize", positionProductHeart);
+
+    window.addEventListener("scroll", positionProductHeart, { passive: true });
 
     updateProductHeart();
   }
@@ -886,47 +827,28 @@ header,
 
 /* CARD */
 
-
-/* PRODUCT PAGE */
 .wl-product-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-
+  position: fixed;
   width: 42px;
   height: 42px;
-
-  padding: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
   border-radius: 50%;
-
   background: #fff;
   border: 1px solid #eee;
 
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
 
-  cursor: pointer;
-
-  z-index: 999;
-
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.wl-product-heart {
   display: flex;
   align-items: center;
   justify-content: center;
 
-  width: 100%;
-  height: 100%;
+  cursor: pointer;
 
-  line-height: 1;
+  z-index: 999999;
+
+  padding: 0;
+
+  pointer-events: auto;
 }
 
 .wl-product-btn:hover {
@@ -936,6 +858,7 @@ header,
 .wl-product-btn:active {
   transform: scale(.95);
 }
+
 
 /* DRAWER */
 #wl-overlay {
