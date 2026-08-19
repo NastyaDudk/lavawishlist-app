@@ -6,58 +6,82 @@
   const LS_TIME = "wishlist_cache_time";
   const TTL = 1000 * 60 * 5; // 5 минут
 
+  /* =========================================================
+     STORAGE
+  ========================================================= */
+
   window.addEventListener("storage", (e) => {
-    if (e.key === LS_KEY) {
+    if (e.key !== LS_KEY) return;
+
+    try {
       wishlistCache = JSON.parse(e.newValue || "[]");
-      updateCount();
-      sync();
+    } catch {
+      wishlistCache = [];
     }
+
+    updateCount();
+    sync();
   });
-  /* ======================
-   STORAGE
-  ====================== */
+
   async function getWishlist(force = false) {
-    // 👉 1. память
+    /* 1. MEMORY */
     if (!force && wishlistCache) {
       return wishlistCache;
     }
 
-    // 👉 2. localStorage
+    /* 2. LOCAL STORAGE */
     const cached = localStorage.getItem(LS_KEY);
     const time = localStorage.getItem(LS_TIME);
 
-    if (!force && cached && time && Date.now() - time < TTL) {
-      wishlistCache = JSON.parse(cached);
-      return wishlistCache;
+    if (!force && cached && time && Date.now() - Number(time) < TTL) {
+      try {
+        wishlistCache = JSON.parse(cached);
+        return wishlistCache;
+      } catch {
+        wishlistCache = null;
+      }
     }
 
-    // 👉 3. защита от дублей
+    /* 3. PREVENT DUPLICATE REQUESTS */
     if (!force && wishlistPromise) {
       return wishlistPromise;
     }
 
-    // 👉 4. fetch
+    /* 4. SERVER */
     wishlistPromise = fetch("/apps/wishlist")
-      .then((r) => r.json())
-      .then((data) => {
-        wishlistCache = data;
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Wishlist GET failed: ${res.status}`);
+        }
 
-        localStorage.setItem(LS_KEY, JSON.stringify(data));
+        return res.json();
+      })
+      .then((data) => {
+        wishlistCache = Array.isArray(data) ? data : [];
+
+        localStorage.setItem(LS_KEY, JSON.stringify(wishlistCache));
+
         localStorage.setItem(LS_TIME, Date.now());
 
         wishlistPromise = null;
-        return data;
+
+        return wishlistCache;
       })
-      .catch(() => {
+      .catch((error) => {
+        console.log("Wishlist GET error:", error);
+
         wishlistPromise = null;
-        return [];
+
+        return wishlistCache || [];
       });
 
     return wishlistPromise;
   }
-  /* ======================
-   COUNT
-  ====================== */
+
+  /* =========================================================
+     COUNT
+  ========================================================= */
+
   async function updateCount() {
     const list = await getWishlist();
     const count = list.length;
@@ -66,19 +90,29 @@
       el.innerText = count;
     });
 
-    const heart = document.querySelector(".wl-header-heart");
-
-    if (heart) {
+    /*
+     * Обновляем fill только у header-heart.
+     * Никаких .wl-header здесь нет.
+     */
+    document.querySelectorAll(".wl-header-heart").forEach((heart) => {
       heart.style.setProperty("--fill", Math.min(1, count / 10));
-    }
+    });
   }
+
+  /* =========================================================
+     CLEANUP
+  ========================================================= */
+
   async function cleanupWishlist() {
     const list = await getWishlist();
+
+    if (!list.length) return;
 
     const checks = await Promise.all(
       list.map(async (item) => {
         try {
           const res = await fetch(`/products/${item.handle}.js`);
+
           return res.ok;
         } catch {
           return false;
@@ -86,28 +120,81 @@
       }),
     );
 
-    const valid = list.filter((_, i) => checks[i]);
+    const valid = list.filter((_, index) => checks[index]);
 
     wishlistCache = valid;
 
     localStorage.setItem(LS_KEY, JSON.stringify(valid));
+
     localStorage.setItem(LS_TIME, Date.now());
 
     updateCount();
+    sync();
   }
 
-  /* ======================
-   HEADER
-  ====================== */
-  function injectHeader() {
-    if (document.querySelector(".wl-header")) return;
+  /* =========================================================
+     HEADER
 
-    const cartSelectors = [
-      "a[href*='/cart']",
-      "button[name='cart']",
-      "[aria-label*='Cart' i]",
-      "[aria-label*='cart' i]",
-      ".header__icon--cart",
+     ВАЖНО:
+     НЕТ .wl-header.
+
+     Wishlist button физически вставляется
+     в тот же DOM-контейнер, где Search / Cart.
+  ========================================================= */
+
+  function findHeaderContainer() {
+    /*
+     * 1. Точная структура твоей темы
+     */
+    const headerColumns = document.querySelector(
+      ".header__columns.spacing--style",
+    );
+
+    if (headerColumns) {
+      return headerColumns;
+    }
+
+    /*
+     * 2. Другие варианты Shopify themes
+     */
+    const possibleHeaders = [
+      ".header__columns",
+      ".header-actions",
+      ".header__actions",
+      ".header-actions__icons",
+      ".header__icons",
+      ".header-icons",
+      ".site-header__actions",
+      ".header-wrapper",
+    ];
+
+    for (const selector of possibleHeaders) {
+      const element = document.querySelector(selector);
+
+      if (element) {
+        return element;
+      }
+    }
+
+    /*
+     * 3. Последний fallback:
+     * ищем Cart и используем его родителя.
+     */
+    const cart = findCartElement();
+
+    if (cart && cart.parentElement) {
+      return cart.parentElement;
+    }
+
+    return null;
+  }
+
+  function findCartElement() {
+    const selectors = [
+      '[aria-label*="cart" i]',
+      '[aria-label*="basket" i]',
+      'a[href*="/cart"]',
+      'button[name="cart"]',
       ".header__icon--cart",
       ".cart-link",
       ".cart-icon",
@@ -118,59 +205,188 @@
       "cart-drawer-trigger",
     ];
 
-    let cart = null;
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
 
-    for (const selector of cartSelectors) {
-      cart = document.querySelector(selector);
-
-      if (cart) break;
+      if (element) {
+        return element;
+      }
     }
 
-    if (!cart) return;
+    return null;
+  }
 
-    const el = document.createElement("div");
-    el.className = "wl-header";
+  function findSearchElement(container) {
+    if (!container) return null;
 
-    el.innerHTML = `
-    <button class="wl-header-btn" type="button" aria-label="Wishlist">
+    const selectors = [
+      '[aria-label*="search" i]',
+      'a[href*="/search"]',
+      "button[type='submit'][aria-label*='search' i]",
+      ".header-actions__search-icon",
+      ".header__icon--search",
+      ".search-icon",
+      "[data-action='open-search']",
+    ];
+
+    for (const selector of selectors) {
+      const element = container.querySelector(selector);
+
+      if (element) {
+        return element;
+      }
+    }
+
+    return null;
+  }
+
+  function createHeaderWishlistButton() {
+    const button = document.createElement("button");
+
+    button.className = "wl-header-btn";
+    button.type = "button";
+    button.setAttribute("aria-label", "Wishlist");
+
+    button.innerHTML = `
       <span class="wl-header-heart">
-
-        <svg viewBox="0 0 24 24">
-
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
+        >
           <defs>
-            <linearGradient id="lavaGradient" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stop-color="#ff3b5c"/>
-              <stop offset="50%" stop-color="#ff6a00"/>
-              <stop offset="100%" stop-color="#ff0000"/>
+            <linearGradient
+              id="wishlistLavaGradient"
+              x1="0"
+              y1="1"
+              x2="0"
+              y2="0"
+            >
+              <stop
+                offset="0%"
+                stop-color="#ff3b5c"
+              />
+              <stop
+                offset="50%"
+                stop-color="#ff6a00"
+              />
+              <stop
+                offset="100%"
+                stop-color="#ff0000"
+              />
             </linearGradient>
           </defs>
 
           <path
             class="heart-fill"
-            d="M12 21s-6.7-4.3-9.3-8C-0.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
+            d="M12 21s-6.7-4.3-9.3-8C-.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
           />
 
           <path
             class="heart-outline"
-            d="M12 21s-6.7-4.3-9.3-8C-0.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
+            d="M12 21s-6.7-4.3-9.3-8C-.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
           />
-
         </svg>
-
       </span>
 
       <span class="wl-count">0</span>
-    </button>
-  `;
+    `;
 
-    el.querySelector(".wl-header-btn").onclick = openDrawer;
+    /*
+     * ВАЖНО:
+     * никакого openDrawer().
+     *
+     * Header heart просто является wishlist button.
+     */
+    button.addEventListener("click", () => {
+      /*
+       * Пока header wishlist не открывает drawer.
+       * Сам wishlist работает через toggle.
+       *
+       * Здесь намеренно ничего нет.
+       */
+    });
 
-    // Ставим wishlist непосредственно ПЕРЕД корзиной
-    cart.parentNode.insertBefore(el, cart);
+    return button;
   }
-  /* ======================
-   HEARTS (CATALOG)
-  ====================== */
+
+  function injectHeader() {
+    const headerContainer = findHeaderContainer();
+
+    if (!headerContainer) return;
+
+    /*
+     * Удаляем старую неправильную конструкцию,
+     * если она осталась от предыдущей версии.
+     */
+    document.querySelectorAll(".wl-header").forEach((el) => {
+      el.remove();
+    });
+
+    /*
+     * Удаляем дубликаты header button,
+     * оставляя только один.
+     */
+    const buttons = Array.from(document.querySelectorAll(".wl-header-btn"));
+
+    buttons.forEach((button, index) => {
+      if (index > 0 || !headerContainer.contains(button)) {
+        button.remove();
+      }
+    });
+
+    let button = headerContainer.querySelector(".wl-header-btn");
+
+    if (!button) {
+      button = createHeaderWishlistButton();
+    }
+
+    /*
+     * Если button уже находится в правильном контейнере —
+     * ничего лишнего не делаем.
+     */
+    if (button.parentElement === headerContainer) {
+      return;
+    }
+
+    const cart = findCartElement();
+    const search = findSearchElement(headerContainer);
+
+    /*
+     * Пытаемся поставить wishlist непосредственно
+     * рядом с Search / Cart.
+     */
+
+    if (cart && headerContainer.contains(cart)) {
+      headerContainer.insertBefore(button, cart);
+      return;
+    }
+
+    if (search) {
+      /*
+       * Search -> Wishlist
+       */
+      if (search.parentElement === headerContainer) {
+        headerContainer.insertBefore(button, search.nextSibling);
+      } else {
+        headerContainer.appendChild(button);
+      }
+
+      return;
+    }
+
+    /*
+     * Fallback
+     */
+    headerContainer.appendChild(button);
+  }
+
+  /* =========================================================
+     CATALOG HEARTS
+
+     button.wl-btn
+  ========================================================= */
+
   async function injectHearts() {
     document.querySelectorAll("a[href*='/products/']").forEach((link) => {
       const selectors = [
@@ -201,34 +417,51 @@
 
       for (const selector of selectors) {
         card = link.closest(selector);
+
         if (card) break;
       }
 
       if (!card) return;
 
-      if (card.querySelector(".wl-btn")) return;
+      /*
+       * Не создаём второй heart.
+       */
+      if (card.querySelector(".wl-btn[data-wishlist-catalog]")) {
+        return;
+      }
 
       const handle = link.href.split("/products/")[1]?.split("/")[0];
+
       if (!handle) return;
 
-      // 🔥 СОЗДАЕМ ОВЕРЛЕЙ (НЕ ВНУТРИ <a>)
-      const wrapper = document.createElement("div");
-      wrapper.className = "wl-overlay";
-
       const btn = document.createElement("button");
-      btn.className = "wl-btn";
-      btn.dataset.handle = handle;
-      btn.innerText = "♡";
 
-      btn.onclick = (e) => {
+      btn.className = "wl-btn";
+      btn.type = "button";
+
+      btn.dataset.handle = handle;
+      btn.dataset.wishlistCatalog = "true";
+
+      btn.setAttribute("aria-label", "Add to wishlist");
+
+      btn.innerHTML = `
+          <span class="wl-heart">♡</span>
+        `;
+
+      btn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (e.stopImmediatePropagation) {
+          e.stopImmediatePropagation();
+        }
+
         toggle(handle);
-      };
+      });
 
-      wrapper.appendChild(btn);
-
-      // ищем контейнер изображения
+      /*
+       * Находим изображение.
+       */
       const media =
         card.querySelector(".product-media") ||
         card.querySelector(".product-media-container") ||
@@ -237,79 +470,142 @@
         card.querySelector(".card-media") ||
         card.querySelector(".media") ||
         card.querySelector(".resource-card__media") ||
-        card.querySelector(".resource-card__image") ||
-        card.querySelector("img")?.parentElement;
+        card.querySelector(".resource-card__image");
 
-      const target = media || card;
+      /*
+       * Кнопка реально добавляется
+       * в карточку.
+       */
+      const target = media || card.querySelector("img")?.parentElement || card;
 
-      target.style.position = "relative";
-      target.appendChild(wrapper);
+      if (!target) return;
+
+      const computed = getComputedStyle(target);
+
+      if (computed.position === "static") {
+        target.style.position = "relative";
+      }
+
+      target.appendChild(btn);
     });
 
     await sync();
   }
-  /* ======================
-   PRODUCT PAGE HEART
-  ====================== */
+
+  /* =========================================================
+     PRODUCT PAGE HEART
+
+     ВАЖНО:
+     Здесь НЕ fixed.
+     Здесь НЕ body.
+
+     button.wl-btn физически находится
+     внутри product information group.
+  ========================================================= */
+
+  function findProductWishlistGroup() {
+    /*
+     * Точная структура из твоего DevTools.
+     */
+    const exactGroups = document.querySelectorAll(
+      ".group-block-content.layout-panel-flex.layout-panel-flex--column",
+    );
+
+    /*
+     * Сначала ищем группу, которая находится
+     * внутри product information и содержит
+     * название / цену / product form.
+     */
+
+    for (const group of exactGroups) {
+      if (
+        group.querySelector("h1, .product__title, .product-title") &&
+        group.closest("main")
+      ) {
+        return group;
+      }
+    }
+
+    /*
+     * Второй вариант:
+     * группа, содержащая цену.
+     */
+
+    for (const group of exactGroups) {
+      if (
+        group.querySelector(".price, [class*='price'], [data-price]") &&
+        group.closest("main")
+      ) {
+        return group;
+      }
+    }
+
+    /*
+     * Fallback для других тем.
+     */
+
+    const fallbacks = [
+      ".product-information",
+      ".product__information",
+      ".product-info",
+      ".product__info",
+      ".product-details",
+      ".product__details",
+      ".product-form",
+      ".product__form",
+    ];
+
+    for (const selector of fallbacks) {
+      const element = document.querySelector(selector);
+
+      if (element) {
+        return element;
+      }
+    }
+
+    return null;
+  }
 
   function injectProductHeart() {
-    if (!location.pathname.includes("/products/")) return;
+    if (!location.pathname.includes("/products/")) {
+      return;
+    }
 
-    // Если уже есть — ничего не создаём
-    if (document.querySelector(".wl-product-btn")) return;
+    /*
+     * Не создаём второй product heart.
+     */
+    if (document.querySelector(".wl-btn[data-wishlist-product]")) {
+      return;
+    }
 
     const handle = location.pathname.split("/products/")[1]?.split("/")[0];
 
     if (!handle) return;
 
-    /*
-     * Ищем главное изображение товара.
-     * Не привязываемся к конкретной теме Shopify.
-     */
-    const images = Array.from(document.querySelectorAll("main img"));
+    const group = findProductWishlistGroup();
 
-    if (!images.length) return;
+    if (!group) return;
 
-    const visibleImages = images.filter((img) => {
-      const rect = img.getBoundingClientRect();
-
-      return (
-        rect.width > 150 &&
-        rect.height > 150 &&
-        rect.bottom > 0 &&
-        rect.right > 0
-      );
-    });
-
-    if (!visibleImages.length) return;
-
-    // Берём самое большое видимое изображение
-    const image = visibleImages.sort((a, b) => {
-      const aRect = a.getBoundingClientRect();
-      const bRect = b.getBoundingClientRect();
-
-      return bRect.width * bRect.height - aRect.width * aRect.height;
-    })[0];
-
-    /*
-     * Кнопка создаётся в BODY,
-     * а НЕ внутри ссылки с картинкой.
-     *
-     * Поэтому клик по сердцу больше
-     * не должен открывать image/lightbox.
-     */
     const btn = document.createElement("button");
 
-    btn.className = "wl-product-btn";
-    btn.type = "button";
-    btn.dataset.handle = handle;
+    /*
+     * ИМЕННО button.wl-btn
+     */
+    btn.className = "wl-btn";
 
-    btn.innerText = "♡";
+    btn.type = "button";
+
+    btn.dataset.handle = handle;
+    btn.dataset.wishlistProduct = "true";
+
+    btn.setAttribute("aria-label", "Add to wishlist");
+
+    btn.innerHTML = `
+      <span class="wl-heart">♡</span>
+    `;
 
     /*
-     * Очень важно:
-     * останавливаем события ещё на pointerdown,
-     * чтобы тема не успевала открыть image gallery.
+     * Не даём теме перехватывать click.
      */
     const stopEvent = (e) => {
       e.preventDefault();
@@ -332,73 +628,68 @@
         e.preventDefault();
         e.stopPropagation();
 
+        if (e.stopImmediatePropagation) {
+          e.stopImmediatePropagation();
+        }
+
         toggle(handle);
       },
       true,
     );
 
-    document.body.appendChild(btn);
-
     /*
-     * Позиционируем кнопку относительно изображения.
+     * НИКАКОГО appendChild в body.
+     *
+     * Кнопка физически находится
+     * внутри нужного group-block.
      */
-    function positionProductHeart() {
-      const rect = image.getBoundingClientRect();
-
-      btn.style.position = "fixed";
-
-      btn.style.top = `${rect.top + 16}px`;
-
-      btn.style.left = `${rect.right - 58}px`;
-    }
-
-    positionProductHeart();
-
-    window.addEventListener("resize", positionProductHeart);
-
-    window.addEventListener("scroll", positionProductHeart, { passive: true });
+    group.appendChild(btn);
 
     updateProductHeart();
   }
 
   async function updateProductHeart() {
-    const btn = document.querySelector(".wl-product-btn");
+    const buttons = document.querySelectorAll(".wl-btn[data-wishlist-product]");
 
-    if (!btn) return;
-
-    const heart = btn.querySelector(".wl-product-heart");
-
-    if (!heart) return;
-
-    const handle = location.pathname.split("/products/")[1]?.split("/")[0];
-
-    if (!handle) return;
+    if (!buttons.length) return;
 
     const list = await getWishlist();
 
-    const active = list.some((i) => i.handle === handle);
+    buttons.forEach((btn) => {
+      const handle = btn.dataset.handle;
 
-    heart.innerText = active ? "❤️‍🔥" : "♡";
+      if (!handle) return;
 
-    btn.classList.toggle("active", active);
+      const active = list.some((item) => item.handle === handle);
+
+      const heart = btn.querySelector(".wl-heart");
+
+      if (heart) {
+        heart.innerText = active ? "❤️‍🔥" : "♡";
+      }
+
+      btn.classList.toggle("active", active);
+    });
   }
 
-  /* ======================
-   TOGGLE
-  ====================== */
+  /* =========================================================
+     TOGGLE
+  ========================================================= */
 
   function showLavaToast(text) {
     const old = document.querySelector(".wl-toast");
 
-    if (old) old.remove();
+    if (old) {
+      old.remove();
+    }
 
     const toast = document.createElement("div");
 
     toast.className = "wl-toast";
 
     toast.innerHTML = `
-    ❤️‍🔥 ${text}
-  `;
+      ❤️‍🔥 ${text}
+    `;
 
     document.body.appendChild(toast);
 
@@ -416,23 +707,35 @@
   }
 
   async function toggle(handle) {
+    if (!handle) return;
+
     const list = await getWishlist();
 
-    const exists = list.some((i) => i.handle === handle);
+    const exists = list.some((item) => item.handle === handle);
 
-    // 👉 1. optimistic UI
+    /*
+     * OPTIMISTIC UI
+     */
+
     if (exists) {
-      wishlistCache = list.filter((i) => i.handle !== handle);
+      wishlistCache = list.filter((item) => item.handle !== handle);
     } else {
       wishlistCache = [...list, { handle }];
     }
 
     localStorage.setItem(LS_KEY, JSON.stringify(wishlistCache));
+
     localStorage.setItem(LS_TIME, Date.now());
 
+    /*
+     * Сразу обновляем все hearts.
+     */
     updateCount();
     sync();
 
+    /*
+     * SERVER
+     */
     fetch("/apps/wishlist", {
       method: "POST",
       headers: {
@@ -447,26 +750,34 @@
       .then(async (res) => {
         const text = await res.text();
 
-        console.log(res.status);
-        console.log(text);
+        console.log("Wishlist status:", res.status);
+
+        console.log("Wishlist response:", text);
 
         let data = {};
 
         try {
           data = JSON.parse(text);
-        } catch (e) {
-          console.log("NOT JSON", text);
-          throw e;
+        } catch (error) {
+          console.log("Wishlist response is not JSON:", text);
+
+          throw error;
         }
 
-        // 🔥 лимит достигнут
+        /*
+         * LIMIT REACHED
+         */
         if (!res.ok || data.upgrade) {
           showLavaToast("Wishlist limit reached ❤️‍🔥");
 
-          // откатываем визуально последнее добавление
+          /*
+           * Откатываем optimistic update.
+           */
           wishlistCache = list;
 
           localStorage.setItem(LS_KEY, JSON.stringify(list));
+
+          localStorage.setItem(LS_TIME, Date.now());
 
           updateCount();
           sync();
@@ -474,591 +785,364 @@
           return;
         }
 
-        getWishlist(true).then(() => {
-          updateCount();
-          sync();
-        });
-      })
-      .catch((err) => {
-        alert("FETCH ERROR");
+        /*
+         * Получаем актуальное состояние
+         * с сервера.
+         */
+        await getWishlist(true);
 
-        console.log(err);
+        updateCount();
+        sync();
+      })
+      .catch((error) => {
+        console.log("Wishlist toggle error:", error);
+
+        /*
+         * Откатываем при ошибке запроса.
+         */
+        wishlistCache = list;
+
+        localStorage.setItem(LS_KEY, JSON.stringify(list));
+
+        localStorage.setItem(LS_TIME, Date.now());
+
+        updateCount();
+        sync();
       });
   }
+
+  /* =========================================================
+     SYNC
+  ========================================================= */
+
   async function sync() {
-    const list = await getWishlist(); // ✅
+    const list = await getWishlist();
 
+    /*
+     * CATALOG + PRODUCT HEARTS
+     */
     document.querySelectorAll(".wl-btn").forEach((btn) => {
-      const h = btn.dataset.handle;
+      const handle = btn.dataset.handle;
 
-      if (list.some((i) => i.handle === h)) {
-        btn.classList.add("active");
-        btn.innerText = "❤️‍🔥";
-      } else {
-        btn.classList.remove("active");
-        btn.innerText = "♡";
+      if (!handle) return;
+
+      const active = list.some((item) => item.handle === handle);
+
+      const heart = btn.querySelector(".wl-heart");
+
+      if (heart) {
+        heart.innerText = active ? "❤️‍🔥" : "♡";
       }
+
+      btn.classList.toggle("active", active);
     });
 
-    await updateProductHeart();
+    /*
+     * HEADER
+     */
+    updateCount();
   }
 
-  /* ======================
-   DRAWER
-  ====================== */
-  function createDrawer() {
-    if (document.getElementById("wl-drawer")) return;
+  /* =========================================================
+     STYLES
+  ========================================================= */
 
-    const wrap = document.createElement("div");
-
-    wrap.innerHTML = `
-      <div id="wl-overlay"></div>
-
-      <div id="wl-drawer">
-        <button id="wl-close">✕</button>
-        <h3>❤️‍🔥 My Wishlist</h3>
-        <div id="wl-items"></div>
-      </div>
-    `;
-
-    document.body.appendChild(wrap);
-
-    document.getElementById("wl-close").onclick = closeDrawer;
-    document.getElementById("wl-overlay").onclick = closeDrawer;
-  }
-
-  function openDrawer() {
-    createDrawer();
-
-    document.getElementById("wl-overlay").classList.add("open");
-    document.getElementById("wl-drawer").classList.add("open");
-
-    render();
-  }
-
-  function closeDrawer() {
-    document.getElementById("wl-overlay").classList.remove("open");
-    document.getElementById("wl-drawer").classList.remove("open");
-  }
-
-  /* ======================
-   RENDER
-  ====================== */
-  async function render() {
-    const box = document.getElementById("wl-items");
-
-    const list = await getWishlist(); // ✅ ВОТ ГЛАВНОЕ
-
-    if (!list.length) {
-      box.innerHTML = "No items yet";
-      return;
-    }
-
-    const data = await Promise.all(
-      list.map(async (item) => {
-        try {
-          const res = await fetch(`/products/${item.handle}.js`);
-          if (!res.ok) return null;
-          return await res.json();
-        } catch {
-          return null;
-        }
-      }),
-    );
-
-    const safeData = data.filter(Boolean);
-
-    box.innerHTML = safeData
-      .map((p) => {
-        const variant = p.variants.find((v) => v.available) || p.variants[0];
-
-        return `
-      <div class="wl-item">
-        <img src="${p.featured_image}">
-        <div class="wl-info">
-          <div>${p.title}</div>
-
-          ${
-            variant.available
-              ? `<button class="wl-add" data-id="${variant.id}">
-                   Add to cart
-                 </button>`
-              : `<button class="wl-add disabled" disabled>
-                   Out of stock
-                 </button>`
-          }
-
-          <button class="wl-remove" data-h="${p.handle}">
-            Remove
-          </button>
-        </div>
-      </div>
-    `;
-      })
-      .join("");
-  }
-
-  /* ======================
-   EVENTS
-====================== */
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".wl-add, .wl-remove");
-    if (!btn) return;
-
-    /* ===== REMOVE ===== */
-    if (btn.classList.contains("wl-remove")) {
-      const h = btn.dataset.h;
-
-      // ⚡ моментально удаляем из UI
-      const current = await getWishlist();
-      wishlistCache = current.filter((i) => i.handle !== h);
-
-      localStorage.setItem(LS_KEY, JSON.stringify(wishlistCache));
-      localStorage.setItem(LS_TIME, Date.now());
-
-      await updateCount();
-      await render();
-      await sync();
-
-      // сервер в фоне
-      fetch("/apps/wishlist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          handle: h,
-          actionType: "remove",
-        }),
-      }).then(() => {
-        getWishlist(true).then(() => {
-          updateCount();
-          render();
-          sync();
-        });
-      });
-
-      return;
-    }
-    /* ===== ADD TO CART ===== */
-    if (btn.classList.contains("wl-add")) {
-      if (btn.classList.contains("loading")) return;
-
-      const id = Number(btn.dataset.id);
-      if (!id) return;
-
-      // ⚡ UI instantly
-      btn.classList.add("loading");
-      btn.innerText = "Adding...";
-
-      try {
-        const res = await fetch("/cart/add.js", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            items: [{ id, quantity: 1 }],
-          }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || data.status) {
-          throw new Error("Add failed");
-        }
-
-        // ✅ SUCCESS UI
-        btn.innerText = "Added ✔";
-        btn.disabled = true;
-
-        /* ⚡ мгновенно цифра */
-        document
-          .querySelectorAll(
-            ".cart-count, .cart-count-bubble, .header__icon--cart span",
-          )
-          .forEach((el) => {
-            const n = parseInt(el.innerText) || 0;
-            el.innerText = n + 1;
-          });
-
-        /* ⚡ открыть/обновить drawer */
-        document.dispatchEvent(new CustomEvent("cart:refresh"));
-
-        refreshCartDrawer();
-        updateCartCount();
-      } catch (err) {
-        console.log(err);
-        btn.innerText = "Error";
-      } finally {
-        setTimeout(() => {
-          btn.classList.remove("loading");
-          if (!btn.disabled) btn.innerText = "Add to cart";
-        }, 800);
-      }
-    }
-  });
-
-  /* ======================
-   DRAWER REFRESH (главное)
-====================== */
-  async function refreshCartDrawer() {
-    try {
-      const res = await fetch("/?sections=cart-drawer");
-      const data = await res.json();
-
-      const current = document.querySelector("#CartDrawer, cart-drawer");
-      if (!current) return;
-
-      const html = new DOMParser().parseFromString(
-        data["cart-drawer"],
-        "text/html",
-      );
-
-      const updated = html.querySelector("#CartDrawer, cart-drawer");
-
-      if (updated) {
-        current.innerHTML = updated.innerHTML;
-      }
-    } catch (e) {
-      console.log("Drawer update error", e);
-    }
-  }
-
-  /* ======================
-   SYNC (опционально)
-====================== */
-  async function updateCartCount() {
-    try {
-      const cart = await fetch("/cart.js").then((r) => r.json());
-      const count = cart.item_count;
-
-      document
-        .querySelectorAll(
-          ".cart-count, .cart-count-bubble, .header__icon--cart span",
-        )
-        .forEach((el) => {
-          el.innerText = count;
-        });
-    } catch (e) {
-      console.log("Cart sync error", e);
-    }
-  } /* ======================
-   STYLES
-  ====================== */
   const style = document.createElement("style");
+
   style.innerHTML = `
 
-.wl-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  margin: 0 6px;
-}
+    /* =====================================================
+       HEADER WISHLIST
 
-.wl-header-btn {
-  position: relative;
-  top: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
+       НЕТ .wl-header.
+       Button находится непосредственно
+       внутри header container.
+    ===================================================== */
 
+    .wl-header-btn {
+      position: relative !important;
 
+      width: 40px !important;
+      height: 40px !important;
 
-header,
-.header,
-.header-wrapper {
-  z-index: 9999 !important;
-}
+      flex: 0 0 40px !important;
 
-/* контейнер */
-.wl-header-heart {
-  width:28px;
-  height:28px;
-  display:inline-block;
-}
+      display: inline-flex !important;
 
-/* svg */
-.wl-header-heart svg {
-  width:100%;
-  height:100%;
-  display:block;
-}
+      align-items: center !important;
+      justify-content: center !important;
 
-/* 🔥 заливка */
-.heart-fill {
-  fill: url(#lavaGradient);
-  transform: scaleY(var(--fill, 0));
-  transform-origin: bottom;
-  transition: transform 0.35s ease;
-}
+      padding: 0 !important;
+      margin: 0 4px !important;
 
-/* ❤️ контур (ВСЕГДА виден) */
-.heart-outline {
-  fill: none;
-  stroke: #ff3b5c;
-  stroke-width: 2;
-}
+      background: transparent !important;
 
-/* hover эффект */
-.wl-header-btn:hover .heart-outline {
-  stroke: #ff6a00;
-}
+      border: 0 !important;
 
-/* счетчик */
-.wl-count {
-  position:absolute;
-  top:-6px;
-  right:-8px;
-  background:#ff3b5c;
-  color:#fff;
-  font-size:10px;
-  border-radius:50%;
-  padding:2px 6px;
-}
+      cursor: pointer;
 
+      appearance: none;
 
-/* CARD */
+      -webkit-appearance: none;
+    }
 
-.wl-product-btn {
-  position: fixed;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #fff;
-  border: 1px solid #eee;
+    .wl-header-heart {
+      width: 28px;
+      height: 28px;
 
-  font-size: 22px;
-  line-height: 1;
+      display: block;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+      position: relative;
+    }
 
-  cursor: pointer;
+    .wl-header-heart svg {
+      width: 100%;
+      height: 100%;
 
-  z-index: 999999;
+      display: block;
+    }
 
-  padding: 0;
+    .wl-header-heart .heart-fill {
+      fill: url(#wishlistLavaGradient);
 
-  pointer-events: auto;
-}
+      transform:
+        scaleY(var(--fill, 0));
 
-.wl-product-btn:hover {
-  transform: scale(1.05);
-}
+      transform-origin: bottom;
 
-.wl-product-btn:active {
-  transform: scale(.95);
-}
+      transition:
+        transform .35s ease;
+    }
+
+    .wl-header-heart .heart-outline {
+      fill: none;
+
+      stroke: #ff3b5c;
+
+      stroke-width: 2;
+    }
+
+    .wl-header-btn:hover
+    .heart-outline {
+      stroke: #ff6a00;
+    }
+
+    .wl-count {
+      position: absolute;
+
+      top: 0;
+      right: 0;
+
+      min-width: 14px;
+      height: 14px;
+
+      display: flex;
+
+      align-items: center;
+      justify-content: center;
+
+      background: #ff3b5c;
+
+      color: #fff;
+
+      font-size: 9px;
+      line-height: 1;
+
+      border-radius: 50%;
+
+      padding: 0 3px;
+
+      box-sizing: border-box;
+    }
 
 
-/* DRAWER */
-#wl-overlay {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.5);
-  opacity:0;
-  pointer-events:none;
-  transition:.3s;
-  z-index:9998;
-}
+    /* =====================================================
+       CATALOG + PRODUCT BUTTON
 
-#wl-overlay.open {
-  opacity:1;
-  pointer-events:auto;
-}
+       И catalog heart, и product heart —
+       один класс: button.wl-btn
+    ===================================================== */
 
-#wl-drawer {
-  position:fixed;
-  right:-400px;
-  top:0;
-  width:360px;
-  height:100%;
-  background:#fff;
-  transition:.3s;
-  z-index:9999;
-  padding:20px;
-}
+    .wl-btn {
+      width: 36px;
+      height: 36px;
 
-#wl-drawer.open {
-  right:0;
-}
+      display: flex;
 
-#wl-close {
-  position:absolute;
-  top:10px;
-  right:10px;
-  border:none;
-  background:#eee;
-  border-radius:50%;
-  width:32px;
-  height:32px;
-}
+      align-items: center;
+      justify-content: center;
 
-.wl-item {
-  display:flex;
-  gap:10px;
-  margin-bottom:12px;
-}
+      box-sizing: border-box;
 
-.wl-item img {
-  width:60px;
-}
-.wl-overlay{
-  position:absolute;
-  top:10px;
-  right:10px;
-  z-index:999;
-  pointer-events:none;
-}
+      padding: 0;
 
-.resource-card,
-.card-wrapper,
-.card,
-.product-card,
-.product-item,
-.product-grid-item,
-.product,
-.product-block,
-.product-card-wrapper {
-  position: relative;
-}
+      margin: 0;
 
-.wl-btn {
-  position: relative;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #fff;
-  border: 1px solid #eee;
-  pointer-events: auto;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-  /* 🔥 ОБЩИЕ КНОПКИ */
-.wl-add,
-.wl-remove {
-  cursor: pointer;
-  border-radius: 8px;
-  padding: 8px 14px;
-  font-size: 13px;
-  border: none;
-  transition: all 0.25s ease;
-}
+      border-radius: 50%;
 
-/* 🔥 ADD TO CART */
-.wl-add {
-  background: linear-gradient(135deg, #ff3b5c, #ff6a00, #ff0000);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(255, 60, 60, 0.4);
-}
+      border: 1px solid #eee;
 
-/* 🔥 HOVER ЭФФЕКТ */
-.wl-add:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 6px 18px rgba(255, 60, 60, 0.7);
-}
+      background: #fff;
 
-/* 🔥 ACTIVE CLICK */
-.wl-add:active {
-  transform: scale(0.95);
-}
+      color: #000;
 
-/* 🔥 ADDED STATE */
-.wl-add.added {
-  background: linear-gradient(135deg, #ff9500, #ff3b5c);
-  box-shadow: 0 0 12px rgba(255, 120, 0, 0.8);
-}
+      font-size: 22px;
+      line-height: 1;
 
-/* ❌ REMOVE */
-.wl-remove {
-  background: transparent;
-  border: 1px solid #ddd;
-  color: #333;
-}
+      cursor: pointer;
 
-/* ❌ REMOVE HOVER */
-.wl-remove:hover {
-  border-color: #ff3b5c;
-  color: #ff3b5c;
-  transform: scale(1.05);
-}
-  .wl-item .wl-add,
-.wl-item .wl-remove {
-  margin-top: 10px;
-}
-  .wl-toast {
+      appearance: none;
 
-  position: fixed;
+      -webkit-appearance: none;
 
-  top: 50%;
-  left: 50%;
+      transition:
+        transform .18s ease,
+        background .18s ease,
+        border-color .18s ease;
+    }
 
-  transform:
-    translate(-50%, -50%)
-    scale(.9);
+    .wl-btn:hover {
+      transform: scale(1.06);
+    }
 
-  opacity: 0;
+    .wl-btn:active {
+      transform: scale(.94);
+    }
 
-  padding: 22px 30px;
+    .wl-btn.active {
+      border-color: #ff3b5c;
+    }
 
-  border-radius: 24px;
+    .wl-heart {
+      display: flex;
 
-  background:
-    linear-gradient(
-      135deg,
-      #ff3b5c,
-      #ff6a00,
-      #ff0000
-    );
+      align-items: center;
+      justify-content: center;
 
-  color: white;
+      width: 100%;
+      height: 100%;
 
-  font-size: 18px;
-  font-weight: 700;
+      line-height: 1;
+    }
 
-  text-align: center;
 
-  box-shadow:
-    0 0 25px rgba(255,80,50,.45),
-    0 0 60px rgba(255,60,60,.35);
+    /* =====================================================
+       CATALOG POSITION
+    ===================================================== */
 
-  z-index: 999999;
+    .wl-overlay {
+      position: absolute;
 
-  transition:
-    opacity .3s ease,
-    transform .3s ease;
+      top: 10px;
+      right: 10px;
 
-  max-width: 360px;
-}
+      z-index: 999;
 
-.wl-toast.show {
+      pointer-events: none;
+    }
 
-  opacity: 1;
+    .wl-overlay .wl-btn {
+      pointer-events: auto;
+    }
 
-  transform:
-    translate(-50%, -50%)
-    scale(1);
+    .resource-card,
+    .card-wrapper,
+    .card,
+    .product-card,
+    .product-item,
+    .product-grid-item,
+    .product,
+    .product-block,
+    .product-card-wrapper {
+      position: relative;
+    }
 
-}
-`;
+
+    /* =====================================================
+       PRODUCT PAGE
+
+       Больше НЕ fixed.
+       Больше НЕ position relative to image.
+       Кнопка находится внутри group-block.
+    ===================================================== */
+
+    [data-wishlist-product="true"] {
+      flex: 0 0 auto;
+
+      margin-top: 10px;
+    }
+
+
+    /* =====================================================
+       TOAST
+
+       Только сообщение о лимите wishlist.
+       Никакого drawer.
+    ===================================================== */
+
+    .wl-toast {
+      position: fixed;
+
+      top: 50%;
+      left: 50%;
+
+      transform:
+        translate(-50%, -50%)
+        scale(.9);
+
+      opacity: 0;
+
+      padding: 22px 30px;
+
+      border-radius: 24px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #ff3b5c,
+          #ff6a00,
+          #ff0000
+        );
+
+      color: white;
+
+      font-size: 18px;
+
+      font-weight: 700;
+
+      text-align: center;
+
+      box-shadow:
+        0 0 25px
+        rgba(255,80,50,.45),
+
+        0 0 60px
+        rgba(255,60,60,.35);
+
+      z-index: 999999;
+
+      transition:
+        opacity .3s ease,
+        transform .3s ease;
+
+      max-width: 360px;
+    }
+
+    .wl-toast.show {
+      opacity: 1;
+
+      transform:
+        translate(-50%, -50%)
+        scale(1);
+    }
+
+  `;
 
   document.head.appendChild(style);
 
-  /* ======================
-   INIT
-  ====================== */
+  /* =========================================================
+     INIT
+  ========================================================= */
 
   function refreshWishlistUI() {
     injectHeader();
@@ -1066,26 +1150,46 @@ header,
     injectProductHeart();
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
+  function initWishlist() {
     refreshWishlistUI();
     cleanupWishlist();
-  });
+  }
 
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initWishlist, { once: true });
+  } else {
+    initWishlist();
+  }
+
+  /*
+   * Shopify theme editor
+   */
   document.addEventListener("shopify:section:load", refreshWishlistUI);
+
   document.addEventListener("shopify:section:select", refreshWishlistUI);
+
   document.addEventListener("shopify:section:reorder", refreshWishlistUI);
+
   document.addEventListener("shopify:block:select", refreshWishlistUI);
 
-  let refreshTimer;
+  /* =========================================================
+     MUTATION OBSERVER
+  ========================================================= */
 
-  new MutationObserver(() => {
+  let refreshTimer = null;
+
+  const observer = new MutationObserver(() => {
     clearTimeout(refreshTimer);
 
     refreshTimer = setTimeout(() => {
       refreshWishlistUI();
-    }, 120);
-  }).observe(document.body, {
-    childList: true,
-    subtree: true,
+    }, 200);
   });
+
+  if (document.body) {
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
 })();
