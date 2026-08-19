@@ -100,73 +100,97 @@
    HEADER
   ====================== */
   function injectHeader() {
-    if (document.querySelector(".wl-header")) return;
-
     const cartSelectors = [
-      "a[href*='/cart']",
-      "button[name='cart']",
-      "[aria-label*='Cart' i]",
-      "[aria-label*='cart' i]",
+      'a[href="/cart"]',
+      'a[href*="/cart"]',
+      'button[name="cart"]',
+      'button[aria-label*="cart" i]',
+      'button[aria-label*="bag" i]',
+      '[aria-label*="cart" i]',
+      '[aria-label*="bag" i]',
       ".header__icon--cart",
-      ".header__icon--cart",
-      ".cart-link",
       ".cart-icon",
-      ".site-header__cart",
-      ".header-cart",
-      "[data-cart-toggle]",
-      "[data-action='open-cart']",
-      "cart-drawer-trigger",
+      "[data-cart-icon]",
     ];
 
     let cart = null;
 
     for (const selector of cartSelectors) {
-      cart = document.querySelector(selector);
+      const element = document.querySelector(selector);
 
-      if (cart) break;
+      if (element) {
+        cart = element;
+        break;
+      }
     }
 
     if (!cart) return;
 
-    const el = document.createElement("div");
-    el.className = "wl-header";
+    let el = document.querySelector(".wl-header");
 
-    el.innerHTML = `
-    <button class="wl-header-btn" type="button" aria-label="Wishlist">
-      <span class="wl-header-heart">
+    if (!el) {
+      el = document.createElement("div");
 
-        <svg viewBox="0 0 24 24">
+      el.className = "wl-header";
 
-          <defs>
-            <linearGradient id="lavaGradient" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stop-color="#ff3b5c"/>
-              <stop offset="50%" stop-color="#ff6a00"/>
-              <stop offset="100%" stop-color="#ff0000"/>
-            </linearGradient>
-          </defs>
+      el.innerHTML = `
+      <button
+        type="button"
+        class="wl-header-btn"
+        aria-label="Wishlist"
+      >
+        <span class="wl-header-heart">
 
-          <path
-            class="heart-fill"
-            d="M12 21s-6.7-4.3-9.3-8C-0.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
-          />
+          <svg viewBox="0 0 24 24">
 
-          <path
-            class="heart-outline"
-            d="M12 21s-6.7-4.3-9.3-8C-0.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
-          />
+            <defs>
+              <linearGradient
+                id="lavaGradient"
+                x1="0"
+                y1="1"
+                x2="0"
+                y2="0"
+              >
+                <stop offset="0%" stop-color="#ff3b5c"/>
+                <stop offset="50%" stop-color="#ff6a00"/>
+                <stop offset="100%" stop-color="#ff0000"/>
+              </linearGradient>
+            </defs>
 
-        </svg>
+            <path
+              class="heart-fill"
+              d="M12 21s-6.7-4.3-9.3-8C-0.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
+            />
 
-      </span>
+            <path
+              class="heart-outline"
+              d="M12 21s-6.7-4.3-9.3-8C-0.5 9.4 2 4.5 6.3 4.5c2.3 0 3.7 1.4 5.7 3.4 2-2 3.4-3.4 5.7-3.4C22 4.5 24.5 9.4 21.3 13c-2.6 3.7-9.3 8-9.3 8z"
+            />
 
-      <span class="wl-count">0</span>
-    </button>
-  `;
+          </svg>
 
-    el.querySelector(".wl-header-btn").onclick = openDrawer;
+        </span>
 
-    // Ставим wishlist непосредственно ПЕРЕД корзиной
-    cart.parentNode.insertBefore(el, cart);
+        <span class="wl-count">0</span>
+      </button>
+    `;
+
+      el.querySelector(".wl-header-btn").addEventListener("click", openDrawer);
+    }
+
+    const parent = cart.parentElement;
+
+    if (!parent) return;
+
+    /*
+     * Сердце всегда находится
+     * непосредственно перед корзиной.
+     */
+    if (el.parentElement !== parent || el.nextElementSibling !== cart) {
+      parent.insertBefore(el, cart);
+    }
+
+    updateCount();
   }
   /* ======================
    HEARTS (CATALOG)
@@ -255,48 +279,47 @@
   function injectProductHeart() {
     if (!location.pathname.includes("/products/")) return;
 
-    // Если уже есть — ничего не создаём
-    if (document.querySelector(".wl-product-btn")) return;
-
     const handle = location.pathname.split("/products/")[1]?.split("/")[0];
 
     if (!handle) return;
 
+    // Если кнопка уже есть — только обновляем состояние
+    const existing = document.querySelector(".wl-product-btn");
+
+    if (existing) {
+      updateProductHeart();
+      return;
+    }
+
     /*
-     * Ищем главное изображение товара.
-     * Не привязываемся к конкретной теме Shopify.
+     * Ищем название товара.
+     * Это намного универсальнее, чем искать картинку.
      */
-    const images = Array.from(document.querySelectorAll("main img"));
+    const titleSelectors = [
+      "main h1",
+      ".product__title h1",
+      ".product-title",
+      ".product__title",
+      "[data-product-title]",
+      "h1",
+    ];
 
-    if (!images.length) return;
+    let title = null;
 
-    const visibleImages = images.filter((img) => {
-      const rect = img.getBoundingClientRect();
+    for (const selector of titleSelectors) {
+      const element = document.querySelector(selector);
 
-      return (
-        rect.width > 150 &&
-        rect.height > 150 &&
-        rect.bottom > 0 &&
-        rect.right > 0
-      );
-    });
+      if (element && element.textContent.trim()) {
+        title = element;
+        break;
+      }
+    }
 
-    if (!visibleImages.length) return;
-
-    // Берём самое большое видимое изображение
-    const image = visibleImages.sort((a, b) => {
-      const aRect = a.getBoundingClientRect();
-      const bRect = b.getBoundingClientRect();
-
-      return bRect.width * bRect.height - aRect.width * aRect.height;
-    })[0];
+    if (!title) return;
 
     /*
-     * Кнопка создаётся в BODY,
-     * а НЕ внутри ссылки с картинкой.
-     *
-     * Поэтому клик по сердцу больше
-     * не должен открывать image/lightbox.
+     * Создаём кнопку отдельно.
+     * Она НЕ находится внутри ссылки на картинку.
      */
     const btn = document.createElement("button");
 
@@ -306,57 +329,39 @@
 
     btn.innerText = "♡";
 
-    /*
-     * Очень важно:
-     * останавливаем события ещё на pointerdown,
-     * чтобы тема не успевала открыть image gallery.
-     */
-    const stopEvent = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (e.stopImmediatePropagation) {
+    btn.addEventListener(
+      "pointerdown",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         e.stopImmediatePropagation();
-      }
-    };
-
-    btn.addEventListener("pointerdown", stopEvent, true);
-
-    btn.addEventListener("mousedown", stopEvent, true);
-
-    btn.addEventListener("touchstart", stopEvent, true);
+      },
+      true,
+    );
 
     btn.addEventListener(
       "click",
       (e) => {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
 
         toggle(handle);
       },
       true,
     );
 
-    document.body.appendChild(btn);
-
     /*
-     * Позиционируем кнопку относительно изображения.
+     * Обёртка для title + heart
      */
-    function positionProductHeart() {
-      const rect = image.getBoundingClientRect();
+    const wrapper = document.createElement("div");
 
-      btn.style.position = "fixed";
+    wrapper.className = "wl-product-title-row";
 
-      btn.style.top = `${rect.top + 16}px`;
+    title.parentNode.insertBefore(wrapper, title);
 
-      btn.style.left = `${rect.right - 58}px`;
-    }
-
-    positionProductHeart();
-
-    window.addEventListener("resize", positionProductHeart);
-
-    window.addEventListener("scroll", positionProductHeart, { passive: true });
+    wrapper.appendChild(title);
+    wrapper.appendChild(btn);
 
     updateProductHeart();
   }
@@ -748,107 +753,132 @@
   style.innerHTML = `
 
 .wl-header {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
+
+  position: relative;
+
   margin: 0 6px;
+
+  z-index: 10000;
 }
 
 .wl-header-btn {
   position: relative;
-  top: 1px;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  margin: 0;
+
   background: transparent;
-  border: 0;
+  border: none;
+
   cursor: pointer;
 }
 
-
-
-header,
-.header,
-.header-wrapper {
-  z-index: 9999 !important;
-}
-
-/* контейнер */
 .wl-header-heart {
-  width:28px;
-  height:28px;
-  display:inline-block;
+  width: 26px;
+  height: 26px;
+
+  display: block;
 }
 
-/* svg */
 .wl-header-heart svg {
-  width:100%;
-  height:100%;
-  display:block;
+  width: 100%;
+  height: 100%;
+
+  display: block;
 }
 
-/* 🔥 заливка */
 .heart-fill {
   fill: url(#lavaGradient);
+
   transform: scaleY(var(--fill, 0));
+
   transform-origin: bottom;
-  transition: transform 0.35s ease;
+
+  transition: transform .35s ease;
 }
 
-/* ❤️ контур (ВСЕГДА виден) */
 .heart-outline {
   fill: none;
+
   stroke: #ff3b5c;
+
   stroke-width: 2;
 }
 
-/* hover эффект */
 .wl-header-btn:hover .heart-outline {
   stroke: #ff6a00;
 }
 
-/* счетчик */
 .wl-count {
-  position:absolute;
-  top:-6px;
-  right:-8px;
-  background:#ff3b5c;
-  color:#fff;
-  font-size:10px;
-  border-radius:50%;
-  padding:2px 6px;
-}
+  position: absolute;
 
+  top: -4px;
+  right: -5px;
 
-/* CARD */
-
-.wl-product-btn {
-  position: fixed;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #fff;
-  border: 1px solid #eee;
-
-  font-size: 22px;
-  line-height: 1;
+  min-width: 14px;
+  height: 14px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  cursor: pointer;
+  background: #ff3b5c;
 
-  z-index: 999999;
+  color: #fff;
+
+  font-size: 9px;
+  line-height: 1;
+
+  border-radius: 50%;
+
+  padding: 0 3px;
+}
+
+/* CARD */
+
+.wl-product-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.wl-product-title-row h1 {
+  margin: 0;
+}
+
+.wl-product-btn {
+  flex: 0 0 auto;
+
+  width: 34px;
+  height: 34px;
 
   padding: 0;
 
-  pointer-events: auto;
+  border-radius: 50%;
+
+  background: #fff;
+  border: 1px solid #ddd;
+
+  font-size: 21px;
+  line-height: 1;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  z-index: 1000;
 }
 
 .wl-product-btn:hover {
