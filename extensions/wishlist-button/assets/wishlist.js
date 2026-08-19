@@ -104,8 +104,15 @@
 
     if (!headerColumns) return;
 
+    // Удаляем любые старые/лишние wishlist-контейнеры
+    document.querySelectorAll(".wl-header").forEach((el) => {
+      el.remove();
+    });
+
+    // Ищем существующую кнопку
     let button = document.querySelector(".wl-header-btn");
 
+    // Если кнопки нет — создаём
     if (!button) {
       button = document.createElement("button");
 
@@ -126,109 +133,19 @@
       button.addEventListener("click", openDrawer);
     }
 
-    /*
-     * Сначала переносим кнопку в настоящий header.
-     */
+    // Ищем именно поиск
     const search =
       headerColumns.querySelector(".header-actions__search-icon") ||
       headerColumns.querySelector('[aria-label*="search" i]') ||
       headerColumns.querySelector('a[href*="/search"]') ||
       headerColumns.querySelector('button[aria-label*="search" i]');
 
+    // Wishlist -> ПЕРЕД поиском
     if (search) {
       headerColumns.insertBefore(button, search);
     } else {
       headerColumns.appendChild(button);
     }
-
-    /*
-     * И только ПОСЛЕ переноса удаляем старый .wl-header.
-     */
-    document.querySelectorAll(".wl-header").forEach((el) => {
-      if (el !== headerColumns && !headerColumns.contains(el)) {
-        el.remove();
-      }
-    });
-  }
-  /* ======================
-   HEARTS (CATALOG)
-  ====================== */
-  async function injectHearts() {
-    document.querySelectorAll("a[href*='/products/']").forEach((link) => {
-      const selectors = [
-        ".resource-card",
-        ".card-wrapper",
-        ".card",
-        ".product-card",
-        ".product-item",
-        ".product-grid-item",
-        ".grid__item",
-        ".grid-product",
-        ".product-block",
-        ".collection-product-card",
-        ".collection-grid-item",
-        ".boost-pfs-filter-product-item",
-        ".product",
-        ".product-grid__item",
-        ".product-loop",
-        ".item-product",
-        ".product-card-wrapper",
-        ".thumbnail",
-        "li[class*=product]",
-        "[data-product-id]",
-        "[data-product-handle]",
-      ];
-
-      let card = null;
-
-      for (const selector of selectors) {
-        card = link.closest(selector);
-        if (card) break;
-      }
-
-      if (!card) return;
-
-      if (card.querySelector(".wl-btn")) return;
-
-      const handle = link.href.split("/products/")[1]?.split("/")[0];
-      if (!handle) return;
-
-      // 🔥 СОЗДАЕМ ОВЕРЛЕЙ (НЕ ВНУТРИ <a>)
-      const wrapper = document.createElement("div");
-      wrapper.className = "wl-overlay";
-
-      const btn = document.createElement("button");
-      btn.className = "wl-btn";
-      btn.dataset.handle = handle;
-      btn.innerText = "♡";
-
-      btn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggle(handle);
-      };
-
-      wrapper.appendChild(btn);
-
-      // ищем контейнер изображения
-      const media =
-        card.querySelector(".product-media") ||
-        card.querySelector(".product-media-container") ||
-        card.querySelector(".product__media") ||
-        card.querySelector(".card__media") ||
-        card.querySelector(".card-media") ||
-        card.querySelector(".media") ||
-        card.querySelector(".resource-card__media") ||
-        card.querySelector(".resource-card__image") ||
-        card.querySelector("img")?.parentElement;
-
-      const target = media || card;
-
-      target.style.position = "relative";
-      target.appendChild(wrapper);
-    });
-
-    await sync();
   }
   /* ======================
    PRODUCT PAGE HEART
@@ -675,9 +592,8 @@
   const style = document.createElement("style");
   style.innerHTML = `
 
-
 .wl-header-btn {
-  position: static !important;
+  position: relative !important;
 
   width: 44px !important;
   height: 44px !important;
