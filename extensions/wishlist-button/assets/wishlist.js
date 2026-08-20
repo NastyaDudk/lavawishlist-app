@@ -239,23 +239,16 @@
       btn.dataset.handle = handle;
       btn.innerText = "♡";
 
-      const stopWishlistClick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (e.stopImmediatePropagation) {
-          e.stopImmediatePropagation();
-        }
-      };
-
-      btn.addEventListener("pointerdown", stopWishlistClick, true);
-      btn.addEventListener("mousedown", stopWishlistClick, true);
-      btn.addEventListener("touchstart", stopWishlistClick, true);
-
       btn.addEventListener(
         "click",
         (e) => {
-          stopWishlistClick(e);
+          e.preventDefault();
+          e.stopPropagation();
+
+          if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+          }
+
           toggle(handle);
         },
         true,
@@ -264,35 +257,23 @@
       wrapper.appendChild(btn);
 
       // ищем контейнер изображения
-      const media =
-        card.querySelector(".product-media") ||
-        card.querySelector(".product-media-container") ||
-        card.querySelector(".product__media") ||
-        card.querySelector(".card__media") ||
-        card.querySelector(".card-media") ||
-        card.querySelector(".media") ||
-        card.querySelector(".resource-card__media") ||
-        card.querySelector(".resource-card__image") ||
-        card.querySelector("img")?.parentElement;
 
-      let target = media || card;
+      /* =========================
+         SAFE WISHLIST POSITION
+         ========================= */
 
-      // Не помещаем wishlist внутрь ссылки товара
-      const productLink = target.closest("a[href*='/products/']");
+      const img = card.querySelector("img");
 
-      if (productLink) {
-        // Если media находится внутри <a>,
-        // ставим wishlist рядом с самой ссылкой
-        const parent = productLink.parentElement;
+      if (!img) return;
 
-        if (parent) {
-          target = parent;
-        }
-      }
+      card.style.position = "relative";
 
-      target.style.position = "relative";
+      wrapper.style.position = "absolute";
+      wrapper.style.top = "12px";
+      wrapper.style.right = "12px";
+      wrapper.style.zIndex = "20";
 
-      target.appendChild(wrapper);
+      card.appendChild(wrapper);
     });
 
     await sync();
@@ -357,22 +338,6 @@
     <span class="wl-product-heart">♡</span>
     <span class="wl-product-text">Add to wishlist</span>
   `;
-
-    /*
-     * Не даём теме перехватить клик.
-     */
-    const stopEvent = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (e.stopImmediatePropagation) {
-        e.stopImmediatePropagation();
-      }
-    };
-
-    btn.addEventListener("pointerdown", stopEvent, true);
-    btn.addEventListener("mousedown", stopEvent, true);
-    btn.addEventListener("touchstart", stopEvent, true);
 
     btn.addEventListener(
       "click",
