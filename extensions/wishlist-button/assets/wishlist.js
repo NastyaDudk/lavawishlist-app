@@ -142,104 +142,6 @@
      в тот же DOM-контейнер, где Search / Cart.
   ========================================================= */
 
-  function findHeaderContainer() {
-    /*
-     * 1. Точная структура твоей темы
-     */
-    const headerColumns = document.querySelector(
-      ".header__columns.spacing--style",
-    );
-
-    if (headerColumns) {
-      return headerColumns;
-    }
-
-    /*
-     * 2. Другие варианты Shopify themes
-     */
-    const possibleHeaders = [
-      ".header__columns",
-      ".header-actions",
-      ".header__actions",
-      ".header-actions__icons",
-      ".header__icons",
-      ".header-icons",
-      ".site-header__actions",
-      ".header-wrapper",
-    ];
-
-    for (const selector of possibleHeaders) {
-      const element = document.querySelector(selector);
-
-      if (element) {
-        return element;
-      }
-    }
-
-    /*
-     * 3. Последний fallback:
-     * ищем Cart и используем его родителя.
-     */
-    const cart = findCartElement();
-
-    if (cart && cart.parentElement) {
-      return cart.parentElement;
-    }
-
-    return null;
-  }
-
-  function findCartElement() {
-    const selectors = [
-      '[aria-label*="cart" i]',
-      '[aria-label*="basket" i]',
-      'a[href*="/cart"]',
-      'button[name="cart"]',
-      ".header__icon--cart",
-      ".cart-link",
-      ".cart-icon",
-      ".site-header__cart",
-      ".header-cart",
-      "[data-cart-toggle]",
-      "[data-action='open-cart']",
-      "cart-drawer-trigger",
-    ];
-
-    for (const selector of selectors) {
-      const element = document.querySelector(selector);
-
-      if (element) {
-        return element;
-      }
-    }
-
-    return null;
-  }
-
-  function findSearchElement(container) {
-    if (!container) return null;
-
-    const selectors = [
-      '[aria-label*="search" i]',
-      'a[href*="/search"]',
-      "button[type='submit'][aria-label*='search' i]",
-      ".header-actions__search-icon",
-      ".header__icon--search",
-      ".search-icon",
-      "[data-action='open-search']",
-    ];
-
-    for (const selector of selectors) {
-      const element = container.querySelector(selector);
-
-      if (element) {
-        return element;
-      }
-    }
-
-    return null;
-  }
-
   function createHeaderWishlistButton() {
     const button = document.createElement("button");
 
@@ -311,74 +213,34 @@
   }
 
   function injectHeader() {
-    const headerContainer = findHeaderContainer();
-
-    if (!headerContainer) return;
-
-    /*
-     * Удаляем старую неправильную конструкцию,
-     * если она осталась от предыдущей версии.
-     */
+    // Удаляем старую обёртку Wishlist
     document.querySelectorAll(".wl-header").forEach((el) => {
       el.remove();
     });
 
-    /*
-     * Удаляем дубликаты header button,
-     * оставляя только один.
-     */
-    const buttons = Array.from(document.querySelectorAll(".wl-header-btn"));
+    // Нативный контейнер темы — НЕ удаляем
+    const container = document.querySelector(".header__columns.spacing--style");
 
-    buttons.forEach((button, index) => {
-      if (index > 0 || !headerContainer.contains(button)) {
-        button.remove();
-      }
-    });
+    if (!container) return;
 
-    let button = headerContainer.querySelector(".wl-header-btn");
+    // Ищем корзину именно внутри этого контейнера
+    const cart = container.querySelector(
+      'a[href*="/cart"], button[name="cart"], [aria-label*="cart" i], .header__icon--cart, .cart-link, .cart-icon',
+    );
+
+    if (!cart) return;
+
+    // Если уже есть наша иконка — не создаём новую
+    let button = container.querySelector(".wl-header-btn");
 
     if (!button) {
       button = createHeaderWishlistButton();
     }
 
-    /*
-     * Если button уже находится в правильном контейнере —
-     * ничего лишнего не делаем.
-     */
-    if (button.parentElement === headerContainer) {
-      return;
+    // Ставим Wishlist непосредственно перед корзиной
+    if (button.nextElementSibling !== cart) {
+      container.insertBefore(button, cart);
     }
-
-    const cart = findCartElement();
-    const search = findSearchElement(headerContainer);
-
-    /*
-     * Пытаемся поставить wishlist непосредственно
-     * рядом с Search / Cart.
-     */
-
-    if (cart && headerContainer.contains(cart)) {
-      headerContainer.insertBefore(button, cart);
-      return;
-    }
-
-    if (search) {
-      /*
-       * Search -> Wishlist
-       */
-      if (search.parentElement === headerContainer) {
-        headerContainer.insertBefore(button, search.nextSibling);
-      } else {
-        headerContainer.appendChild(button);
-      }
-
-      return;
-    }
-
-    /*
-     * Fallback
-     */
-    headerContainer.appendChild(button);
   }
 
   /* =========================================================
@@ -571,9 +433,6 @@
       return;
     }
 
-    /*
-     * Не создаём второй product heart.
-     */
     if (document.querySelector(".wl-btn[data-wishlist-product]")) {
       return;
     }
@@ -588,9 +447,6 @@
 
     const btn = document.createElement("button");
 
-    /*
-     * ИМЕННО button.wl-btn
-     */
     btn.className = "wl-btn";
 
     btn.type = "button";
