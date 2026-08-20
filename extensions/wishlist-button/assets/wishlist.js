@@ -268,11 +268,10 @@
   /* ======================
    PRODUCT PAGE HEART
   ====================== */
-
   function injectProductHeart() {
     if (!location.pathname.includes("/products/")) return;
 
-    // Уже создано
+    // Уже есть wishlist button
     if (document.querySelector("[data-wishlist-product]")) return;
 
     const handle = location.pathname.split("/products/")[1]?.split("/")[0];
@@ -280,17 +279,37 @@
     if (!handle) return;
 
     /*
-     * Ищем контейнер с кнопками покупки.
+     * Ищем основной блок с кнопками товара.
      */
-    const buttonsContainer =
-      document.querySelector(".product-form-buttons") ||
-      document.querySelector(".product-form__buttons") ||
-      document.querySelector(".product-form-buttons-container");
+    const containers = [
+      ".product-form__buttons",
+      ".product-form-buttons",
+      ".product-form",
+      ".product__form",
+      ".product-information",
+      ".product__information",
+      ".product-info",
+      ".product__info",
+      ".product-details",
+      ".product__details",
+    ];
 
-    if (!buttonsContainer) return;
+    let container = null;
+
+    for (const selector of containers) {
+      const candidate = document.querySelector(selector);
+
+      if (candidate) {
+        container = candidate;
+        break;
+      }
+    }
+
+    if (!container) return;
 
     /*
-     * Создаём wishlist button
+     * Создаём обычную кнопку
+     * в стиле Add to cart.
      */
     const btn = document.createElement("button");
 
@@ -304,10 +323,11 @@
 
     btn.innerHTML = `
     <span class="wl-product-heart">♡</span>
+    <span class="wl-product-text">Add to wishlist</span>
   `;
 
     /*
-     * Не даём теме обработать клик.
+     * Не даём теме перехватить клик.
      */
     const stopEvent = (e) => {
       e.preventDefault();
@@ -338,16 +358,17 @@
     );
 
     /*
-     * Ставим wishlist рядом с Add to cart.
+     * Сначала пытаемся поставить Wishlist
+     * сразу после Add to cart.
      */
-    const addToCart = buttonsContainer.querySelector(
+    const addToCart = container.querySelector(
       'button[type="submit"], button[name="add"], [name="add"]',
     );
 
     if (addToCart) {
-      addToCart.parentNode.insertBefore(btn, addToCart.nextSibling);
+      addToCart.insertAdjacentElement("afterend", btn);
     } else {
-      buttonsContainer.appendChild(btn);
+      container.appendChild(btn);
     }
 
     updateProductHeart();
@@ -823,62 +844,65 @@ header,
 
 /* PRODUCT PAGE WISHLIST */
 
+/* PRODUCT WISHLIST */
+
 .wl-product-btn {
-  position: relative;
+  width: 100%;
+  min-height: 44px;
 
-  width: 42px;
-  height: 42px;
-
-  flex: 0 0 42px;
-
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
 
-  padding: 0;
-  margin: 0 0 0 8px;
+  margin: 8px 0 0;
+  padding: 12px 20px;
 
-  border-radius: 50%;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
 
-  background: #fff;
-  border: 1px solid #eee;
-
-  font-size: 22px;
-  line-height: 1;
+  color: inherit;
+  font: inherit;
+  line-height: 1.2;
 
   cursor: pointer;
 
   appearance: none;
   -webkit-appearance: none;
 
-  z-index: 5;
-
   transition:
-    transform .18s ease,
-    border-color .18s ease;
+    opacity .2s ease,
+    transform .15s ease;
 }
 
 .wl-product-btn:hover {
-  transform: scale(1.05);
+  opacity: .7;
 }
 
 .wl-product-btn:active {
-  transform: scale(.95);
+  transform: scale(.99);
+}
+
+.wl-product-heart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  line-height: 1;
+  font-size: 18px;
+}
+
+.wl-product-text {
+  display: inline-block;
 }
 
 .wl-product-btn.active {
   border-color: #ff3b5c;
 }
 
-.wl-product-heart {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 100%;
-  height: 100%;
-
-  line-height: 1;
+.wl-product-btn.active .wl-product-heart {
+  color: #ff3b5c;
 }
 
 /* DRAWER */
