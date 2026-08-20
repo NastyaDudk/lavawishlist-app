@@ -233,7 +233,9 @@
       wrapper.className = "wl-overlay";
 
       const btn = document.createElement("button");
+
       btn.className = "wl-btn";
+      btn.type = "button";
       btn.dataset.handle = handle;
       btn.innerText = "♡";
 
@@ -273,11 +275,22 @@
         card.querySelector(".resource-card__image") ||
         card.querySelector("img")?.parentElement;
 
-      const target = media || card;
+      let target = media || card;
 
-      if (target !== card) {
-        target.style.position = "relative";
+      // Не помещаем wishlist внутрь ссылки товара
+      const productLink = target.closest("a[href*='/products/']");
+
+      if (productLink) {
+        // Если media находится внутри <a>,
+        // ставим wishlist рядом с самой ссылкой
+        const parent = productLink.parentElement;
+
+        if (parent) {
+          target = parent;
+        }
       }
+
+      target.style.position = "relative";
 
       target.appendChild(wrapper);
     });
@@ -507,11 +520,6 @@
 
           return;
         }
-
-        getWishlist(true).then(() => {
-          updateCount();
-          sync();
-        });
       })
       .catch((err) => {
         alert("FETCH ERROR");
@@ -665,11 +673,8 @@
           actionType: "remove",
         }),
       }).then(() => {
-        getWishlist(true).then(() => {
-          updateCount();
-          render();
-          sync();
-        });
+        updateCount();
+        sync();
       });
 
       return;
@@ -982,6 +987,14 @@ header,
   right:10px;
   z-index:999;
   pointer-events:none;
+}
+
+.wl-overlay {
+  pointer-events: none;
+}
+
+.wl-overlay .wl-btn {
+  pointer-events: auto;
 }
 
 
