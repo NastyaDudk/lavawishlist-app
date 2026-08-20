@@ -4,7 +4,7 @@
 
   const LS_KEY = "wishlist_cache";
   const LS_TIME = "wishlist_cache_time";
-  const TTL = 1000 * 60 * 5; // 5 минут
+  const TTL = 0;
 
   window.addEventListener("storage", (e) => {
     if (e.key === LS_KEY) {
@@ -432,65 +432,99 @@
 
     const exists = list.some((i) => i.handle === handle);
 
-    // 👉 1. optimistic UI
-    if (exists) {
-      wishlistCache = list.filter((i) => i.handle !== handle);
-    } else {
-      wishlistCache = [...list, { handle }];
-    }
+    /*
+     * Оптимистически меняем интерфейс,
+     * чтобы кнопка реагировала сразу.
+     */
+    const optimisticList = exists
+      ? list.filter((i) => i.handle !== handle)
+      : [...list, { handle }];
 
-    localStorage.setItem(LS_KEY, JSON.stringify(wishlistCache));
+    wishlistCache = optimisticList;
+
+    localStorage.setItem(LS_KEY, JSON.stringify(optimisticList));
+
     localStorage.setItem(LS_TIME, Date.now());
 
     updateCount();
     sync();
 
-    fetch("/apps/wishlist", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-
-      body: JSON.stringify({
-        handle,
-        actionType: "toggle",
-      }),
-    })
-      .then(async (res) => {
-        const text = await res.text();
-
-        console.log(res.status);
-        console.log(text);
-
-        let data = {};
-
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          console.log("NOT JSON", text);
-          throw e;
-        }
-
-        // 🔥 лимит достигнут
-        if (!res.ok || data.upgrade) {
-          showLavaToast("Wishlist limit reached ❤️‍🔥");
-
-          // откатываем визуально последнее добавление
-          wishlistCache = list;
-
-          localStorage.setItem(LS_KEY, JSON.stringify(list));
-
-          updateCount();
-          sync();
-
-          return;
-        }
-      })
-      .catch((err) => {
-        alert("FETCH ERROR");
-
-        console.log(err);
+    try {
+      const res = await fetch("/apps/wishlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          handle,
+          actionType: "toggle",
+        }),
       });
+
+      const text = await res.text();
+
+      console.log("Wishlist response:", res.status, text);
+
+      let data = {};
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.log("Wishlist response is not JSON:", text);
+      }
+
+      /*
+       * Сервер отклонил изменение.
+       */
+      if (!res.ok || data.upgrade) {
+        showLavaToast("Wishlist limit reached ❤️‍🔥");
+
+        /*
+         * Возвращаем старое состояние.
+         */
+        wishlistCache = list;
+
+        localStorage.setItem(LS_KEY, JSON.stringify(list));
+
+        localStorage.setItem(LS_TIME, Date.now());
+
+        updateCount();
+        sync();
+
+        return;
+      }
+
+      /*
+       * КЛЮЧЕВОЕ:
+       * после успешного запроса заново получаем
+       * реальное состояние Wishlist с сервера.
+       */
+      const serverList = await getWishlist(true);
+
+      wishlistCache = serverList;
+
+      localStorage.setItem(LS_KEY, JSON.stringify(serverList));
+
+      localStorage.setItem(LS_TIME, Date.now());
+
+      updateCount();
+      sync();
+    } catch (err) {
+      console.error("Wishlist toggle error:", err);
+
+      /*
+       * Если запрос вообще не дошёл —
+       * возвращаем старое состояние.
+       */
+      wishlistCache = list;
+
+      localStorage.setItem(LS_KEY, JSON.stringify(list));
+
+      localStorage.setItem(LS_TIME, Date.now());
+
+      updateCount();
+      sync();
+    }
   }
   async function sync() {
     const list = await getWishlist(); // ✅
