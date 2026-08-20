@@ -272,7 +272,7 @@
   function injectProductHeart() {
     if (!location.pathname.includes("/products/")) return;
 
-    // Уже есть product wishlist — ничего не создаём
+    // Уже создано
     if (document.querySelector("[data-wishlist-product]")) return;
 
     const handle = location.pathname.split("/products/")[1]?.split("/")[0];
@@ -280,53 +280,18 @@
     if (!handle) return;
 
     /*
-     * Ищем блок с информацией о товаре.
-     * Сначала — универсальные варианты Shopify.
+     * Ищем контейнер с кнопками покупки.
      */
-    const selectors = [
-      ".product-information",
-      ".product__information",
-      ".product-info",
-      ".product__info",
-      ".product-details",
-      ".product__details",
-      ".product-form",
-      ".product__form",
-      ".product-information__content",
-      "[data-product-information]",
-    ];
+    const buttonsContainer =
+      document.querySelector(".product-form-buttons") ||
+      document.querySelector(".product-form__buttons") ||
+      document.querySelector(".product-form-buttons-container");
 
-    let group = null;
-
-    for (const selector of selectors) {
-      group = document.querySelector(selector);
-
-      if (group) break;
-    }
+    if (!buttonsContainer) return;
 
     /*
-     * Если тема использует group-block.
+     * Создаём wishlist button
      */
-    if (!group) {
-      const groups = document.querySelectorAll(
-        ".group-block-content.layout-panel-flex.layout-panel-flex--column",
-      );
-
-      for (const candidate of groups) {
-        if (
-          candidate.querySelector(
-            "h1, .product__title, .product-title, [class*='title']",
-          ) &&
-          candidate.closest("main")
-        ) {
-          group = candidate;
-          break;
-        }
-      }
-    }
-
-    if (!group) return;
-
     const btn = document.createElement("button");
 
     btn.className = "wl-product-btn";
@@ -342,8 +307,7 @@
   `;
 
     /*
-     * Очень важно:
-     * кнопка не должна открывать image/gallery/link темы.
+     * Не даём теме обработать клик.
      */
     const stopEvent = (e) => {
       e.preventDefault();
@@ -374,10 +338,17 @@
     );
 
     /*
-     * Кнопка находится ВНУТРИ product information,
-     * а не в body и не поверх изображения.
+     * Ставим wishlist рядом с Add to cart.
      */
-    group.appendChild(btn);
+    const addToCart = buttonsContainer.querySelector(
+      'button[type="submit"], button[name="add"], [name="add"]',
+    );
+
+    if (addToCart) {
+      addToCart.parentNode.insertBefore(btn, addToCart.nextSibling);
+    } else {
+      buttonsContainer.appendChild(btn);
+    }
 
     updateProductHeart();
   }
@@ -850,6 +821,8 @@ header,
 
 /* CARD */
 
+/* PRODUCT PAGE WISHLIST */
+
 .wl-product-btn {
   position: relative;
 
@@ -863,7 +836,7 @@ header,
   justify-content: center;
 
   padding: 0;
-  margin-top: 10px;
+  margin: 0 0 0 8px;
 
   border-radius: 50%;
 
@@ -877,6 +850,8 @@ header,
 
   appearance: none;
   -webkit-appearance: none;
+
+  z-index: 5;
 
   transition:
     transform .18s ease,
