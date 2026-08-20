@@ -4,7 +4,7 @@
 
   const LS_KEY = "wishlist_cache";
   const LS_TIME = "wishlist_cache_time";
-  const TTL = 0;
+  const TTL = 1000 * 60 * 5; // 5 минут
 
   window.addEventListener("storage", (e) => {
     if (e.key === LS_KEY) {
@@ -208,8 +208,12 @@
 
       if (card.querySelector(".wl-btn")) return;
 
-      const handle = link.href.split("/products/")[1]?.split("/")[0];
-      if (!handle) return;
+      const url = new URL(link.href, window.location.origin);
+      const match = url.pathname.match(/\/products\/([^/]+)/);
+
+      if (!match) return;
+
+      const handle = match[1];
 
       /*
        * На product page не создаём catalog-heart

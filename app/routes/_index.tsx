@@ -23,13 +23,8 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-const auth =
-  await authenticate.admin(request);
-
-console.log(Object.keys(auth));
-
-const { session } = auth;
-
+  const { session } =
+    await authenticate.admin(request);
 
   const stats =
     await prisma.shopStats.findUnique({
@@ -37,15 +32,11 @@ const { session } = auth;
         shop: session.shop,
       },
     });
-  console.log("stats =", stats);
-
-  const isPro =
-    stats?.isPro ?? false;
 
   return {
     shop: session.shop,
     limitHits: stats?.limitHits ?? 0,
-    isPro,
+    isPro: stats?.isPro ?? false,
   };
 }
 
