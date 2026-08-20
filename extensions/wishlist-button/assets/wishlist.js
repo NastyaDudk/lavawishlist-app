@@ -237,11 +237,27 @@
       btn.dataset.handle = handle;
       btn.innerText = "♡";
 
-      btn.onclick = (e) => {
+      const stopWishlistClick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggle(handle);
+
+        if (e.stopImmediatePropagation) {
+          e.stopImmediatePropagation();
+        }
       };
+
+      btn.addEventListener("pointerdown", stopWishlistClick, true);
+      btn.addEventListener("mousedown", stopWishlistClick, true);
+      btn.addEventListener("touchstart", stopWishlistClick, true);
+
+      btn.addEventListener(
+        "click",
+        (e) => {
+          stopWishlistClick(e);
+          toggle(handle);
+        },
+        true,
+      );
 
       wrapper.appendChild(btn);
 
@@ -259,7 +275,10 @@
 
       const target = media || card;
 
-      target.style.position = "relative";
+      if (target !== card) {
+        target.style.position = "relative";
+      }
+
       target.appendChild(wrapper);
     });
 
@@ -845,17 +864,18 @@ header,
 /* PRODUCT PAGE WISHLIST */
 
 /* PRODUCT WISHLIST */
-
 .wl-product-btn {
-  width: 100%;
-  min-height: 44px;
-
   display: flex;
+  width: 100%;
+  box-sizing: border-box;
+
   align-items: center;
   justify-content: center;
   gap: 8px;
 
-  margin: 8px 0 0;
+  min-height: 44px;
+
+  margin: 10px 0;
   padding: 12px 20px;
 
   background: transparent;
@@ -888,7 +908,6 @@ header,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   line-height: 1;
   font-size: 18px;
 }
@@ -965,17 +984,6 @@ header,
   pointer-events:none;
 }
 
-.resource-card,
-.card-wrapper,
-.card,
-.product-card,
-.product-item,
-.product-grid-item,
-.product,
-.product-block,
-.product-card-wrapper {
-  position: relative;
-}
 
 .wl-btn {
   position: relative;
