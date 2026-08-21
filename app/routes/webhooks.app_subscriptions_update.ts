@@ -9,17 +9,27 @@ export const action = async ({
   const { topic, shop, payload } =
     await authenticate.webhook(request);
 
-  console.log("WEBHOOK:", topic);
+  console.log("=================================");
+  console.log("SUBSCRIPTION WEBHOOK");
+  console.log("TOPIC:", topic);
+  console.log("SHOP:", shop);
   console.log(
     "PAYLOAD:",
     JSON.stringify(payload, null, 2)
   );
+  console.log("=================================");
 
   const subscription =
-    payload.app_subscription;
+    payload?.app_subscription;
+
+  const status =
+    subscription?.status;
 
   const isPro =
-    subscription?.status === "ACTIVE";
+    status === "ACTIVE";
+
+  console.log("SUBSCRIPTION STATUS:", status);
+  console.log("CALCULATED isPro:", isPro);
 
   await prisma.shopStats.upsert({
     where: {
@@ -38,11 +48,13 @@ export const action = async ({
   });
 
   console.log(
-    "BILLING STATUS:",
-    subscription?.status,
+    "DATABASE UPDATED:",
+    shop,
     "=> isPro:",
     isPro
   );
 
-  return new Response();
+  return new Response(null, {
+    status: 200,
+  });
 };
