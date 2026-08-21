@@ -23,7 +23,7 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { session } =
+  const { admin, session } =
     await authenticate.admin(request);
 
   const stats =
@@ -33,10 +33,40 @@ export async function loader({
       },
     });
 
+  const response = await admin.graphql(`
+    #graphql
+    query GetActiveSubscriptions {
+      currentAppInstallation {
+        activeSubscriptions {
+          id
+          name
+          status
+        }
+      }
+    }
+  `);
+
+  const data = await response.json();
+
+  const subscriptions =
+    data.data?.currentAppInstallation?.activeSubscriptions ?? [];
+
+  const isPro = subscriptions.some(
+    (subscription: {
+      name: string;
+      status: string;
+    }) =>
+      subscription.name === "pro" &&
+      subscription.status === "ACTIVE"
+  );
+
+  console.log("Shopify active subscriptions:", subscriptions);
+  console.log("REAL isPro:", isPro);
+
   return {
     shop: session.shop,
     limitHits: stats?.limitHits ?? 0,
-    isPro: stats?.isPro ?? false,
+    isPro,
   };
 }
 
