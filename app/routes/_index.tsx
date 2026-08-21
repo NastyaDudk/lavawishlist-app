@@ -11,9 +11,6 @@ import {
 } from "@shopify/polaris";
 import { useLoaderData } from "react-router";
 
-
-
-
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
 import prisma from "../db.server";
@@ -26,37 +23,194 @@ export async function loader({
   const { admin, session } =
     await authenticate.admin(request);
 
-  const response = await admin.graphql(`
+  /*
+   * =====================================
+   * 1. Получаем настоящий Shopify Shop ID
+   * =====================================
+   */
+
+  const shopResponse = await admin.graphql(`
     #graphql
     query {
-      currentAppInstallation {
-        activeSubscriptions {
-          id
-          name
-          status
-        }
+      shop {
+        id
       }
     }
   `);
 
-  const result = await response.json();
+  const shopResult =
+    await shopResponse.json();
+
+  const shopId =
+    shopResult?.data?.shop?.id;
 
   console.log(
-    "SHOPIFY BILLING:",
-    JSON.stringify(result, null, 2)
+    "SHOP ID:",
+    shopId
   );
 
+  if (!shopId) {
+    throw new Error(
+      "Could not get Shopify Shop ID"
+    );
+  }
+
+
+  /*
+   * =====================================
+   * 2. Проверяем Managed Pricing
+   * через Partner API
+   * =====================================
+   */
+
+  const partnerResponse =
+    await fetch(
+      `https://partners.shopify.com/${process.env.SHOPIFY_PARTNER_ORG_ID}/api/2026-07/graphql.json`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          "X-Shopify-Access-Token":
+            process.env.SHOPIFY_PARTNER_ACCESS_TOKEN!,
+        },
+
+        body: JSON.stringify({
+
+          query: `
+            query ActiveSubscription(
+              $appId: ID!
+              $shopId: ID!
+            ) {
+
+              activeSubscription(
+                appId: $appId
+                shopId: $shopId
+              ) {
+
+                shop {
+                  id
+                  myshopifyDomain
+                }
+
+                billingPeriod
+
+                cancelAtEndOfCycle
+
+                trialEndsAt
+
+                items {
+                  handle
+                  description
+
+                  price {
+                    __typename
+
+                    ... on FlatRatePrice {
+                      amount
+                      currency
+                    }
+                  }
+                }
+              }
+            }
+          `,
+
+          variables: {
+
+            appId:
+              process.env.SHOPIFY_APP_ID!,
+
+            shopId,
+
+          },
+
+        }),
+      }
+    );
+
+
+  const partnerResult =
+    await partnerResponse.json();
+
+
+  console.log(
+    "PARTNER BILLING:",
+    JSON.stringify(
+      partnerResult,
+      null,
+      2
+    )
+  );
+
+
+  /*
+   * =====================================
+   * 3. Определяем Pro
+   * =====================================
+   */
+
+  const subscription =
+    partnerResult?.data
+      ?.activeSubscription;
+
+
+  const isPro =
+    !!subscription;
+
+
+  console.log(
+    "IS PRO:",
+    isPro
+  );
+
+
+  /*
+   * =====================================
+   * 4. Сохраняем актуальный статус
+   * =====================================
+   */
+
   const stats =
-    await prisma.shopStats.findUnique({
+    await prisma.shopStats.upsert({
+
       where: {
         shop: session.shop,
       },
+
+      update: {
+        isPro,
+      },
+
+      create: {
+        shop: session.shop,
+
+        isPro,
+
+        limitHits: 0,
+      },
+
     });
 
+
+  /*
+   * =====================================
+   * 5. Возвращаем данные Dashboard
+   * =====================================
+   */
+
   return {
-    shop: session.shop,
-    limitHits: stats?.limitHits ?? 0,
-    isPro: stats?.isPro ?? false,
+
+    shop:
+      session.shop,
+
+    limitHits:
+      stats.limitHits,
+
+    isPro,
+
   };
 }
 
