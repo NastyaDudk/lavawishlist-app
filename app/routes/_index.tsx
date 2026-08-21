@@ -1,3 +1,5 @@
+import React from "react";
+
 import {
   Page,
   Card,
@@ -10,8 +12,10 @@ import {
   Link,
 } from "@shopify/polaris";
 
-import { useLoaderData } from "react-router";
-import { useState } from "react";
+import {
+  useLoaderData,
+  useFetcher,
+} from "react-router";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
@@ -69,31 +73,54 @@ export async function loader({
 export default function Index() {
 
   const {
-  shop,
-  limitHits,
-  isPro,
-  cancellationScheduled,
-  cancellationDate,
-} = useLoaderData<{
-  shop: string;
-  limitHits: number;
-  isPro: boolean;
-  cancellationScheduled: boolean;
-  cancellationDate: string | null;
-}>();
+    shop,
+    limitHits,
+    isPro,
+    cancellationScheduled,
+    cancellationDate,
+  } = useLoaderData<{
+    shop: string;
+    limitHits: number;
+    isPro: boolean;
+    cancellationScheduled: boolean;
+    cancellationDate: string | null;
+  }>();
 
+  const fetcher = useFetcher<{
+    success?: boolean;
+    cancellationScheduled?: boolean;
+    cancellationDate?: string | null;
+    error?: string;
+  }>();
 
-  const [
-    showCancelModal,
-    setShowCancelModal,
-  ] = useState(false);
+  const [showCancelModal, setShowCancelModal] =
+    React.useState(false);
 
+  const cancelling =
+    fetcher.state === "submitting";
 
-  const [
-    cancelling,
-    setCancelling,
-  ] = useState(false);
+  React.useEffect(() => {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.success &&
+      fetcher.data?.cancellationScheduled
+    ) {
+      setShowCancelModal(false);
+      window.location.reload();
+    }
 
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.error
+    ) {
+      console.error(
+        "Cancellation error:",
+        fetcher.data.error
+      );
+
+      alert(fetcher.data.error);
+    }
+  }, [fetcher.state, fetcher.data]);
 
   const store =
     shop.replace(
@@ -117,57 +144,16 @@ export default function Index() {
       : null;
 
 
-  async function cancelSubscription() {
-
-    setCancelling(true);
-
-    try {
-
-      const response =
-        await fetch(
-          "/app/cancel-subscription",
-          {
-            method: "POST",
-          }
-        );
-
-
-      const data =
-        await response.json();
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data?.error ||
-          "Cancellation failed"
-        );
-
+  function cancelSubscription() {
+    fetcher.submit(
+      {},
+      {
+        method: "post",
+        action: "/app/cancel-subscription",
       }
-
-
-      setShowCancelModal(false);
-
-      window.location.reload();
-
-    } catch (error) {
-
-      console.error(
-        "Cancellation error:",
-        error
-      );
-
-      alert(
-        "We couldn't cancel your subscription. Please try again."
-      );
-
-    } finally {
-
-      setCancelling(false);
-
-    }
-
+    );
   }
+
 
 
   return (
@@ -952,7 +938,7 @@ export default function Index() {
 
 
               <p>
-                You won&apos;t be charged again. again after
+                You won&apos;t be charged again after
                 that. Once your current period
                 ends, your account will automatically
                 switch to the Free Plan with a
