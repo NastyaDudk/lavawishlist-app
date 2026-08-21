@@ -42,9 +42,15 @@ model ShopStats {
 
   shop String @id
 
+  shopId String?
+
   limitHits Int @default(0)
 
   isPro Boolean @default(false)
+
+  cancellationScheduled Boolean @default(false)
+
+  cancellationDate DateTime?
 
   updatedAt DateTime @updatedAt
 

@@ -9,9 +9,9 @@ import {
   Button,
   Link,
 } from "@shopify/polaris";
+
 import { useLoaderData } from "react-router";
-
-
+import { useState } from "react";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
@@ -21,38 +21,79 @@ import { authenticate } from "../shopify.server";
 export async function loader({
   request,
 }: LoaderFunctionArgs) {
-  const { session } = await authenticate.admin(request);
 
-  const stats = await prisma.shopStats.findUnique({
-    where: {
-      shop: session.shop,
-    },
-  });
+  const { session } =
+    await authenticate.admin(request);
 
-  const isPro = stats?.isPro ?? false;
+  const stats =
+    await prisma.shopStats.findUnique({
+      where: {
+        shop: session.shop,
+      },
+    });
 
-  console.log("SHOP:", session.shop);
-  console.log("SHOP STATS:", stats);
-  console.log("IS PRO:", isPro);
+  const isPro =
+    stats?.isPro ?? false;
 
-  return {
-    shop: session.shop,
-    limitHits: stats?.limitHits ?? 0,
-    isPro,
-  };
+  console.log(
+    "SHOP:",
+    session.shop
+  );
+
+  console.log(
+    "SHOP STATS:",
+    stats
+  );
+
+  console.log(
+    "IS PRO:",
+    isPro
+  );
+
+ return {
+  shop: session.shop,
+  limitHits: stats?.limitHits ?? 0,
+  isPro,
+
+  cancellationScheduled:
+    stats?.cancellationScheduled ?? false,
+
+  cancellationDate:
+    stats?.cancellationDate
+      ? stats.cancellationDate.toISOString()
+      : null,
+};
 }
+
 
 export default function Index() {
 
   const {
-    shop,
-    limitHits,
-    isPro,
-  } = useLoaderData<{
-    shop: string;
-    limitHits: number;
-    isPro: boolean;
-  }>();
+  shop,
+  limitHits,
+  isPro,
+  cancellationScheduled,
+  cancellationDate,
+} = useLoaderData<{
+  shop: string;
+  limitHits: number;
+  isPro: boolean;
+  cancellationScheduled: boolean;
+  cancellationDate: string | null;
+}>();
+
+
+  const [
+    showCancelModal,
+    setShowCancelModal,
+  ] = useState(false);
+
+
+  const [
+    cancelling,
+    setCancelling,
+  ] = useState(false);
+
 
   const store =
     shop.replace(
@@ -60,15 +101,81 @@ export default function Index() {
       ""
     );
 
-  console.log("shop =", shop);
-  console.log("store =", store);
-  console.log("isPro =", isPro);
+
+  const formattedCancellationDate =
+    cancellationDate
+      ? new Date(
+          cancellationDate
+        ).toLocaleDateString(
+          "en-US",
+          {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }
+        )
+      : null;
+
+
+  async function cancelSubscription() {
+
+    setCancelling(true);
+
+    try {
+
+      const response =
+        await fetch(
+          "/app/cancel-subscription",
+          {
+            method: "POST",
+          }
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data?.error ||
+          "Cancellation failed"
+        );
+
+      }
+
+
+      setShowCancelModal(false);
+
+      window.location.reload();
+
+    } catch (error) {
+
+      console.error(
+        "Cancellation error:",
+        error
+      );
+
+      alert(
+        "We couldn't cancel your subscription. Please try again."
+      );
+
+    } finally {
+
+      setCancelling(false);
+
+    }
+
+  }
+
 
   return (
 
     <Page title="❤️‍🔥 Lava Wishlist">
 
       <BlockStack gap="500">
+
 
         {/* HERO */}
 
@@ -82,15 +189,21 @@ export default function Index() {
               align="space-between"
             >
 
-             <div className="hero-badge">
-  ❤️‍🔥 Shopify LavaWishlist App
-</div>
+              <div className="hero-badge">
+                ❤️‍🔥 Shopify LavaWishlist App
+              </div>
 
-            <div className="hero-pill">
-  {isPro ? "Pro Plan Active" : "Free Plan Included"}
-</div>
+
+              <div className="hero-pill">
+
+                {isPro
+                  ? "Pro Plan Active"
+                  : "Free Plan Included"}
+
+              </div>
 
             </InlineStack>
+
 
             <BlockStack gap="300">
 
@@ -100,6 +213,7 @@ export default function Index() {
               >
                 Turn visitors into loyal buyers
               </Text>
+
 
               <Text
                 as="p"
@@ -114,17 +228,18 @@ export default function Index() {
 
             </BlockStack>
 
+
             <InlineStack gap="300">
 
               <Button
                 variant="primary"
-
                 disabled
               >
                 App Installed ✓
               </Button>
 
             </InlineStack>
+
 
             <div className="hero-grid">
 
@@ -143,6 +258,7 @@ export default function Index() {
 
               </div>
 
+
               <div className="hero-box">
 
                 <Text
@@ -157,6 +273,7 @@ export default function Index() {
                 </Text>
 
               </div>
+
 
               <div className="hero-box">
 
@@ -179,11 +296,13 @@ export default function Index() {
 
         </div>
 
+
         {/* PLANS */}
 
         <Card>
 
           <BlockStack gap="500">
+
 
             <InlineStack
               align="space-between"
@@ -196,6 +315,7 @@ export default function Index() {
                 Plans
               </Text>
 
+
               <div className="free-info">
                 Free includes
                 3 saves/month
@@ -203,27 +323,39 @@ export default function Index() {
 
             </InlineStack>
 
+
             <div className="plans-grid">
+
 
               {/* FREE */}
 
-              <div className={`plan-card free-plan ${!isPro ? "current-plan" : ""}`}>
+              <div
+                className={
+                  `plan-card free-plan ${
+                    !isPro
+                      ? "current-plan"
+                      : ""
+                  }`
+                }
+              >
 
                 {!isPro && (
 
-<div className="current-badge">
-  CURRENT PLAN
-</div>
+                  <div className="current-badge">
+                    CURRENT PLAN
+                  </div>
 
-)}
-
+                )}
 
 
                 <BlockStack gap="400">
 
+
                   <div>
 
-                    <InlineStack align="space-between">
+                    <InlineStack
+                      align="space-between"
+                    >
 
                       <Text
                         as="h3"
@@ -232,11 +364,23 @@ export default function Index() {
                         Free Plan
                       </Text>
 
-                     <Badge tone={isPro ? "critical" : "success"}>
-  {!isPro ? "Active" : "Inactive"}
-</Badge>
+
+                      <Badge
+                        tone={
+                          isPro
+                            ? "critical"
+                            : "success"
+                        }
+                      >
+
+                        {!isPro
+                          ? "Active"
+                          : "Inactive"}
+
+                      </Badge>
 
                     </InlineStack>
+
 
                     <Text
                       as="p"
@@ -247,12 +391,14 @@ export default function Index() {
 
                   </div>
 
+
                   <Text
                     as="h2"
                     variant="heading2xl"
                   >
                     $0
                   </Text>
+
 
                   <BlockStack gap="200">
 
@@ -269,7 +415,9 @@ export default function Index() {
                         className="feature-row"
                       >
 
-                        <span>🔥</span>
+                        <span>
+                          🔥
+                        </span>
 
                         <Text as="p">
                           {item}
@@ -281,46 +429,61 @@ export default function Index() {
 
                   </BlockStack>
 
-             {!isPro && (
-  <div className="free-plan-note">
 
-    <Text as="p">
-      You are currently using the free plan
-    </Text>
+                  {!isPro && (
 
-    <Text
-      as="p"
-      tone="subdued"
-    >
-      Limit reached {limitHits} times
-    </Text>
+                    <div className="free-plan-note">
 
-  </div>
-)}
+                      <Text as="p">
+                        You are currently using the free plan
+                      </Text>
+
+
+                      <Text
+                        as="p"
+                        tone="subdued"
+                      >
+                        Limit reached {limitHits} times
+                      </Text>
+
+                    </div>
+
+                  )}
 
                 </BlockStack>
 
               </div>
 
+
               {/* PRO */}
 
-             <div className={`plan-card pro-plan ${isPro ? "current-plan" : ""}`}>
+              <div
+                className={
+                  `plan-card pro-plan ${
+                    isPro
+                      ? "current-plan"
+                      : ""
+                  }`
+                }
+              >
 
-               {isPro ? (
+                {isPro ? (
 
-<div className="current-badge">
-  CURRENT PLAN
-</div>
+                  <div className="current-badge">
+                    CURRENT PLAN
+                  </div>
 
-) : (
+                ) : (
 
-<div className="popular-badge">
-  MOST POPULAR
-</div>
+                  <div className="popular-badge">
+                    MOST POPULAR
+                  </div>
 
-)}
+                )}
+
 
                 <BlockStack gap="400">
+
 
                   <div>
 
@@ -331,6 +494,7 @@ export default function Index() {
                       Pro Plan
                     </Text>
 
+
                     <Text
                       as="p"
                       tone="subdued"
@@ -340,6 +504,7 @@ export default function Index() {
 
                   </div>
 
+
                   <Text
                     as="h2"
                     variant="heading2xl"
@@ -347,12 +512,14 @@ export default function Index() {
                     $9.99/mo
                   </Text>
 
+
                   <Text
                     as="p"
                     tone="subdued"
                   >
                     Includes 3-day free trial
                   </Text>
+
 
                   <BlockStack gap="200">
 
@@ -371,7 +538,9 @@ export default function Index() {
                         className="feature-row"
                       >
 
-                        <span>🚀</span>
+                        <span>
+                          🚀
+                        </span>
 
                         <Text as="p">
                           {item}
@@ -384,75 +553,99 @@ export default function Index() {
                   </BlockStack>
 
 
+                  {!isPro ? (
+
+                    <a
+                      href={
+                        `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`
+                      }
+                      target="_top"
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        textAlign: "center",
+                        padding: "10px",
+                        background: "#111",
+                        color: "white",
+                        borderRadius: "10px",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Start Free Trial
+                    </a>
+
+                  ) : (
+
+                    <BlockStack gap="300">
 
 
-{!isPro ? (
-
-<a
-  href={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`}
-  target="_top"
-  style={{
-    display: "block",
-    width: "100%",
-    textAlign: "center",
-    padding: "10px",
-    background: "#111",
-    color: "white",
-    borderRadius: "10px",
-    textDecoration: "none",
-    fontWeight: 600,
-  }}
->
-  Start Free Trial
-</a>
-
-) : (
-
-<BlockStack gap="300">
-
-  <Button
-    variant="primary"
-    disabled
-    fullWidth
-  >
-    Pro Active ✓
-  </Button>
-
-<a
-  href={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/free?interval=EVERY_30_DAYS`}
-  target="_top"
-  style={{
-    display: "block",
-    width: "100%",
-    textAlign: "center",
-    padding: "10px",
-    background: "#d82c0d",
-    color: "white",
-    borderRadius: "10px",
-    textDecoration: "none",
-    fontWeight: 600,
-  }}
->
-  Switch to Free Plan
-</a>
-
-</BlockStack>
-
-)}
+                      <Button
+                        variant="primary"
+                        disabled
+                        fullWidth
+                      >
+                        Pro Active ✓
+                      </Button>
 
 
+                      {cancellationScheduled ? (
+
+                        <div className="cancelled-note">
+
+                          <Text as="p">
+                            Subscription cancelled
+                          </Text>
 
 
-           <div className="pro-note">
+                          <Text
+                            as="p"
+                            tone="subdued"
+                          >
 
-           <Text
-           as="p"
-          tone="subdued"
-             >
-           3-day free trial included
-           </Text>
+                            Your Pro plan remains active
+                            {formattedCancellationDate
+                              ? ` until ${formattedCancellationDate}.`
+                              : " until the end of your current billing period."
+                            }
 
-            </div>
+                            {" "}
+
+                            We couldn&apos;t cancel your subscription.
+
+                          </Text>
+
+                        </div>
+
+                      ) : (
+
+                        <button
+                          type="button"
+                          className="cancel-subscription-link"
+                          onClick={() =>
+                            setShowCancelModal(true)
+                          }
+                        >
+                          Cancel subscription
+                        </button>
+
+                      )}
+
+                    </BlockStack>
+
+                  )}
+
+
+                  <div className="pro-note">
+
+                    <Text
+                      as="p"
+                      tone="subdued"
+                    >
+                      3-day free trial included
+                    </Text>
+
+                  </div>
 
                 </BlockStack>
 
@@ -463,6 +656,7 @@ export default function Index() {
           </BlockStack>
 
         </Card>
+
 
         {/* SCREENSHOTS */}
 
@@ -476,6 +670,7 @@ export default function Index() {
             >
               Beautiful inside your store
             </Text>
+
 
             <div className="grid">
 
@@ -527,6 +722,7 @@ export default function Index() {
 
                   </div>
 
+
                   <Text
                     as="p"
                     tone="subdued"
@@ -543,6 +739,7 @@ export default function Index() {
           </BlockStack>
 
         </Card>
+
 
         {/* VIDEO */}
 
@@ -562,11 +759,13 @@ export default function Index() {
                 1 minute 🎬
               </Text>
 
+
               <Badge tone="attention">
                 No Coding
               </Badge>
 
             </InlineStack>
+
 
             <div className="video-box">
 
@@ -576,6 +775,7 @@ export default function Index() {
               />
 
             </div>
+
 
             <Text
               as="p"
@@ -591,6 +791,7 @@ export default function Index() {
 
         </Card>
 
+
         {/* QUICK SETUP */}
 
         <Card>
@@ -604,6 +805,7 @@ export default function Index() {
               Quick setup
             </Text>
 
+
             <List type="number">
 
               <List.Item>
@@ -611,14 +813,17 @@ export default function Index() {
                 Theme Customize
               </List.Item>
 
+
               <List.Item>
                 Enable Lava Favorites
                 App Embed
               </List.Item>
 
+
               <List.Item>
                 Save changes
               </List.Item>
+
 
               <List.Item>
                 Customers can now
@@ -626,6 +831,7 @@ export default function Index() {
               </List.Item>
 
             </List>
+
 
             <div className="setup-banner">
 
@@ -639,6 +845,7 @@ export default function Index() {
           </BlockStack>
 
         </Card>
+
 
         {/* CTA */}
 
@@ -654,6 +861,7 @@ export default function Index() {
               wishlists? 🔥
             </Text>
 
+
             <Text
               as="p"
               variant="bodyLg"
@@ -665,6 +873,7 @@ export default function Index() {
           </BlockStack>
 
         </div>
+
 
         {/* FOOTER */}
 
@@ -682,12 +891,14 @@ export default function Index() {
               Privacy Policy
             </Link>
 
+
             <Link
               url="/faq"
               removeUnderline
             >
               FAQ
             </Link>
+
 
             <Link
               url="/docs"
@@ -700,31 +911,116 @@ export default function Index() {
 
         </div>
 
+
+        {/* CANCEL MODAL */}
+
+        {showCancelModal && (
+
+          <div className="cancel-modal-overlay">
+
+            <div className="cancel-modal">
+
+
+              <button
+                type="button"
+                className="cancel-modal-close"
+                onClick={() =>
+                  setShowCancelModal(false)
+                }
+              >
+                ×
+              </button>
+
+
+              <h2>
+                Cancel your subscription?
+              </h2>
+
+
+              <p>
+                Your current Pro subscription
+                is already paid for, so your
+                current payment will not be refunded.
+              </p>
+
+
+              <p>
+                You will keep all Pro features
+                until the end of your current
+                billing period.
+              </p>
+
+
+              <p>
+                You won&apos;t be charged again. again after
+                that. Once your current period
+                ends, your account will automatically
+                switch to the Free Plan with a
+                limit of 3 wishlist saves per month.
+              </p>
+
+
+              <div className="cancel-modal-actions">
+
+
+                <button
+                  type="button"
+                  className="keep-pro-btn"
+                  onClick={() =>
+                    setShowCancelModal(false)
+                  }
+                >
+                  Keep Pro
+                </button>
+
+
+                <button
+                  type="button"
+                  className="confirm-cancel-btn"
+                  disabled={cancelling}
+                  onClick={cancelSubscription}
+                >
+                  {cancelling
+                    ? "Cancelling..."
+                    : "Cancel subscription"}
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+
         {/* STYLES */}
 
         <style>{`
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
 
-  width: fit-content;
+          .hero-badge {
+            display: inline-flex;
+            align-items: center;
 
-  padding: 12px 18px;
+            width: fit-content;
 
-  border-radius: 999px;
+            padding: 12px 18px;
 
-  background: rgba(255,255,255,.18);
+            border-radius: 999px;
 
-  color: white;
+            background: rgba(255,255,255,.18);
 
-  font-size: 16px;
-  font-weight: 700;
+            color: white;
 
-  backdrop-filter: blur(12px);
+            font-size: 16px;
+            font-weight: 700;
 
-  box-shadow:
-    0 4px 18px rgba(0,0,0,.12);
-}
+            backdrop-filter: blur(12px);
+
+            box-shadow:
+              0 4px 18px rgba(0,0,0,.12);
+          }
+
 
           .hero-card {
             position: relative;
@@ -743,6 +1039,7 @@ export default function Index() {
             color: white;
           }
 
+
           .hero-overlay {
             position: absolute;
             inset: 0;
@@ -757,12 +1054,15 @@ export default function Index() {
               );
           }
 
+
           .hero-card h1,
           .hero-card p {
             color: white;
+
             position: relative;
             z-index: 2;
           }
+
 
           .hero-pill {
             padding: 10px 16px;
@@ -780,6 +1080,7 @@ export default function Index() {
             backdrop-filter: blur(10px);
           }
 
+
           .hero-grid {
             display: grid;
 
@@ -788,6 +1089,7 @@ export default function Index() {
 
             gap: 18px;
           }
+
 
           .hero-box {
             padding: 22px;
@@ -800,10 +1102,12 @@ export default function Index() {
             backdrop-filter: blur(12px);
           }
 
+
           .hero-box h3,
           .hero-box p {
             color: white;
           }
+
 
           .free-info {
             padding: 8px 14px;
@@ -818,6 +1122,7 @@ export default function Index() {
             font-weight: 700;
           }
 
+
           .plans-grid {
             display: grid;
 
@@ -826,6 +1131,7 @@ export default function Index() {
 
             gap: 24px;
           }
+
 
           .plan-card {
             position: relative;
@@ -838,9 +1144,11 @@ export default function Index() {
               1px solid #e1e3e5;
           }
 
+
           .free-plan {
             background: #f6f6f7;
           }
+
 
           .current-plan {
             border: 2px solid #16a34a;
@@ -852,6 +1160,7 @@ export default function Index() {
                 rgba(22,163,74,.02)
               );
           }
+
 
           .current-badge {
             position: absolute;
@@ -871,6 +1180,7 @@ export default function Index() {
             font-weight: 700;
           }
 
+
           .free-plan-note {
             padding: 14px;
 
@@ -881,6 +1191,7 @@ export default function Index() {
 
             text-align: center;
           }
+
 
           .pro-plan {
             background:
@@ -893,6 +1204,7 @@ export default function Index() {
             border:
               2px solid #dd2476;
           }
+
 
           .popular-badge {
             position: absolute;
@@ -912,16 +1224,19 @@ export default function Index() {
             font-weight: 700;
           }
 
+
           .feature-row {
             display: flex;
             align-items: center;
             gap: 10px;
           }
 
+
           .pro-note {
             text-align: center;
             opacity: .7;
           }
+
 
           .grid {
             display: grid;
@@ -932,15 +1247,18 @@ export default function Index() {
             gap: 18px;
           }
 
+
           .card-preview {
             transition:
               transform .25s ease;
           }
 
+
           .card-preview:hover {
             transform:
               translateY(-4px);
           }
+
 
           .img-box {
             width: 100%;
@@ -955,17 +1273,19 @@ export default function Index() {
             margin-bottom: 10px;
           }
 
+
           .img-box img {
-  width: 100%;
-  height: 100%;
+            width: 100%;
+            height: 100%;
 
-  object-fit: contain;
-  object-position: center;
+            object-fit: contain;
+            object-position: center;
 
-  display: block;
+            display: block;
 
-  background: #f6f6f7;
-}
+            background: #f6f6f7;
+          }
+
 
           .video-box {
             overflow: hidden;
@@ -975,10 +1295,12 @@ export default function Index() {
             background: #f6f6f7;
           }
 
+
           .video-box img {
             width: 100%;
             display: block;
           }
+
 
           .setup-banner {
             padding: 16px;
@@ -992,6 +1314,7 @@ export default function Index() {
                 rgba(221,36,118,.08)
               );
           }
+
 
           .cta-card {
             padding: 48px;
@@ -1010,15 +1333,199 @@ export default function Index() {
             color: white;
           }
 
+
           .cta-card h2,
           .cta-card p {
             color: white;
           }
 
+
           .footer {
             padding:
               12px 0 24px;
           }
+
+
+          /* CANCEL SUBSCRIPTION LINK */
+
+          .cancel-subscription-link {
+            display: block;
+
+            width: 100%;
+
+            padding: 5px 0;
+
+            border: none;
+
+            background: transparent;
+
+            color: #6b7280;
+
+            font-size: 12px;
+            font-weight: 400;
+
+            text-align: center;
+
+            cursor: pointer;
+
+            text-decoration: underline;
+
+            text-underline-offset: 3px;
+          }
+
+
+          .cancel-subscription-link:hover {
+            color: #374151;
+          }
+
+
+          /* CANCELLED STATE */
+
+          .cancelled-note {
+            padding: 14px;
+
+            border-radius: 14px;
+
+            background:
+              rgba(22,163,74,.08);
+
+            text-align: center;
+          }
+
+
+          /* MODAL */
+
+          .cancel-modal-overlay {
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 99999;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            padding: 20px;
+
+            background:
+              rgba(0,0,0,.45);
+
+            backdrop-filter:
+              blur(4px);
+          }
+
+
+          .cancel-modal {
+            position: relative;
+
+            width: 100%;
+
+            max-width: 480px;
+
+            padding: 32px;
+
+            border-radius: 20px;
+
+            background: white;
+
+            box-shadow:
+              0 20px 60px rgba(0,0,0,.2);
+          }
+
+
+          .cancel-modal h2 {
+            margin:
+              0 0 18px;
+
+            font-size: 24px;
+
+            line-height: 1.2;
+          }
+
+
+          .cancel-modal p {
+            margin:
+              0 0 14px;
+
+            color: #555;
+
+            font-size: 14px;
+
+            line-height: 1.55;
+          }
+
+
+          .cancel-modal-close {
+            position: absolute;
+
+            top: 12px;
+            right: 12px;
+
+            width: 32px;
+            height: 32px;
+
+            border: none;
+
+            border-radius: 50%;
+
+            background: #f3f3f3;
+
+            font-size: 22px;
+
+            cursor: pointer;
+          }
+
+
+          .cancel-modal-actions {
+            display: flex;
+
+            gap: 10px;
+
+            margin-top: 26px;
+          }
+
+
+          .keep-pro-btn,
+          .confirm-cancel-btn {
+            flex: 1;
+
+            padding: 11px 16px;
+
+            border-radius: 9px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+          }
+
+
+          .keep-pro-btn {
+            border:
+              1px solid #ddd;
+
+            background: white;
+
+            color: #222;
+          }
+
+
+          .confirm-cancel-btn {
+            border: none;
+
+            background: #f1f1f1;
+
+            color: #555;
+          }
+
+
+          .confirm-cancel-btn:hover {
+            background: #e5e5e5;
+          }
+
 
           @media (
             max-width: 768px
@@ -1039,6 +1546,10 @@ export default function Index() {
 
             .img-box {
               height: 240px;
+            }
+
+            .cancel-modal-actions {
+              flex-direction: column;
             }
 
           }

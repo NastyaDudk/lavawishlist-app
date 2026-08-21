@@ -47,21 +47,30 @@ console.log(
   isPro
 );
 
-  await prisma.shopStats.upsert({
-    where: {
-      shop,
-    },
+ await prisma.shopStats.upsert({
+  where: {
+    shop,
+  },
 
-    update: {
-      isPro,
-    },
+  update: {
+    shopId:
+      payload.app_subscription
+        .admin_graphql_api_shop_id,
 
-    create: {
-      shop,
-      isPro,
-      limitHits: 0,
-    },
-  });
+    isPro,
+  },
+
+  create: {
+    shop,
+
+    shopId:
+      payload.app_subscription
+        .admin_graphql_api_shop_id,
+
+    isPro,
+    limitHits: 0,
+  },
+});
 
   console.log(
     "DATABASE UPDATED:",
