@@ -26,16 +26,9 @@ export async function loader({
   const { admin, session } =
     await authenticate.admin(request);
 
-  const stats =
-    await prisma.shopStats.findUnique({
-      where: {
-        shop: session.shop,
-      },
-    });
-
   const response = await admin.graphql(`
     #graphql
-    query GetActiveSubscriptions {
+    query {
       currentAppInstallation {
         activeSubscriptions {
           id
@@ -46,27 +39,24 @@ export async function loader({
     }
   `);
 
-  const data = await response.json();
+  const result = await response.json();
 
-  const subscriptions =
-    data.data?.currentAppInstallation?.activeSubscriptions ?? [];
-
-  const isPro = subscriptions.some(
-    (subscription: {
-      name: string;
-      status: string;
-    }) =>
-      subscription.name === "pro" &&
-      subscription.status === "ACTIVE"
+  console.log(
+    "SHOPIFY BILLING:",
+    JSON.stringify(result, null, 2)
   );
 
-  console.log("Shopify active subscriptions:", subscriptions);
-  console.log("REAL isPro:", isPro);
+  const stats =
+    await prisma.shopStats.findUnique({
+      where: {
+        shop: session.shop,
+      },
+    });
 
   return {
     shop: session.shop,
     limitHits: stats?.limitHits ?? 0,
-    isPro,
+    isPro: stats?.isPro ?? false,
   };
 }
 
