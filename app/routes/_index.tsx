@@ -11,6 +11,8 @@ import {
 } from "@shopify/polaris";
 import { useLoaderData } from "react-router";
 
+
+
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
 import prisma from "../db.server";
@@ -20,52 +22,139 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { admin, session } =
+  const { session } =
     await authenticate.admin(request);
+
+  console.log("PARTNER ENV CHECK:", {
+  orgId: process.env.SHOPIFY_PARTNER_ORG_ID,
+  tokenExists: !!process.env.SHOPIFY_PARTNER_ACCESS_TOKEN,
+  tokenLength:
+    process.env.SHOPIFY_PARTNER_ACCESS_TOKEN?.length,
+});
+
+  const shop = session.shop;
 
   /*
    * =====================================
-   * 1. Получаем настоящий Shopify Shop ID
+   * 1. Проверяем переменные окружения
    * =====================================
    */
 
-  const shopResponse = await admin.graphql(`
-    #graphql
-    query {
-      shop {
-        id
-      }
-    }
-  `);
+  const orgId =
+    process.env.SHOPIFY_PARTNER_ORG_ID;
 
-  const shopResult =
-    await shopResponse.json();
+  const accessToken =
+    process.env.SHOPIFY_PARTNER_ACCESS_TOKEN;
 
-  const shopId =
-    shopResult?.data?.shop?.id;
+  const appId =
+    process.env.SHOPIFY_APP_ID;
 
-  console.log(
-    "SHOP ID:",
-    shopId
-  );
-
-  if (!shopId) {
+  if (!orgId) {
     throw new Error(
-      "Could not get Shopify Shop ID"
+      "SHOPIFY_PARTNER_ORG_ID is missing"
+    );
+  }
+
+  if (!accessToken) {
+    throw new Error(
+      "SHOPIFY_PARTNER_ACCESS_TOKEN is missing"
+    );
+  }
+
+  if (!appId) {
+    throw new Error(
+      "SHOPIFY_APP_ID is missing"
     );
   }
 
 
   /*
    * =====================================
-   * 2. Проверяем Managed Pricing
-   * через Partner API
+   * 2. Получаем Shop ID через Partner API
    * =====================================
    */
 
-  const partnerResponse =
+  const shopResponse = await fetch(
+    `https://partners.shopify.com/${orgId}/api/2026-07/graphql.json`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token":
+          accessToken,
+      },
+
+      body: JSON.stringify({
+        query: `
+          query GetShop($domain: String!) {
+            shop(domain: $domain) {
+              id
+              myshopifyDomain
+            }
+          }
+        `,
+
+        variables: {
+          domain: shop,
+        },
+      }),
+    }
+  );
+
+  const shopResult =
+    await shopResponse.json();
+
+  console.log(
+    "PARTNER SHOP RESPONSE:",
+    JSON.stringify(
+      shopResult,
+      null,
+      2
+    )
+  );
+
+
+  if (!shopResponse.ok) {
+    throw new Error(
+      `Partner API shop request failed: ${shopResponse.status}`
+    );
+  }
+
+  if (shopResult.errors) {
+    throw new Error(
+      JSON.stringify(
+        shopResult.errors
+      )
+    );
+  }
+
+  const shopId =
+    shopResult?.data?.shop?.id;
+
+
+  if (!shopId) {
+    throw new Error(
+      `Could not find Shopify shop ID for ${shop}`
+    );
+  }
+
+
+  console.log(
+    "SHOP ID:",
+    shopId
+  );
+
+
+  /*
+   * =====================================
+   * 3. Проверяем активную подписку
+   * =====================================
+   */
+
+  const billingResponse =
     await fetch(
-      `https://partners.shopify.com/${process.env.SHOPIFY_PARTNER_ORG_ID}/api/2026-07/graphql.json`,
+      `https://partners.shopify.com/${orgId}/api/2026-07/graphql.json`,
       {
         method: "POST",
 
@@ -74,7 +163,7 @@ export async function loader({
             "application/json",
 
           "X-Shopify-Access-Token":
-            process.env.SHOPIFY_PARTNER_ACCESS_TOKEN!,
+            accessToken,
         },
 
         body: JSON.stringify({
@@ -89,11 +178,6 @@ export async function loader({
                 appId: $appId
                 shopId: $shopId
               ) {
-
-                shop {
-                  id
-                  myshopifyDomain
-                }
 
                 billingPeriod
 
@@ -119,12 +203,8 @@ export async function loader({
           `,
 
           variables: {
-
-            appId:
-              process.env.SHOPIFY_APP_ID!,
-
+            appId,
             shopId,
-
           },
 
         }),
@@ -132,44 +212,60 @@ export async function loader({
     );
 
 
-  const partnerResult =
-    await partnerResponse.json();
+  const billingResult =
+    await billingResponse.json();
 
 
   console.log(
-    "PARTNER BILLING:",
+    "SHOPIFY BILLING:",
     JSON.stringify(
-      partnerResult,
+      billingResult,
       null,
       2
     )
   );
 
 
+  if (!billingResponse.ok) {
+    throw new Error(
+      `Partner API billing request failed: ${billingResponse.status}`
+    );
+  }
+
+  if (billingResult.errors) {
+    throw new Error(
+      JSON.stringify(
+        billingResult.errors
+      )
+    );
+  }
+
+
   /*
    * =====================================
-   * 3. Определяем Pro
+   * 4. Реальный статус Pro
    * =====================================
    */
 
   const subscription =
-    partnerResult?.data
+    billingResult?.data
       ?.activeSubscription;
 
 
   const isPro =
-    !!subscription;
+    subscription !== null &&
+    subscription !== undefined;
 
 
   console.log(
-    "IS PRO:",
+    "REAL IS PRO:",
     isPro
   );
 
 
   /*
    * =====================================
-   * 4. Сохраняем актуальный статус
+   * 5. Сохраняем в Prisma
    * =====================================
    */
 
@@ -177,7 +273,7 @@ export async function loader({
     await prisma.shopStats.upsert({
 
       where: {
-        shop: session.shop,
+        shop,
       },
 
       update: {
@@ -185,10 +281,8 @@ export async function loader({
       },
 
       create: {
-        shop: session.shop,
-
+        shop,
         isPro,
-
         limitHits: 0,
       },
 
@@ -197,22 +291,20 @@ export async function loader({
 
   /*
    * =====================================
-   * 5. Возвращаем данные Dashboard
+   * 6. Отдаём Dashboard
    * =====================================
    */
 
   return {
-
-    shop:
-      session.shop,
+    shop,
 
     limitHits:
       stats.limitHits,
 
     isPro,
-
   };
 }
+
 
 export default function Index() {
 
