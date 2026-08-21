@@ -3,11 +3,15 @@ import type { ActionFunctionArgs } from "@remix-run/node";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
-const PARTNER_API_VERSION = "2026-07";
-
 export async function action({
   request,
 }: ActionFunctionArgs) {
+
+  /*
+   * =====================================
+   * 1. Only POST is allowed
+   * =====================================
+   */
 
   if (request.method !== "POST") {
     return new Response(
@@ -23,18 +27,17 @@ export async function action({
     );
   }
 
+
   /*
    * =====================================
-   * 1. Authenticate Shopify Admin request
+   * 2. Authenticate Shopify Admin request
    * =====================================
    *
-   * This is ONLY used to verify that the
-   * request comes from the current merchant.
-   *
-   * We DO NOT use Admin API for billing.
+   * ONLY Shopify Admin API is used.
+   * No Partner API.
    */
 
-  const { session } =
+  const { admin, session } =
     await authenticate.admin(request);
 
   const shop = session.shop;
@@ -47,7 +50,7 @@ export async function action({
 
   /*
    * =====================================
-   * 2. Get shop ID from our database
+   * 3. Check our database
    * =====================================
    */
 
@@ -74,205 +77,83 @@ export async function action({
     );
   }
 
-  const shopId = stats.shopId;
-
-  if (!shopId) {
-    return new Response(
-      JSON.stringify({
-        error:
-          "Shop ID is missing. Please reinstall the app or wait for the subscription webhook.",
-      }),
-      {
-        status: 400,
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-      }
-    );
-  }
-
 
   /*
    * =====================================
-   * 3. Partner API environment
+   * 4. Get active subscription
    * =====================================
+   *
+   * Shopify Admin GraphQL API.
    */
 
-  const orgId =
-    process.env.SHOPIFY_PARTNER_ORG_ID;
-
-  const accessToken =
-  process.env.SHOPIFY_PARTNER_ACCESS_TOKEN;
-
-if (!accessToken) {
-  throw new Error(
-    "SHOPIFY_PARTNER_ACCESS_TOKEN is missing"
-  );
-}
-
-const partnerAccessToken: string =
-  accessToken;
-
-  const appId =
-    process.env.SHOPIFY_APP_ID;
-
-
-  if (!orgId) {
-    throw new Error(
-      "SHOPIFY_PARTNER_ORG_ID is missing"
-    );
-  }
-
-  if (!accessToken) {
-    throw new Error(
-      "SHOPIFY_PARTNER_ACCESS_TOKEN is missing"
-    );
-  }
-
-  if (!appId) {
-    throw new Error(
-      "SHOPIFY_APP_ID is missing"
-    );
-  }
-
-
-  /*
-   * =====================================
-   * 4. Partner API helper
-   * =====================================
-   */
-
-  async function partnerGraphQL(
-    query: string,
-    variables: Record<string, unknown>
-  ) {
-
-    const response = await fetch(
-      `https://partners.shopify.com/${orgId}/api/${PARTNER_API_VERSION}/graphql.json`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json",
-
-          "X-Shopify-Access-Token":
-          partnerAccessToken,
-        },
-
-        body: JSON.stringify({
-          query,
-          variables,
-        }),
-      }
-    );
-
-    const result =
-      await response.json();
-
-    console.log(
-      "PARTNER API RESPONSE:",
-      JSON.stringify(
-        result,
-        null,
-        2
-      )
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Partner API request failed: ${response.status}`
-      );
-    }
-
-    if (result.errors?.length) {
-      throw new Error(
-        result.errors
-          .map(
-            (error: {
-              message: string;
-            }) => error.message
-          )
-          .join(", ")
-      );
-    }
-
-    return result;
-  }
-
-
-  /*
-   * =====================================
-   * 5. Get current subscription
-   * =====================================
-   */
-
-  const subscriptionResult =
-    await partnerGraphQL(
-      `
-        query ActiveSubscription(
-          $appId: ID!
-          $shopId: ID!
-        ) {
-
-          activeSubscription(
-            appId: $appId
-            shopId: $shopId
-          ) {
-
-            shop {
+  const subscriptionResponse =
+    await admin.graphql(
+      `#graphql
+        query GetActiveSubscription {
+          currentAppInstallation {
+            activeSubscriptions {
               id
-              myshopifyDomain
-            }
-
-            billingPeriod
-
-            cancelAtEndOfCycle
-
-            trialEndsAt
-
-            currentBillingCycle {
-              startTime
-              endTime
-            }
-
-            items {
-              handle
-              description
-
-              price {
-                __typename
-
-                ... on FlatRatePrice {
-                  amount
-                  currency
-                }
-              }
+              name
+              status
+              createdAt
+              currentPeriodEnd
+              trialDays
             }
           }
         }
-      `,
-      {
-        appId,
-        shopId,
-      }
+      `
     );
-
-
-  const subscription =
-    subscriptionResult
-      ?.data
-      ?.activeSubscription;
 
 
   /*
    * =====================================
-   * 6. No active subscription
+   * 5. Parse Shopify response
    * =====================================
    */
 
-  if (!subscription) {
+  const subscriptionData =
+    await subscriptionResponse.json();
+
+  console.log(
+    "ACTIVE SUBSCRIPTION:",
+    JSON.stringify(
+      subscriptionData,
+      null,
+      2
+    )
+  );
+
+
+  /*
+   * =====================================
+   * 6. Extract active subscriptions
+   * =====================================
+   *
+   * We intentionally do NOT access
+   * subscriptionData.errors because
+   * the Shopify Admin API response type
+   * does not expose that property.
+   */
+
+  const activeSubscriptions =
+    subscriptionData?.data
+      ?.currentAppInstallation
+      ?.activeSubscriptions ?? [];
+
+
+  /*
+   * =====================================
+   * 7. No active subscription
+   * =====================================
+   */
+
+  if (
+    activeSubscriptions.length === 0
+  ) {
+
+    console.log(
+      "NO ACTIVE SUBSCRIPTION FOUND"
+    );
 
     await prisma.shopStats.update({
       where: {
@@ -281,18 +162,27 @@ const partnerAccessToken: string =
 
       data: {
         isPro: false,
-        cancellationScheduled: false,
-        cancellationDate: null,
+
+        cancellationScheduled:
+          false,
+
+        cancellationDate:
+          null,
       },
     });
 
     return new Response(
       JSON.stringify({
         success: true,
+
         alreadyFree: true,
+
+        message:
+          "No active subscription found.",
       }),
       {
         status: 200,
+
         headers: {
           "Content-Type":
             "application/json",
@@ -304,47 +194,44 @@ const partnerAccessToken: string =
 
   /*
    * =====================================
-   * 7. Already scheduled for cancellation
+   * 8. Find Pro subscription
    * =====================================
    */
 
-  if (
-    subscription.cancelAtEndOfCycle
-  ) {
+  const subscription =
+    activeSubscriptions.find(
+      (item: {
+        id: string;
+        name: string;
+        status: string;
+      }) =>
+        item.name?.toLowerCase() ===
+          "pro" &&
+        item.status === "ACTIVE"
+    );
 
-    const cancellationDate =
-      subscription
-        ?.currentBillingCycle
-        ?.endTime ?? null;
 
-    await prisma.shopStats.update({
-      where: {
-        shop,
-      },
+  /*
+   * =====================================
+   * 9. Pro subscription not found
+   * =====================================
+   */
 
-      data: {
-        isPro: true,
+  if (!subscription) {
 
-        cancellationScheduled:
-          true,
-
-        cancellationDate:
-          cancellationDate
-            ? new Date(cancellationDate)
-            : null,
-      },
-    });
+    console.error(
+      "ACTIVE PRO SUBSCRIPTION NOT FOUND:",
+      activeSubscriptions
+    );
 
     return new Response(
       JSON.stringify({
-        success: true,
-
-        alreadyScheduled: true,
-
-        cancellationDate,
+        error:
+          "Active Pro subscription not found.",
       }),
       {
-        status: 200,
+        status: 404,
+
         headers: {
           "Content-Type":
             "application/json",
@@ -354,61 +241,47 @@ const partnerAccessToken: string =
   }
 
 
+  console.log(
+    "PRO SUBSCRIPTION ID:",
+    subscription.id
+  );
+
+  console.log(
+    "CURRENT PERIOD END:",
+    subscription.currentPeriodEnd
+  );
+
+
   /*
    * =====================================
-   * 8. Cancel subscription
+   * 10. Cancel subscription
+   * =====================================
+   *
+   * prorate: false
    *
    * IMPORTANT:
    *
-   * deferCancellation = true
+   * The merchant does NOT receive
+   * a prorated refund.
    *
-   * means:
-   *
-   * - subscription stays active
-   * - Pro stays active
-   * - current billing period continues
-   * - next renewal is cancelled
-   *
-   * prorate = false
-   *
-   * means:
-   *
-   * - no refund for unused time
-   * - customer keeps access until
-   *   the end of the paid period
+   * The subscription is cancelled
+   * for future billing.
    */
 
-  const cancelResult =
-    await partnerGraphQL(
-      `
-        mutation CancelAppSubscription(
-          $appId: ID!
-          $deferCancellation: Boolean!
-          $prorate: Boolean!
-          $shopId: ID!
-          $skipFinalUsageCharge: Boolean!
+  const cancelResponse =
+    await admin.graphql(
+      `#graphql
+        mutation AppSubscriptionCancel(
+          $id: ID!
+          $prorate: Boolean
         ) {
-
           appSubscriptionCancel(
-            appId: $appId
-            deferCancellation: $deferCancellation
+            id: $id
             prorate: $prorate
-            shopId: $shopId
-            skipFinalUsageCharge: $skipFinalUsageCharge
           ) {
-
             appSubscription {
-              cancelAtEndOfCycle
-              cancelledAt
-
-              billingPeriod
-
-              currentBillingCycle {
-                startTime
-                endTime
-              }
-
-              trialEndsAt
+              id
+              status
             }
 
             userErrors {
@@ -419,43 +292,55 @@ const partnerAccessToken: string =
         }
       `,
       {
-        appId,
+        variables: {
+          id: subscription.id,
 
-        deferCancellation:
-          true,
-
-        prorate:
-          false,
-
-        shopId,
-
-        skipFinalUsageCharge:
-          false,
+          prorate: false,
+        },
       }
     );
 
 
   /*
    * =====================================
-   * 9. Shopify user errors
+   * 11. Parse cancellation response
    * =====================================
    */
 
   const cancelData =
-    cancelResult
-      ?.data
+    await cancelResponse.json();
+
+  console.log(
+    "CANCEL RESPONSE:",
+    JSON.stringify(
+      cancelData,
+      null,
+      2
+    )
+  );
+
+
+  /*
+   * =====================================
+   * 12. Shopify user errors
+   * =====================================
+   */
+
+  const cancelPayload =
+    cancelData?.data
       ?.appSubscriptionCancel;
 
-
   const userErrors =
-    cancelData
+    cancelPayload
       ?.userErrors ?? [];
 
 
-  if (userErrors.length > 0) {
+  if (
+    userErrors.length > 0
+  ) {
 
     console.error(
-      "PARTNER CANCEL USER ERRORS:",
+      "CANCEL USER ERRORS:",
       userErrors
     );
 
@@ -485,28 +370,33 @@ const partnerAccessToken: string =
 
   /*
    * =====================================
-   * 10. Get cancellation date
+   * 13. Get cancellation date
    * =====================================
+   *
+   * currentPeriodEnd is the end of
+   * the currently paid/trial period.
    */
 
   const cancellationDate =
-    cancelData
-      ?.appSubscription
-      ?.currentBillingCycle
-      ?.endTime ?? null;
+    subscription.currentPeriodEnd ??
+    null;
 
 
   /*
    * =====================================
-   * 11. Update our database
+   * 14. Update our database
+   * =====================================
    *
    * IMPORTANT:
    *
-   * isPro stays TRUE.
+   * isPro remains TRUE.
    *
-   * The merchant is still Pro until
-   * the paid billing period ends.
-   * =====================================
+   * The merchant keeps Pro access
+   * until the current period ends.
+   *
+   * cancellationScheduled = true
+   *
+   * cancellationDate = period end
    */
 
   await prisma.shopStats.update({
@@ -515,9 +405,7 @@ const partnerAccessToken: string =
     },
 
     data: {
-
-      isPro:
-        true,
+      isPro: true,
 
       cancellationScheduled:
         true,
@@ -532,11 +420,20 @@ const partnerAccessToken: string =
   });
 
 
+  /*
+   * =====================================
+   * 15. Log successful cancellation
+   * =====================================
+   */
+
   console.log(
     "SUBSCRIPTION CANCELLATION SCHEDULED:",
     {
       shop,
-      shopId,
+
+      subscriptionId:
+        subscription.id,
+
       cancellationDate,
     }
   );
@@ -544,15 +441,13 @@ const partnerAccessToken: string =
 
   /*
    * =====================================
-   * 12. Return success
+   * 16. Return success
    * =====================================
    */
 
   return new Response(
     JSON.stringify({
-
-      success:
-        true,
+      success: true,
 
       cancellationScheduled:
         true,
