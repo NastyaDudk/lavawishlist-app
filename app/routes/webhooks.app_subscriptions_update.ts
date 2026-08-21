@@ -19,17 +19,33 @@ export const action = async ({
   );
   console.log("=================================");
 
-  const subscription =
-    payload?.app_subscription;
+ const subscription =
+  payload?.app_subscription;
 
-  const status =
-    subscription?.status;
+const status =
+  subscription?.status;
 
-  const isPro =
-    status === "ACTIVE";
+const planHandle =
+  subscription?.plan_handle;
 
-  console.log("SUBSCRIPTION STATUS:", status);
-  console.log("CALCULATED isPro:", isPro);
+const isPro =
+  status === "ACTIVE" &&
+  planHandle === "pro";
+
+console.log(
+  "SUBSCRIPTION STATUS:",
+  status
+);
+
+console.log(
+  "PLAN HANDLE:",
+  planHandle
+);
+
+console.log(
+  "CALCULATED isPro:",
+  isPro
+);
 
   await prisma.shopStats.upsert({
     where: {
