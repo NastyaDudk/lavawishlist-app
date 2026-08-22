@@ -696,27 +696,41 @@ export default function Index() {
                            CANCEL BUTTON
                         ================================= */
 
-                      <button
-  type="button"
+<div
+  role="button"
+  tabIndex={0}
   onClick={() => {
-    alert("CLICK WORKS");
+    console.log("CANCEL CLICK");
     setShowCancelModal(true);
   }}
+  onKeyDown={(event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      setShowCancelModal(true);
+    }
+  }}
   style={{
+    position: "relative",
+    zIndex: 9999,
     display: "block",
     width: "100%",
     padding: "8px 0",
+    marginTop: "2px",
     border: "none",
     background: "transparent",
     color: "#6b7280",
     fontSize: "12px",
+    fontWeight: 400,
+    lineHeight: "18px",
     textAlign: "center",
     textDecoration: "underline",
+    textUnderlineOffset: "3px",
     cursor: "pointer",
+    pointerEvents: "auto",
   }}
 >
   Cancel subscription
-</button>
+</div>
 
                       )}
 
@@ -1329,17 +1343,20 @@ export default function Index() {
           }
 
 
-          .pro-plan {
-            background:
-              linear-gradient(
-                135deg,
-                rgba(255,81,47,.08),
-                rgba(221,36,118,.08)
-              );
+        .pro-plan {
+  position: relative;
+  z-index: 10;
 
-            border:
-              2px solid #dd2476;
-          }
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,81,47,.08),
+      rgba(221,36,118,.08)
+    );
+
+  border:
+    2px solid #dd2476;
+}
 
 
           .popular-badge {
