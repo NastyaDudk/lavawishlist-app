@@ -23,6 +23,10 @@ export default [
 {
   path: "/app/cancel-plan",
   file: "routes/app.cancel-plan.ts",
+  },
+{
+  path: "/app/cancel-subscription",
+  file: "routes/app.cancel-subscription.ts",
 },
 {
   path: "/app/pricing",

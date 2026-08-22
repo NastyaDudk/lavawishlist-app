@@ -698,85 +698,53 @@ export default function Index() {
                     </a>
 
                   ) : (
+<BlockStack gap="300">
 
-                    <BlockStack gap="300">
+  <Button
+    variant="primary"
+    disabled
+    fullWidth
+  >
+    Pro Active ✓
+  </Button>
 
+  {cancellationScheduled ? (
 
-                      <Button
-                        variant="primary"
-                        disabled
-                        fullWidth
-                      >
-                        Pro Active ✓
-                      </Button>
+    <div className="cancelled-note">
 
+      <Text as="p">
+        Subscription cancelled
+      </Text>
 
-                      {/* =================================================
-                          CANCELLATION ALREADY SCHEDULED
-                      ================================================= */}
+      <Text
+        as="p"
+        tone="subdued"
+      >
+        Your Pro plan remains active
+        {formattedCancellationDate
+          ? ` until ${formattedCancellationDate}.`
+          : " until the end of your current billing period."
+        }
+        {" "}
+        You will not be charged again
+        after this period.
+      </Text>
 
-                      {cancellationScheduled ? (
+    </div>
 
-                        <div className="cancelled-note">
+  ) : (
 
-                          <Text as="p">
+    <a
+      href={`https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/free?interval=EVERY_30_DAYS`}
+      target="_top"
+      className="cancel-subscription-link"
+    >
+      Cancel subscription
+    </a>
 
-                            Subscription cancelled
+  )}
 
-                          </Text>
-
-
-                          <Text
-                            as="p"
-                            tone="subdued"
-                          >
-
-                            Your Pro plan remains
-                            active
-
-                            {formattedCancellationDate
-                              ? ` until ${formattedCancellationDate}.`
-                              : " until the end of your current billing period."
-                            }
-
-                            {" "}
-
-                            You will not be charged
-                            again after this period.
-
-                          </Text>
-
-                        </div>
-
-                      ) : (
-
-                        /* =================================================
-                           CANCEL BUTTON
-                        ================================================= */
-
-                        <button
-                          type="button"
-                          className="cancel-subscription-link"
-                          onClick={() => {
-
-                            console.log(
-                              "CANCEL BUTTON CLICKED"
-                            );
-
-                            setShowCancelModal(
-                              true
-                            );
-
-                          }}
-                        >
-
-                          Cancel subscription
-
-                        </button>
-
-                      )}
-
-                    </BlockStack>
+</BlockStack>
 
                   )}
 
