@@ -12,7 +12,13 @@ import {
 
 import {
   useLoaderData,
+  useFetcher,
 } from "react-router";
+
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import type {
   LoaderFunctionArgs,
@@ -43,7 +49,10 @@ export async function loader({
   const isPro =
     stats?.isPro ?? false;
 
-  console.log("SHOP:", session.shop);
+  console.log(
+    "SHOP:",
+    session.shop
+  );
 
   console.log(
     "SHOP STATS:",
@@ -96,12 +105,120 @@ export default function Index() {
     }>();
 
 
+  // ===================================================
+  // FETCHER
+  // ===================================================
+
+  const fetcher =
+    useFetcher<{
+      success?: boolean;
+      cancellationScheduled?: boolean;
+      cancellationDate?: string | null;
+      alreadyScheduled?: boolean;
+      alreadyFree?: boolean;
+      error?: string;
+      message?: string;
+    }>();
+
+
+  // ===================================================
+  // CANCEL MODAL
+  // ===================================================
+
+  const [
+    showCancelModal,
+    setShowCancelModal,
+  ] = useState(false);
+
+
+  // ===================================================
+  // CLIENT HYDRATION TEST
+  // ===================================================
+
+  useEffect(() => {
+
+    console.log(
+      "REACT CLIENT WORKS"
+    );
+
+    /*
+     * Temporary test.
+     *
+     * If this alert appears after
+     * the page loads, React client
+     * hydration is working.
+     */
+
+    alert(
+      "REACT CLIENT WORKS"
+    );
+
+  }, []);
+
+
+  // ===================================================
+  // CANCEL REQUEST STATE
+  // ===================================================
+
+  const cancelling =
+    fetcher.state === "submitting";
+
+
+  // ===================================================
+  // CANCEL RESPONSE
+  // ===================================================
+
+  useEffect(() => {
+
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.success
+    ) {
+
+      setShowCancelModal(false);
+
+      window.location.reload();
+
+      return;
+    }
+
+
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.error
+    ) {
+
+      console.error(
+        "Cancellation error:",
+        fetcher.data.error
+      );
+
+      alert(
+        fetcher.data.error
+      );
+
+    }
+
+  }, [
+    fetcher.state,
+    fetcher.data,
+  ]);
+
+
+  // ===================================================
+  // STORE
+  // ===================================================
+
   const store =
     shop.replace(
       ".myshopify.com",
       ""
     );
 
+
+  // ===================================================
+  // CANCELLATION DATE
+  // ===================================================
 
   const formattedCancellationDate =
     cancellationDate
@@ -119,806 +236,79 @@ export default function Index() {
 
 
   // ===================================================
-  // TEST CLICK
+  // CANCEL SUBSCRIPTION
   // ===================================================
 
-  function handleCancelClick() {
+  function cancelSubscription() {
 
     console.log(
-      "CANCEL BUTTON CLICKED"
+      "SUBMITTING CANCEL REQUEST"
     );
 
-    alert(
-      "CANCEL BUTTON CLICKED"
+    fetcher.submit(
+      {},
+      {
+        method: "post",
+        action:
+          "/app/cancel-subscription",
+      }
     );
 
   }
 
 
+  // ===================================================
+  // RENDER
+  // ===================================================
+
   return (
 
-    <div
-      onClick={() => {
-        console.log(
-          "PAGE CLICK WORKS"
-        );
-      }}
-      style={{
-        minHeight: "100vh",
-      }}
+    <Page
+      title="❤️‍🔥 Lava Wishlist"
     >
 
-      <Page
-        title="❤️‍🔥 Lava Wishlist"
-      >
-
-        <BlockStack gap="500">
+      <BlockStack gap="500">
 
 
-          {/* =========================================
-              HERO
-          ========================================= */}
+        {/* =================================================
+            HERO
+        ================================================= */}
 
-          <div className="hero-card">
+        <div className="hero-card">
 
-            <div className="hero-overlay" />
+          <div className="hero-overlay" />
 
-            <BlockStack gap="500">
+          <BlockStack gap="500">
 
-              <InlineStack
-                align="space-between"
-              >
+            <InlineStack
+              align="space-between"
+            >
 
-                <div className="hero-badge">
-                  ❤️‍🔥 Shopify LavaWishlist App
-                </div>
+              <div className="hero-badge">
 
-                <div className="hero-pill">
-
-                  {isPro
-                    ? "Pro Plan Active"
-                    : "Free Plan Included"}
-
-                </div>
-
-              </InlineStack>
-
-
-              <BlockStack gap="300">
-
-                <Text
-                  as="h1"
-                  variant="heading2xl"
-                >
-                  Turn visitors into loyal buyers
-                </Text>
-
-                <Text
-                  as="p"
-                  variant="bodyLg"
-                >
-                  Beautiful wishlist experience
-                  for Shopify stores.
-                  Let customers save products
-                  they love and return later
-                  to buy.
-                </Text>
-
-              </BlockStack>
-
-
-              <InlineStack gap="300">
-
-                <Button
-                  variant="primary"
-                  disabled
-                >
-                  App Installed ✓
-                </Button>
-
-              </InlineStack>
-
-
-              <div className="hero-grid">
-
-                <div className="hero-box">
-
-                  <Text
-                    as="h3"
-                    variant="headingLg"
-                  >
-                    🤍
-                  </Text>
-
-                  <Text as="p">
-                    Beautiful UI
-                  </Text>
-
-                </div>
-
-
-                <div className="hero-box">
-
-                  <Text
-                    as="h3"
-                    variant="headingLg"
-                  >
-                    Shopify
-                  </Text>
-
-                  <Text as="p">
-                    Theme compatible
-                  </Text>
-
-                </div>
-
-
-                <div className="hero-box">
-
-                  <Text
-                    as="h3"
-                    variant="headingLg"
-                  >
-                    60 sec
-                  </Text>
-
-                  <Text as="p">
-                    Setup time
-                  </Text>
-
-                </div>
+                ❤️‍🔥 Shopify LavaWishlist App
 
               </div>
 
-            </BlockStack>
 
-          </div>
+              <div className="hero-pill">
 
-
-          {/* =========================================
-              PLANS
-          ========================================= */}
-
-          <Card>
-
-            <BlockStack gap="500">
-
-
-              <InlineStack
-                align="space-between"
-              >
-
-                <Text
-                  as="h2"
-                  variant="headingLg"
-                >
-                  Plans
-                </Text>
-
-
-                <div className="free-info">
-                  Free includes
-                  3 saves/month
-                </div>
-
-              </InlineStack>
-
-
-              <div className="plans-grid">
-
-
-                {/* ===================================
-                    FREE PLAN
-                =================================== */}
-
-                <div
-                  className={
-                    `plan-card free-plan ${
-                      !isPro
-                        ? "current-plan"
-                        : ""
-                    }`
-                  }
-                >
-
-                  {!isPro && (
-
-                    <div className="current-badge">
-                      CURRENT PLAN
-                    </div>
-
-                  )}
-
-
-                  <BlockStack gap="400">
-
-
-                    <div>
-
-                      <InlineStack
-                        align="space-between"
-                      >
-
-                        <Text
-                          as="h3"
-                          variant="headingLg"
-                        >
-                          Free Plan
-                        </Text>
-
-
-                        <Badge
-                          tone={
-                            isPro
-                              ? "critical"
-                              : "success"
-                          }
-                        >
-
-                          {!isPro
-                            ? "Active"
-                            : "Inactive"}
-
-                        </Badge>
-
-                      </InlineStack>
-
-
-                      <Text
-                        as="p"
-                        tone="subdued"
-                      >
-                        Perfect for small stores
-                      </Text>
-
-                    </div>
-
-
-                    <Text
-                      as="h2"
-                      variant="heading2xl"
-                    >
-                      $0
-                    </Text>
-
-
-                    <BlockStack gap="200">
-
-                      {[
-                        "Up to 3 wishlist saves",
-                        "Theme App Embed",
-                        "Mobile optimized",
-                        "Works with all Shopify themes",
-                        "Basic wishlist functionality",
-                      ].map(
-                        (item) => (
-
-                          <div
-                            key={item}
-                            className="feature-row"
-                          >
-
-                            <span>
-                              🔥
-                            </span>
-
-                            <Text as="p">
-                              {item}
-                            </Text>
-
-                          </div>
-
-                        )
-                      )}
-
-                    </BlockStack>
-
-
-                    {!isPro && (
-
-                      <div className="free-plan-note">
-
-                        <Text as="p">
-                          You are currently using the free plan
-                        </Text>
-
-                        <Text
-                          as="p"
-                          tone="subdued"
-                        >
-                          Limit reached {limitHits} times
-                        </Text>
-
-                      </div>
-
-                    )}
-
-                  </BlockStack>
-
-                </div>
-
-
-                {/* ===================================
-                    PRO PLAN
-                =================================== */}
-
-                <div
-                  className={
-                    `plan-card pro-plan ${
-                      isPro
-                        ? "current-plan"
-                        : ""
-                    }`
-                  }
-                >
-
-
-                  {isPro ? (
-
-                    <div className="current-badge">
-                      CURRENT PLAN
-                    </div>
-
-                  ) : (
-
-                    <div className="popular-badge">
-                      MOST POPULAR
-                    </div>
-
-                  )}
-
-
-                  <BlockStack gap="400">
-
-
-                    <div>
-
-                      <Text
-                        as="h3"
-                        variant="headingLg"
-                      >
-                        Pro Plan
-                      </Text>
-
-
-                      <Text
-                        as="p"
-                        tone="subdued"
-                      >
-                        For growing stores
-                      </Text>
-
-                    </div>
-
-
-                    <Text
-                      as="h2"
-                      variant="heading2xl"
-                    >
-                      $9.99/mo
-                    </Text>
-
-
-                    <Text
-                      as="p"
-                      tone="subdued"
-                    >
-                      Includes 3-day free trial
-                    </Text>
-
-
-                    <BlockStack gap="200">
-
-                      {[
-                        "Unlimited wishlist saves",
-                        "Priority performance",
-                        "Unlimited customer usage",
-                        "Premium lava UI ❤️‍🔥",
-                        "Fast add to cart",
-                        "Future Pro updates included",
-                        "Priority support",
-                      ].map(
-                        (item) => (
-
-                          <div
-                            key={item}
-                            className="feature-row"
-                          >
-
-                            <span>
-                              🚀
-                            </span>
-
-                            <Text as="p">
-                              {item}
-                            </Text>
-
-                          </div>
-
-                        )
-                      )}
-
-                    </BlockStack>
-
-
-                    {/* =================================
-                        FREE → PRO
-                    ================================= */}
-
-                    {!isPro ? (
-
-                      <a
-                        href={
-                          `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`
-                        }
-
-                        target="_top"
-
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          textAlign: "center",
-                          padding: "10px",
-                          background: "#111",
-                          color: "white",
-                          borderRadius: "10px",
-                          textDecoration: "none",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Start Free Trial
-                      </a>
-
-                    ) : (
-
-                      <BlockStack gap="300">
-
-
-                        <Button
-                          variant="primary"
-                          disabled
-                          fullWidth
-                        >
-                          Pro Active ✓
-                        </Button>
-
-
-                        {/* =================================
-                            CANCEL
-                        ================================= */}
-
-                        {!cancellationScheduled ? (
-
-                          <button
-                            type="button"
-
-                            onClick={
-                              handleCancelClick
-                            }
-
-                            style={{
-                              position: "relative",
-                              zIndex: 99999,
-
-                              display: "block",
-
-                              width: "100%",
-
-                              padding: "10px",
-
-                              border:
-                                "1px solid #d1d5db",
-
-                              borderRadius: "8px",
-
-                              background: "#ffffff",
-
-                              color: "#6b7280",
-
-                              fontSize: "13px",
-
-                              fontWeight: 500,
-
-                              cursor: "pointer",
-
-                              pointerEvents: "auto",
-
-                              textAlign: "center",
-                            }}
-                          >
-                            Cancel subscription
-                          </button>
-
-                        ) : (
-
-                          <div
-                            className="cancelled-note"
-                          >
-
-                            <Text as="p">
-
-                              Subscription cancelled
-
-                            </Text>
-
-
-                            <Text
-                              as="p"
-                              tone="subdued"
-                            >
-
-                              Your Pro plan remains
-                              active
-
-                              {formattedCancellationDate
-                                ? ` until ${formattedCancellationDate}.`
-                                : " until the end of your current billing period."
-                              }
-
-                              {" "}
-
-                              You will not be charged
-                              again after this period.
-
-                            </Text>
-
-                          </div>
-
-                        )}
-
-                      </BlockStack>
-
-                    )}
-
-
-                    <div className="pro-note">
-
-                      <Text
-                        as="p"
-                        tone="subdued"
-                      >
-                        3-day free trial included
-                      </Text>
-
-                    </div>
-
-                  </BlockStack>
-
-                </div>
+                {isPro
+                  ? "Pro Plan Active"
+                  : "Free Plan Included"}
 
               </div>
 
-            </BlockStack>
-
-          </Card>
+            </InlineStack>
 
 
-          {/* =========================================
-              SCREENSHOTS
-          ========================================= */}
-
-          <Card>
-
-            <BlockStack gap="500">
+            <BlockStack gap="300">
 
               <Text
-                as="h2"
-                variant="headingLg"
-              >
-                Beautiful inside your store
-              </Text>
-
-
-              <div className="grid">
-
-                {[
-                  {
-                    src:
-                      "/images/header.png",
-                    label:
-                      "Animated lava heart",
-                  },
-
-                  {
-                    src:
-                      "/images/catalog.png",
-                    label:
-                      "Wishlist on collection pages",
-                  },
-
-                  {
-                    src:
-                      "/images/wishlist drawer.png",
-                    label:
-                      "Slide-out wishlist drawer",
-                  },
-
-                  {
-                    src:
-                      "/images/icon.png",
-                    label:
-                      "Clean modern icons",
-                  },
-
-                  {
-                    src:
-                      "/images/added.png",
-                    label:
-                      "Fast add to cart",
-                  },
-
-                  {
-                    src:
-                      "/images/header before.png",
-                    label:
-                      "Fits every theme",
-                  },
-
-                ].map(
-                  (img) => (
-
-                    <div
-                      key={img.src}
-                      className="card-preview"
-                    >
-
-                      <div
-                        className="img-box"
-                      >
-
-                        <img
-                          src={img.src}
-                          alt={img.label}
-                        />
-
-                      </div>
-
-
-                      <Text
-                        as="p"
-                        tone="subdued"
-                      >
-                        {img.label}
-                      </Text>
-
-                    </div>
-
-                  )
-                )}
-
-              </div>
-
-            </BlockStack>
-
-          </Card>
-
-
-          {/* =========================================
-              VIDEO
-          ========================================= */}
-
-          <Card>
-
-            <BlockStack gap="400">
-
-              <InlineStack
-                align="space-between"
-              >
-
-                <Text
-                  as="h2"
-                  variant="headingLg"
-                >
-                  Setup in under
-                  1 minute 🎬
-                </Text>
-
-
-                <Badge tone="attention">
-                  No Coding
-                </Badge>
-
-              </InlineStack>
-
-
-              <div className="video-box">
-
-                <img
-                  src="/images/setup.gif"
-                  alt="Wishlist setup tutorial"
-                />
-
-              </div>
-
-
-              <Text
-                as="p"
-                tone="subdued"
-              >
-                Theme Editor →
-                App Embeds →
-                Enable Lava Favorites →
-                Save
-              </Text>
-
-            </BlockStack>
-
-          </Card>
-
-
-          {/* =========================================
-              QUICK SETUP
-          ========================================= */}
-
-          <Card>
-
-            <BlockStack gap="500">
-
-              <Text
-                as="h2"
-                variant="headingLg"
-              >
-                Quick setup
-              </Text>
-
-
-              <List type="number">
-
-                <List.Item>
-                  Open Shopify
-                  Theme Customize
-                </List.Item>
-
-
-                <List.Item>
-                  Enable Lava Favorites
-                  App Embed
-                </List.Item>
-
-
-                <List.Item>
-                  Save changes
-                </List.Item>
-
-
-                <List.Item>
-                  Customers can now
-                  save favorites ❤️
-                </List.Item>
-
-              </List>
-
-
-              <div
-                className="setup-banner"
-              >
-
-                <Text as="p">
-                  ⚡ Average setup time:
-                  less than 60 seconds
-                </Text>
-
-              </div>
-
-            </BlockStack>
-
-          </Card>
-
-
-          {/* =========================================
-              CTA
-          ========================================= */}
-
-          <div className="cta-card">
-
-            <BlockStack gap="400">
-
-              <Text
-                as="h2"
+                as="h1"
                 variant="heading2xl"
               >
-                Ready for unlimited
-                wishlists? 🔥
+                Turn visitors into loyal buyers
               </Text>
 
 
@@ -926,480 +316,1439 @@ export default function Index() {
                 as="p"
                 variant="bodyLg"
               >
-                Upgrade to Lava Favorites
-                Pro anytime from Shopify billing.
+                Beautiful wishlist experience
+                for Shopify stores.
+                Let customers save products
+                they love and return later
+                to buy.
               </Text>
 
             </BlockStack>
 
-          </div>
 
+            <InlineStack gap="300">
 
-          {/* =========================================
-              FOOTER
-          ========================================= */}
-
-          <div className="footer">
-
-            <InlineStack
-              gap="500"
-              align="center"
-            >
-
-              <Link
-                url="/privacy"
-                removeUnderline
+              <Button
+                variant="primary"
+                disabled
               >
-                Privacy Policy
-              </Link>
-
-
-              <Link
-                url="/faq"
-                removeUnderline
-              >
-                FAQ
-              </Link>
-
-
-              <Link
-                url="/docs"
-                removeUnderline
-              >
-                Documentation
-              </Link>
+                App Installed ✓
+              </Button>
 
             </InlineStack>
 
+
+            <div className="hero-grid">
+
+
+              <div className="hero-box">
+
+                <Text
+                  as="h3"
+                  variant="headingLg"
+                >
+                  🤍
+                </Text>
+
+                <Text as="p">
+                  Beautiful UI
+                </Text>
+
+              </div>
+
+
+              <div className="hero-box">
+
+                <Text
+                  as="h3"
+                  variant="headingLg"
+                >
+                  Shopify
+                </Text>
+
+                <Text as="p">
+                  Theme compatible
+                </Text>
+
+              </div>
+
+
+              <div className="hero-box">
+
+                <Text
+                  as="h3"
+                  variant="headingLg"
+                >
+                  60 sec
+                </Text>
+
+                <Text as="p">
+                  Setup time
+                </Text>
+
+              </div>
+
+
+            </div>
+
+          </BlockStack>
+
+        </div>
+
+
+        {/* =================================================
+            PLANS
+        ================================================= */}
+
+        <Card>
+
+          <BlockStack gap="500">
+
+
+            <InlineStack
+              align="space-between"
+            >
+
+              <Text
+                as="h2"
+                variant="headingLg"
+              >
+                Plans
+              </Text>
+
+
+              <div className="free-info">
+
+                Free includes
+                3 saves/month
+
+              </div>
+
+            </InlineStack>
+
+
+            <div className="plans-grid">
+
+
+              {/* =================================================
+                  FREE PLAN
+              ================================================= */}
+
+              <div
+                className={
+                  `plan-card free-plan ${
+                    !isPro
+                      ? "current-plan"
+                      : ""
+                  }`
+                }
+              >
+
+                {!isPro && (
+
+                  <div className="current-badge">
+
+                    CURRENT PLAN
+
+                  </div>
+
+                )}
+
+
+                <BlockStack gap="400">
+
+
+                  <div>
+
+                    <InlineStack
+                      align="space-between"
+                    >
+
+                      <Text
+                        as="h3"
+                        variant="headingLg"
+                      >
+                        Free Plan
+                      </Text>
+
+
+                      <Badge
+                        tone={
+                          isPro
+                            ? "critical"
+                            : "success"
+                        }
+                      >
+
+                        {!isPro
+                          ? "Active"
+                          : "Inactive"}
+
+                      </Badge>
+
+                    </InlineStack>
+
+
+                    <Text
+                      as="p"
+                      tone="subdued"
+                    >
+                      Perfect for small stores
+                    </Text>
+
+                  </div>
+
+
+                  <Text
+                    as="h2"
+                    variant="heading2xl"
+                  >
+                    $0
+                  </Text>
+
+
+                  <BlockStack gap="200">
+
+                    {[
+                      "Up to 3 wishlist saves",
+                      "Theme App Embed",
+                      "Mobile optimized",
+                      "Works with all Shopify themes",
+                      "Basic wishlist functionality",
+                    ].map(
+                      (item) => (
+
+                        <div
+                          key={item}
+                          className="feature-row"
+                        >
+
+                          <span>
+                            🔥
+                          </span>
+
+                          <Text as="p">
+                            {item}
+                          </Text>
+
+                        </div>
+
+                      )
+                    )}
+
+                  </BlockStack>
+
+
+                  {!isPro && (
+
+                    <div className="free-plan-note">
+
+                      <Text as="p">
+                        You are currently using the free plan
+                      </Text>
+
+
+                      <Text
+                        as="p"
+                        tone="subdued"
+                      >
+                        Limit reached {limitHits} times
+                      </Text>
+
+                    </div>
+
+                  )}
+
+                </BlockStack>
+
+              </div>
+
+
+              {/* =================================================
+                  PRO PLAN
+              ================================================= */}
+
+              <div
+                className={
+                  `plan-card pro-plan ${
+                    isPro
+                      ? "current-plan"
+                      : ""
+                  }`
+                }
+              >
+
+
+                {isPro ? (
+
+                  <div className="current-badge">
+
+                    CURRENT PLAN
+
+                  </div>
+
+                ) : (
+
+                  <div className="popular-badge">
+
+                    MOST POPULAR
+
+                  </div>
+
+                )}
+
+
+                <BlockStack gap="400">
+
+
+                  <div>
+
+                    <Text
+                      as="h3"
+                      variant="headingLg"
+                    >
+                      Pro Plan
+                    </Text>
+
+
+                    <Text
+                      as="p"
+                      tone="subdued"
+                    >
+                      For growing stores
+                    </Text>
+
+                  </div>
+
+
+                  <Text
+                    as="h2"
+                    variant="heading2xl"
+                  >
+                    $9.99/mo
+                  </Text>
+
+
+                  <Text
+                    as="p"
+                    tone="subdued"
+                  >
+                    Includes 3-day free trial
+                  </Text>
+
+
+                  <BlockStack gap="200">
+
+                    {[
+                      "Unlimited wishlist saves",
+                      "Priority performance",
+                      "Unlimited customer usage",
+                      "Premium lava UI ❤️‍🔥",
+                      "Fast add to cart",
+                      "Future Pro updates included",
+                      "Priority support",
+                    ].map(
+                      (item) => (
+
+                        <div
+                          key={item}
+                          className="feature-row"
+                        >
+
+                          <span>
+                            🚀
+                          </span>
+
+                          <Text as="p">
+                            {item}
+                          </Text>
+
+                        </div>
+
+                      )
+                    )}
+
+                  </BlockStack>
+
+
+                  {/* =================================================
+                      FREE → PRO
+                  ================================================= */}
+
+                  {!isPro ? (
+
+                    <a
+                      href={
+                        `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`
+                      }
+                      target="_top"
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        textAlign: "center",
+                        padding: "10px",
+                        background: "#111",
+                        color: "white",
+                        borderRadius: "10px",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Start Free Trial
+                    </a>
+
+                  ) : (
+
+                    <BlockStack gap="300">
+
+
+                      <Button
+                        variant="primary"
+                        disabled
+                        fullWidth
+                      >
+                        Pro Active ✓
+                      </Button>
+
+
+                      {/* =================================================
+                          CANCELLATION ALREADY SCHEDULED
+                      ================================================= */}
+
+                      {cancellationScheduled ? (
+
+                        <div className="cancelled-note">
+
+                          <Text as="p">
+
+                            Subscription cancelled
+
+                          </Text>
+
+
+                          <Text
+                            as="p"
+                            tone="subdued"
+                          >
+
+                            Your Pro plan remains
+                            active
+
+                            {formattedCancellationDate
+                              ? ` until ${formattedCancellationDate}.`
+                              : " until the end of your current billing period."
+                            }
+
+                            {" "}
+
+                            You will not be charged
+                            again after this period.
+
+                          </Text>
+
+                        </div>
+
+                      ) : (
+
+                        /* =================================================
+                           CANCEL BUTTON
+                        ================================================= */
+
+                        <button
+                          type="button"
+                          className="cancel-subscription-link"
+                          onClick={() => {
+
+                            console.log(
+                              "CANCEL BUTTON CLICKED"
+                            );
+
+                            setShowCancelModal(
+                              true
+                            );
+
+                          }}
+                        >
+
+                          Cancel subscription
+
+                        </button>
+
+                      )}
+
+                    </BlockStack>
+
+                  )}
+
+
+                  <div className="pro-note">
+
+                    <Text
+                      as="p"
+                      tone="subdued"
+                    >
+                      3-day free trial included
+                    </Text>
+
+                  </div>
+
+                </BlockStack>
+
+              </div>
+
+            </div>
+
+          </BlockStack>
+
+        </Card>
+
+
+        {/* =================================================
+            SCREENSHOTS
+        ================================================= */}
+
+        <Card>
+
+          <BlockStack gap="500">
+
+            <Text
+              as="h2"
+              variant="headingLg"
+            >
+              Beautiful inside your store
+            </Text>
+
+
+            <div className="grid">
+
+              {[
+                {
+                  src:
+                    "/images/header.png",
+                  label:
+                    "Animated lava heart",
+                },
+
+                {
+                  src:
+                    "/images/catalog.png",
+                  label:
+                    "Wishlist on collection pages",
+                },
+
+                {
+                  src:
+                    "/images/wishlist drawer.png",
+                  label:
+                    "Slide-out wishlist drawer",
+                },
+
+                {
+                  src:
+                    "/images/icon.png",
+                  label:
+                    "Clean modern icons",
+                },
+
+                {
+                  src:
+                    "/images/added.png",
+                  label:
+                    "Fast add to cart",
+                },
+
+                {
+                  src:
+                    "/images/header before.png",
+                  label:
+                    "Fits every theme",
+                },
+              ].map(
+                (img) => (
+
+                  <div
+                    key={img.src}
+                    className="card-preview"
+                  >
+
+                    <div className="img-box">
+
+                      <img
+                        src={img.src}
+                        alt={img.label}
+                      />
+
+                    </div>
+
+
+                    <Text
+                      as="p"
+                      tone="subdued"
+                    >
+                      {img.label}
+                    </Text>
+
+                  </div>
+
+                )
+              )}
+
+            </div>
+
+          </BlockStack>
+
+        </Card>
+
+
+        {/* =================================================
+            VIDEO
+        ================================================= */}
+
+        <Card>
+
+          <BlockStack gap="400">
+
+            <InlineStack
+              align="space-between"
+            >
+
+              <Text
+                as="h2"
+                variant="headingLg"
+              >
+                Setup in under
+                1 minute 🎬
+              </Text>
+
+
+              <Badge tone="attention">
+                No Coding
+              </Badge>
+
+            </InlineStack>
+
+
+            <div className="video-box">
+
+              <img
+                src="/images/setup.gif"
+                alt="Wishlist setup tutorial"
+              />
+
+            </div>
+
+
+            <Text
+              as="p"
+              tone="subdued"
+            >
+              Theme Editor →
+              App Embeds →
+              Enable Lava Favorites →
+              Save
+            </Text>
+
+          </BlockStack>
+
+        </Card>
+
+
+        {/* =================================================
+            QUICK SETUP
+        ================================================= */}
+
+        <Card>
+
+          <BlockStack gap="500">
+
+            <Text
+              as="h2"
+              variant="headingLg"
+            >
+              Quick setup
+            </Text>
+
+
+            <List type="number">
+
+              <List.Item>
+                Open Shopify
+                Theme Customize
+              </List.Item>
+
+
+              <List.Item>
+                Enable Lava Favorites
+                App Embed
+              </List.Item>
+
+
+              <List.Item>
+                Save changes
+              </List.Item>
+
+
+              <List.Item>
+                Customers can now
+                save favorites ❤️
+              </List.Item>
+
+            </List>
+
+
+            <div className="setup-banner">
+
+              <Text as="p">
+                ⚡ Average setup time:
+                less than 60 seconds
+              </Text>
+
+            </div>
+
+          </BlockStack>
+
+        </Card>
+
+
+        {/* =================================================
+            CTA
+        ================================================= */}
+
+        <div className="cta-card">
+
+          <BlockStack gap="400">
+
+            <Text
+              as="h2"
+              variant="heading2xl"
+            >
+              Ready for unlimited
+              wishlists? 🔥
+            </Text>
+
+
+            <Text
+              as="p"
+              variant="bodyLg"
+            >
+              Upgrade to Lava Favorites
+              Pro anytime from Shopify billing.
+            </Text>
+
+          </BlockStack>
+
+        </div>
+
+
+        {/* =================================================
+            FOOTER
+        ================================================= */}
+
+        <div className="footer">
+
+          <InlineStack
+            gap="500"
+            align="center"
+          >
+
+            <Link
+              url="/privacy"
+              removeUnderline
+            >
+              Privacy Policy
+            </Link>
+
+
+            <Link
+              url="/faq"
+              removeUnderline
+            >
+              FAQ
+            </Link>
+
+
+            <Link
+              url="/docs"
+              removeUnderline
+            >
+              Documentation
+            </Link>
+
+          </InlineStack>
+
+        </div>
+
+
+      </BlockStack>
+
+
+      {/* ===================================================
+          CANCEL MODAL
+      =================================================== */}
+
+      {showCancelModal && (
+
+        <div
+          className="cancel-modal-overlay"
+        >
+
+          <div
+            className="cancel-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-title"
+          >
+
+
+            <button
+              type="button"
+              className="cancel-modal-close"
+              onClick={() =>
+                setShowCancelModal(false)
+              }
+            >
+              ×
+            </button>
+
+
+            <h2 id="cancel-title">
+              Cancel your subscription?
+            </h2>
+
+
+            <p>
+              Your current Pro subscription
+              is already paid for, so your
+              current payment will not be refunded.
+            </p>
+
+
+            <p>
+              You will keep all Pro features
+              until the end of your current
+              billing period.
+            </p>
+
+
+            <p>
+              You will not be charged again
+              after that. Once your current
+              period ends, your account will
+              automatically switch to the
+              Free Plan with a limit of
+              3 wishlist saves per month.
+            </p>
+
+
+            {fetcher.data?.error && (
+
+              <div className="cancel-error">
+
+                {fetcher.data.error}
+
+              </div>
+
+            )}
+
+
+            <div className="cancel-modal-actions">
+
+
+              <button
+                type="button"
+                className="keep-pro-btn"
+                onClick={() =>
+                  setShowCancelModal(false)
+                }
+                disabled={cancelling}
+              >
+                Keep Pro
+              </button>
+
+
+              <button
+                type="button"
+                className="confirm-cancel-btn"
+                onClick={
+                  cancelSubscription
+                }
+                disabled={cancelling}
+              >
+
+                {cancelling
+                  ? "Cancelling..."
+                  : "Cancel subscription"}
+
+              </button>
+
+
+            </div>
+
           </div>
 
+        </div>
+
+      )}
+
+
+      {/* =================================================
+          STYLES
+      ================================================= */}
+
+      <style>{`
+
+        .hero-badge {
+          display: inline-flex;
+          align-items: center;
+          width: fit-content;
+          padding: 12px 18px;
+          border-radius: 999px;
+          background: rgba(255,255,255,.18);
+          color: white;
+          font-size: 16px;
+          font-weight: 700;
+          backdrop-filter: blur(12px);
+          box-shadow:
+            0 4px 18px rgba(0,0,0,.12);
+        }
+
+
+        .hero-card {
+          position: relative;
+          overflow: hidden;
+          padding: 48px;
+          border-radius: 28px;
+          background:
+            linear-gradient(
+              135deg,
+              #ff512f 0%,
+              #dd2476 100%
+            );
+          color: white;
+        }
+
+
+        .hero-overlay {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background:
+            radial-gradient(
+              circle at top right,
+              rgba(255,255,255,.16),
+              transparent 40%
+            );
+        }
+
+
+        .hero-card h1,
+        .hero-card p {
+          color: white;
+          position: relative;
+          z-index: 2;
+        }
+
+
+        .hero-pill {
+          padding: 10px 16px;
+          border-radius: 999px;
+          background:
+            rgba(255,255,255,.18);
+          color: white;
+          font-size: 13px;
+          font-weight: 700;
+          backdrop-filter: blur(10px);
+        }
+
+
+        .hero-grid {
+          display: grid;
+          grid-template-columns:
+            repeat(3,1fr);
+          gap: 18px;
+        }
+
+
+        .hero-box {
+          padding: 22px;
+          border-radius: 22px;
+          background:
+            rgba(255,255,255,.12);
+          backdrop-filter: blur(12px);
+        }
+
+
+        .hero-box h3,
+        .hero-box p {
+          color: white;
+        }
+
+
+        .free-info {
+          padding: 8px 14px;
+          border-radius: 999px;
+          background: #eef4ff;
+          color: #4f6ef7;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+
+        .plans-grid {
+          display: grid;
+          grid-template-columns:
+            1fr 1fr;
+          gap: 24px;
+        }
+
+
+        .plan-card {
+          position: relative;
+          padding: 28px;
+          border-radius: 22px;
+          border:
+            1px solid #e1e3e5;
+        }
+
+
+        .free-plan {
+          background: #f6f6f7;
+        }
+
+
+        .current-plan {
+          border:
+            2px solid #16a34a;
+          background:
+            linear-gradient(
+              135deg,
+              rgba(22,163,74,.06),
+              rgba(22,163,74,.02)
+            );
+        }
+
+
+        .current-badge {
+          position: absolute;
+          top: -12px;
+          left: 20px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          background: #16a34a;
+          color: white;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+
+        .free-plan-note {
+          padding: 14px;
+          border-radius: 14px;
+          background:
+            rgba(22,163,74,.08);
+          text-align: center;
+        }
+
+
+        .pro-plan {
+          position: relative;
+          z-index: 10;
+          background:
+            linear-gradient(
+              135deg,
+              rgba(255,81,47,.08),
+              rgba(221,36,118,.08)
+            );
+          border:
+            2px solid #dd2476;
+        }
+
+
+        .popular-badge {
+          position: absolute;
+          top: -12px;
+          right: 20px;
+          padding: 6px 12px;
+          border-radius: 999px;
+          background: #dd2476;
+          color: white;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+
+        .feature-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+
+        .pro-note {
+          text-align: center;
+          opacity: .7;
+        }
+
+
+        .grid {
+          display: grid;
+          grid-template-columns:
+            1fr 1fr;
+          gap: 18px;
+        }
+
+
+        .card-preview {
+          transition:
+            transform .25s ease;
+        }
+
+
+        .card-preview:hover {
+          transform:
+            translateY(-4px);
+        }
+
+
+        .img-box {
+          width: 100%;
+          height: 220px;
+          overflow: hidden;
+          border-radius: 18px;
+          background: #f6f6f7;
+          margin-bottom: 10px;
+        }
 
-          {/* =========================================
-              STYLES
-          ========================================= */}
 
-          <style>{`
+        .img-box img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          object-position: center;
+          display: block;
+          background: #f6f6f7;
+        }
 
-            .hero-badge {
-              display: inline-flex;
-              align-items: center;
 
-              width: fit-content;
+        .video-box {
+          overflow: hidden;
+          border-radius: 18px;
+          background: #f6f6f7;
+        }
 
-              padding: 12px 18px;
 
-              border-radius: 999px;
+        .video-box img {
+          width: 100%;
+          display: block;
+        }
 
-              background:
-                rgba(255,255,255,.18);
 
-              color: white;
+        .setup-banner {
+          padding: 16px;
+          border-radius: 14px;
+          background:
+            linear-gradient(
+              135deg,
+              rgba(255,81,47,.08),
+              rgba(221,36,118,.08)
+            );
+        }
 
-              font-size: 16px;
 
-              font-weight: 700;
+        .cta-card {
+          padding: 48px;
+          border-radius: 28px;
+          text-align: center;
+          background:
+            linear-gradient(
+              135deg,
+              #ff512f 0%,
+              #dd2476 100%
+            );
+          color: white;
+        }
 
-              backdrop-filter:
-                blur(12px);
 
-              box-shadow:
-                0 4px 18px
-                rgba(0,0,0,.12);
-            }
+        .cta-card h2,
+        .cta-card p {
+          color: white;
+        }
 
 
-            .hero-card {
-              position: relative;
+        .footer {
+          padding:
+            12px 0 24px;
+        }
 
-              overflow: hidden;
 
-              padding: 48px;
+        /* ===============================================
+           CANCEL LINK
+        =============================================== */
 
-              border-radius: 28px;
+        .cancel-subscription-link {
+          display: block;
+          position: relative;
+          z-index: 9999;
 
-              background:
-                linear-gradient(
-                  135deg,
-                  #ff512f 0%,
-                  #dd2476 100%
-                );
+          width: 100%;
 
-              color: white;
-            }
+          padding: 6px 0;
 
+          border: none;
 
-            .hero-overlay {
-              position: absolute;
+          background: transparent;
 
-              inset: 0;
+          color: #6b7280;
 
-              pointer-events: none;
+          font-size: 12px;
 
-              background:
-                radial-gradient(
-                  circle at top right,
-                  rgba(255,255,255,.16),
-                  transparent 40%
-                );
-            }
+          font-weight: 400;
 
+          line-height: 18px;
 
-            .hero-card h1,
-            .hero-card p {
-              color: white;
+          text-align: center;
 
-              position: relative;
+          text-decoration: underline;
 
-              z-index: 2;
-            }
+          text-underline-offset: 3px;
 
+          cursor: pointer;
 
-            .hero-pill {
-              padding: 10px 16px;
+          pointer-events: auto;
 
-              border-radius: 999px;
+          appearance: none;
+        }
 
-              background:
-                rgba(255,255,255,.18);
 
-              color: white;
+        .cancel-subscription-link:hover {
+          color: #374151;
+        }
 
-              font-size: 13px;
 
-              font-weight: 700;
+        /* ===============================================
+           CANCELLED STATE
+        =============================================== */
 
-              backdrop-filter:
-                blur(10px);
-            }
+        .cancelled-note {
+          padding: 14px;
 
+          border-radius: 14px;
 
-            .hero-grid {
-              display: grid;
+          background:
+            rgba(22,163,74,.08);
 
-              grid-template-columns:
-                repeat(3,1fr);
+          text-align: center;
+        }
 
-              gap: 18px;
-            }
 
+        /* ===============================================
+           MODAL OVERLAY
+        =============================================== */
 
-            .hero-box {
-              padding: 22px;
+        .cancel-modal-overlay {
+          position: fixed;
 
-              border-radius: 22px;
+          inset: 0;
 
-              background:
-                rgba(255,255,255,.12);
+          z-index: 100000;
 
-              backdrop-filter:
-                blur(12px);
-            }
+          display: flex;
 
+          align-items: center;
 
-            .hero-box h3,
-            .hero-box p {
-              color: white;
-            }
+          justify-content: center;
 
+          padding: 20px;
 
-            .free-info {
-              padding: 8px 14px;
+          background:
+            rgba(0,0,0,.45);
 
-              border-radius: 999px;
+          backdrop-filter:
+            blur(4px);
+        }
 
-              background: #eef4ff;
 
-              color: #4f6ef7;
+        /* ===============================================
+           MODAL
+        =============================================== */
 
-              font-size: 13px;
+        .cancel-modal {
+          position: relative;
 
-              font-weight: 700;
-            }
+          width: 100%;
 
+          max-width: 480px;
 
-            .plans-grid {
-              display: grid;
+          padding: 32px;
 
-              grid-template-columns:
-                1fr 1fr;
+          border-radius: 20px;
 
-              gap: 24px;
-            }
+          background: white;
 
+          box-shadow:
+            0 20px 60px
+            rgba(0,0,0,.2);
+        }
 
-            .plan-card {
-              position: relative;
 
-              padding: 28px;
+        .cancel-modal h2 {
+          margin:
+            0 0 18px;
 
-              border-radius: 22px;
+          font-size: 24px;
 
-              border:
-                1px solid #e1e3e5;
-            }
+          line-height: 1.2;
 
+          color: #111827;
+        }
 
-            .free-plan {
-              background: #f6f6f7;
-            }
 
+        .cancel-modal p {
+          margin:
+            0 0 14px;
 
-            .current-plan {
-              border:
-                2px solid #16a34a;
+          color: #555;
 
-              background:
-                linear-gradient(
-                  135deg,
-                  rgba(22,163,74,.06),
-                  rgba(22,163,74,.02)
-                );
-            }
+          font-size: 14px;
 
+          line-height: 1.55;
+        }
 
-            .current-badge {
-              position: absolute;
 
-              top: -12px;
+        .cancel-modal-close {
+          position: absolute;
 
-              left: 20px;
+          top: 12px;
 
-              padding: 6px 12px;
+          right: 12px;
 
-              border-radius: 999px;
+          width: 32px;
 
-              background: #16a34a;
+          height: 32px;
 
-              color: white;
+          border: none;
 
-              font-size: 12px;
+          border-radius: 50%;
 
-              font-weight: 700;
-            }
+          background: #f3f3f3;
 
+          color: #333;
 
-            .free-plan-note {
-              padding: 14px;
+          font-size: 22px;
 
-              border-radius: 14px;
+          line-height: 32px;
 
-              background:
-                rgba(22,163,74,.08);
+          cursor: pointer;
+        }
 
-              text-align: center;
-            }
 
+        .cancel-modal-actions {
+          display: flex;
 
-            .pro-plan {
-              position: relative;
+          gap: 10px;
 
-              z-index: 10;
+          margin-top: 26px;
+        }
 
-              background:
-                linear-gradient(
-                  135deg,
-                  rgba(255,81,47,.08),
-                  rgba(221,36,118,.08)
-                );
 
-              border:
-                2px solid #dd2476;
-            }
+        .keep-pro-btn,
+        .confirm-cancel-btn {
+          flex: 1;
 
+          padding: 11px 16px;
 
-            .popular-badge {
-              position: absolute;
+          border-radius: 9px;
 
-              top: -12px;
+          font-size: 14px;
 
-              right: 20px;
+          font-weight: 600;
 
-              padding: 6px 12px;
+          cursor: pointer;
+        }
 
-              border-radius: 999px;
 
-              background: #dd2476;
+        .keep-pro-btn {
+          border:
+            1px solid #ddd;
 
-              color: white;
+          background: white;
 
-              font-size: 12px;
+          color: #222;
+        }
 
-              font-weight: 700;
-            }
 
+        .confirm-cancel-btn {
+          border: none;
 
-            .feature-row {
-              display: flex;
+          background: #111;
 
-              align-items: center;
+          color: white;
+        }
 
-              gap: 10px;
-            }
 
+        .confirm-cancel-btn:hover {
+          background: #333;
+        }
 
-            .pro-note {
-              text-align: center;
 
-              opacity: .7;
-            }
+        .confirm-cancel-btn:disabled,
+        .keep-pro-btn:disabled {
+          opacity: .6;
 
+          cursor: default;
+        }
 
-            .cancelled-note {
-              padding: 14px;
 
-              border-radius: 14px;
+        .cancel-error {
+          margin-top: 16px;
 
-              background:
-                rgba(22,163,74,.08);
+          padding: 12px;
 
-              text-align: center;
-            }
+          border-radius: 10px;
 
+          background: #fff1f0;
 
-            .grid {
-              display: grid;
+          color: #d72c0d;
 
-              grid-template-columns:
-                1fr 1fr;
+          font-size: 13px;
 
-              gap: 18px;
-            }
+          line-height: 1.4;
+        }
 
 
-            .card-preview {
-              transition:
-                transform .25s ease;
-            }
+        @media (
+          max-width: 768px
+        ) {
 
+          .hero-card,
+          .cta-card,
+          .plan-card {
+            padding: 28px;
+          }
 
-            .card-preview:hover {
-              transform:
-                translateY(-4px);
-            }
 
+          .grid,
+          .plans-grid,
+          .hero-grid {
+            grid-template-columns:
+              1fr;
+          }
 
-            .img-box {
-              width: 100%;
 
-              height: 220px;
+          .img-box {
+            height: 240px;
+          }
 
-              overflow: hidden;
 
-              border-radius: 18px;
+          .cancel-modal-actions {
+            flex-direction: column;
+          }
 
-              background: #f6f6f7;
+        }
 
-              margin-bottom: 10px;
-            }
+      `}</style>
 
-
-            .img-box img {
-              width: 100%;
-
-              height: 100%;
-
-              object-fit: contain;
-
-              object-position: center;
-
-              display: block;
-
-              background: #f6f6f7;
-            }
-
-
-            .video-box {
-              overflow: hidden;
-
-              border-radius: 18px;
-
-              background: #f6f6f7;
-            }
-
-
-            .video-box img {
-              width: 100%;
-
-              display: block;
-            }
-
-
-            .setup-banner {
-              padding: 16px;
-
-              border-radius: 14px;
-
-              background:
-                linear-gradient(
-                  135deg,
-                  rgba(255,81,47,.08),
-                  rgba(221,36,118,.08)
-                );
-            }
-
-
-            .cta-card {
-              padding: 48px;
-
-              border-radius: 28px;
-
-              text-align: center;
-
-              background:
-                linear-gradient(
-                  135deg,
-                  #ff512f 0%,
-                  #dd2476 100%
-                );
-
-              color: white;
-            }
-
-
-            .cta-card h2,
-            .cta-card p {
-              color: white;
-            }
-
-
-            .footer {
-              padding:
-                12px 0 24px;
-            }
-
-
-            @media (
-              max-width: 768px
-            ) {
-
-              .hero-card,
-              .cta-card,
-              .plan-card {
-                padding: 28px;
-              }
-
-
-              .grid,
-              .plans-grid,
-              .hero-grid {
-                grid-template-columns:
-                  1fr;
-              }
-
-
-              .img-box {
-                height: 240px;
-              }
-
-            }
-
-          `}</style>
-
-        </BlockStack>
-
-      </Page>
-
-    </div>
+    </Page>
 
   );
 }
