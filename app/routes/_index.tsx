@@ -696,21 +696,27 @@ export default function Index() {
                            CANCEL BUTTON
                         ================================= */
 
-                        <Button
-                          variant="plain"
-                          fullWidth
-                          onClick={() => {
-
-                            console.log(
-                              "CANCEL BUTTON CLICKED"
-                            );
-
-                            setShowCancelModal(true);
-
-                          }}
-                        >
-                          Cancel subscription
-                        </Button>
+                      <button
+  type="button"
+  onClick={() => {
+    alert("CLICK WORKS");
+    setShowCancelModal(true);
+  }}
+  style={{
+    display: "block",
+    width: "100%",
+    padding: "8px 0",
+    border: "none",
+    background: "transparent",
+    color: "#6b7280",
+    fontSize: "12px",
+    textAlign: "center",
+    textDecoration: "underline",
+    cursor: "pointer",
+  }}
+>
+  Cancel subscription
+</button>
 
                       )}
 
