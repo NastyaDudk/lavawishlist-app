@@ -1,3 +1,5 @@
+import React from "react";
+
 import {
   Page,
   Card,
@@ -15,18 +17,10 @@ import {
   useFetcher,
 } from "react-router";
 
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import type {
-  LoaderFunctionArgs,
-} from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
-
 
 export async function loader({
   request,
@@ -60,22 +54,19 @@ export async function loader({
     isPro
   );
 
-  return {
-    shop: session.shop,
+ return {
+  shop: session.shop,
+  limitHits: stats?.limitHits ?? 0,
+  isPro,
 
-    limitHits:
-      stats?.limitHits ?? 0,
+  cancellationScheduled:
+    stats?.cancellationScheduled ?? false,
 
-    isPro,
-
-    cancellationScheduled:
-      stats?.cancellationScheduled ?? false,
-
-    cancellationDate:
-      stats?.cancellationDate
-        ? stats.cancellationDate.toISOString()
-        : null,
-  };
+  cancellationDate:
+    stats?.cancellationDate
+      ? stats.cancellationDate.toISOString()
+      : null,
+};
 }
 
 
@@ -95,85 +86,41 @@ export default function Index() {
     cancellationDate: string | null;
   }>();
 
-
-  /*
-   * =====================================
-   * CANCELLATION FETCHER
-   * =====================================
-   */
-
   const fetcher = useFetcher<{
     success?: boolean;
     cancellationScheduled?: boolean;
     cancellationDate?: string | null;
-    alreadyFree?: boolean;
     error?: string;
   }>();
 
-
-  /*
-   * =====================================
-   * CANCEL MODAL STATE
-   * =====================================
-   */
-
-  const [
-    showCancelModal,
-    setShowCancelModal,
-  ] = useState(false);
-
-
-  /*
-   * =====================================
-   * CANCELLATION LOADING
-   * =====================================
-   */
+  const [showCancelModal, setShowCancelModal] =
+    React.useState(false);
 
   const cancelling =
     fetcher.state === "submitting";
 
-
-  /*
-   * =====================================
-   * ERROR
-   * =====================================
-   */
-
-  const cancellationError =
-    fetcher.data?.error ?? null;
-
-
-  /*
-   * =====================================
-   * AFTER SUCCESSFUL CANCELLATION
-   * =====================================
-   */
-
-  useEffect(() => {
-
+  React.useEffect(() => {
     if (
       fetcher.state === "idle" &&
       fetcher.data?.success &&
       fetcher.data?.cancellationScheduled
     ) {
-
       setShowCancelModal(false);
-
       window.location.reload();
-
     }
 
-  }, [
-    fetcher.state,
-    fetcher.data,
-  ]);
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.error
+    ) {
+      console.error(
+        "Cancellation error:",
+        fetcher.data.error
+      );
 
-
-  /*
-   * =====================================
-   * STORE HANDLE
-   * =====================================
-   */
+      alert(fetcher.data.error);
+    }
+  }, [fetcher.state, fetcher.data]);
 
   const store =
     shop.replace(
@@ -181,12 +128,6 @@ export default function Index() {
       ""
     );
 
-
-  /*
-   * =====================================
-   * CANCELLATION DATE
-   * =====================================
-   */
 
   const formattedCancellationDate =
     cancellationDate
@@ -203,18 +144,7 @@ export default function Index() {
       : null;
 
 
-  /*
-   * =====================================
-   * CANCEL SUBSCRIPTION
-   * =====================================
-   */
-
   function cancelSubscription() {
-
-    console.log(
-      "CANCEL SUBSCRIPTION CONFIRMED"
-    );
-
     fetcher.submit(
       {},
       {
@@ -222,8 +152,8 @@ export default function Index() {
         action: "/app/cancel-subscription",
       }
     );
-
   }
+
 
 
   return (
@@ -233,9 +163,7 @@ export default function Index() {
       <BlockStack gap="500">
 
 
-        {/* =====================================
-            HERO
-        ===================================== */}
+        {/* HERO */}
 
         <div className="hero-card">
 
@@ -250,6 +178,7 @@ export default function Index() {
               <div className="hero-badge">
                 ❤️‍🔥 Shopify LavaWishlist App
               </div>
+
 
               <div className="hero-pill">
 
@@ -270,6 +199,7 @@ export default function Index() {
               >
                 Turn visitors into loyal buyers
               </Text>
+
 
               <Text
                 as="p"
@@ -353,9 +283,7 @@ export default function Index() {
         </div>
 
 
-        {/* =====================================
-            PLANS
-        ===================================== */}
+        {/* PLANS */}
 
         <Card>
 
@@ -385,9 +313,7 @@ export default function Index() {
             <div className="plans-grid">
 
 
-              {/* =================================
-                  FREE PLAN
-              ================================= */}
+              {/* FREE */}
 
               <div
                 className={
@@ -410,6 +336,7 @@ export default function Index() {
 
                 <BlockStack gap="400">
 
+
                   <div>
 
                     <InlineStack
@@ -431,9 +358,11 @@ export default function Index() {
                             : "success"
                         }
                       >
+
                         {!isPro
                           ? "Active"
                           : "Inactive"}
+
                       </Badge>
 
                     </InlineStack>
@@ -495,6 +424,7 @@ export default function Index() {
                         You are currently using the free plan
                       </Text>
 
+
                       <Text
                         as="p"
                         tone="subdued"
@@ -511,9 +441,7 @@ export default function Index() {
               </div>
 
 
-              {/* =================================
-                  PRO PLAN
-              ================================= */}
+              {/* PRO */}
 
               <div
                 className={
@@ -551,6 +479,7 @@ export default function Index() {
                     >
                       Pro Plan
                     </Text>
+
 
                     <Text
                       as="p"
@@ -610,19 +539,13 @@ export default function Index() {
                   </BlockStack>
 
 
-                  {/* =================================
-                      FREE → PRO
-                  ================================= */}
-
                   {!isPro ? (
 
                     <a
                       href={
                         `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`
                       }
-
                       target="_top"
-
                       style={{
                         display: "block",
                         width: "100%",
@@ -643,8 +566,6 @@ export default function Index() {
                     <BlockStack gap="300">
 
 
-                      {/* PRO ACTIVE */}
-
                       <Button
                         variant="primary"
                         disabled
@@ -654,18 +575,11 @@ export default function Index() {
                       </Button>
 
 
-                      {/* =================================
-                          ALREADY CANCELLED
-                      ================================= */}
-
                       {cancellationScheduled ? (
 
                         <div className="cancelled-note">
 
-                          <Text
-                            as="p"
-                            variant="bodyMd"
-                          >
+                          <Text as="p">
                             Subscription cancelled
                           </Text>
 
@@ -683,8 +597,7 @@ export default function Index() {
 
                             {" "}
 
-                            You will not be charged again
-                            after this period.
+                            We couldn&apos;t cancel your subscription.
 
                           </Text>
 
@@ -692,45 +605,15 @@ export default function Index() {
 
                       ) : (
 
-                        /* =================================
-                           CANCEL BUTTON
-                        ================================= */
-
-<div
-  role="button"
-  tabIndex={0}
-  onClick={() => {
-    console.log("CANCEL CLICK");
-    setShowCancelModal(true);
-  }}
-  onKeyDown={(event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      setShowCancelModal(true);
-    }
-  }}
-  style={{
-    position: "relative",
-    zIndex: 9999,
-    display: "block",
-    width: "100%",
-    padding: "8px 0",
-    marginTop: "2px",
-    border: "none",
-    background: "transparent",
-    color: "#6b7280",
-    fontSize: "12px",
-    fontWeight: 400,
-    lineHeight: "18px",
-    textAlign: "center",
-    textDecoration: "underline",
-    textUnderlineOffset: "3px",
-    cursor: "pointer",
-    pointerEvents: "auto",
-  }}
->
-  Cancel subscription
-</div>
+                        <button
+                          type="button"
+                          className="cancel-subscription-link"
+                          onClick={() =>
+                            setShowCancelModal(true)
+                          }
+                        >
+                          Cancel subscription
+                        </button>
 
                       )}
 
@@ -761,9 +644,7 @@ export default function Index() {
         </Card>
 
 
-        {/* =====================================
-            SCREENSHOTS
-        ===================================== */}
+        {/* SCREENSHOTS */}
 
         <Card>
 
@@ -782,44 +663,35 @@ export default function Index() {
               {[
                 {
                   src: "/images/header.png",
-                  label:
-                    "Animated lava heart",
+                  label: "Animated lava heart",
                 },
-
                 {
                   src: "/images/catalog.png",
                   label:
                     "Wishlist on collection pages",
                 },
-
                 {
                   src:
                     "/images/wishlist drawer.png",
                   label:
                     "Slide-out wishlist drawer",
                 },
-
                 {
-                  src:
-                    "/images/icon.png",
+                  src: "/images/icon.png",
                   label:
                     "Clean modern icons",
                 },
-
                 {
-                  src:
-                    "/images/added.png",
+                  src: "/images/added.png",
                   label:
                     "Fast add to cart",
                 },
-
                 {
                   src:
                     "/images/header before.png",
                   label:
                     "Fits every theme",
                 },
-
               ].map((img) => (
 
                 <div
@@ -855,9 +727,7 @@ export default function Index() {
         </Card>
 
 
-        {/* =====================================
-            VIDEO
-        ===================================== */}
+        {/* VIDEO */}
 
         <Card>
 
@@ -908,9 +778,7 @@ export default function Index() {
         </Card>
 
 
-        {/* =====================================
-            QUICK SETUP
-        ===================================== */}
+        {/* QUICK SETUP */}
 
         <Card>
 
@@ -965,9 +833,7 @@ export default function Index() {
         </Card>
 
 
-        {/* =====================================
-            CTA
-        ===================================== */}
+        {/* CTA */}
 
         <div className="cta-card">
 
@@ -995,9 +861,7 @@ export default function Index() {
         </div>
 
 
-        {/* =====================================
-            FOOTER
-        ===================================== */}
+        {/* FOOTER */}
 
         <div className="footer">
 
@@ -1034,15 +898,14 @@ export default function Index() {
         </div>
 
 
-        {/* =====================================
-            CANCEL MODAL
-        ===================================== */}
+        {/* CANCEL MODAL */}
 
         {showCancelModal && (
 
           <div className="cancel-modal-overlay">
 
             <div className="cancel-modal">
+
 
               <button
                 type="button"
@@ -1056,7 +919,7 @@ export default function Index() {
 
 
               <h2>
-                Cancel your Pro subscription?
+                Cancel your subscription?
               </h2>
 
 
@@ -1075,52 +938,38 @@ export default function Index() {
 
 
               <p>
-                You won&apos;t be charged again
-                after that. Once your current
-                period ends, your account will
-                automatically switch to the Free
-                Plan with a limit of 3 wishlist
-                saves per month.
+                You won&apos;t be charged again after
+                that. Once your current period
+                ends, your account will automatically
+                switch to the Free Plan with a
+                limit of 3 wishlist saves per month.
               </p>
-
-
-              {cancellationError && (
-
-                <div className="cancel-error">
-
-                  <Text as="p">
-
-                    {cancellationError}
-
-                  </Text>
-
-                </div>
-
-              )}
 
 
               <div className="cancel-modal-actions">
 
 
-                <Button
+                <button
+                  type="button"
+                  className="keep-pro-btn"
                   onClick={() =>
                     setShowCancelModal(false)
                   }
-                  disabled={cancelling}
                 >
                   Keep Pro
-                </Button>
+                </button>
 
 
-                <Button
-                  variant="primary"
-                  loading={cancelling}
-                  onClick={
-                    cancelSubscription
-                  }
+                <button
+                  type="button"
+                  className="confirm-cancel-btn"
+                  disabled={cancelling}
+                  onClick={cancelSubscription}
                 >
-                  Cancel subscription
-                </Button>
+                  {cancelling
+                    ? "Cancelling..."
+                    : "Cancel subscription"}
+                </button>
 
               </div>
 
@@ -1131,9 +980,7 @@ export default function Index() {
         )}
 
 
-        {/* =====================================
-            STYLES
-        ===================================== */}
+        {/* STYLES */}
 
         <style>{`
 
@@ -1147,20 +994,17 @@ export default function Index() {
 
             border-radius: 999px;
 
-            background:
-              rgba(255,255,255,.18);
+            background: rgba(255,255,255,.18);
 
             color: white;
 
             font-size: 16px;
-
             font-weight: 700;
 
             backdrop-filter: blur(12px);
 
             box-shadow:
-              0 4px 18px
-              rgba(0,0,0,.12);
+              0 4px 18px rgba(0,0,0,.12);
           }
 
 
@@ -1169,7 +1013,6 @@ export default function Index() {
             overflow: hidden;
 
             padding: 48px;
-
             border-radius: 28px;
 
             background:
@@ -1185,7 +1028,6 @@ export default function Index() {
 
           .hero-overlay {
             position: absolute;
-
             inset: 0;
 
             pointer-events: none;
@@ -1204,7 +1046,6 @@ export default function Index() {
             color: white;
 
             position: relative;
-
             z-index: 2;
           }
 
@@ -1220,7 +1061,6 @@ export default function Index() {
             color: white;
 
             font-size: 13px;
-
             font-weight: 700;
 
             backdrop-filter: blur(10px);
@@ -1265,7 +1105,6 @@ export default function Index() {
             color: #4f6ef7;
 
             font-size: 13px;
-
             font-weight: 700;
           }
 
@@ -1298,8 +1137,7 @@ export default function Index() {
 
 
           .current-plan {
-            border:
-              2px solid #16a34a;
+            border: 2px solid #16a34a;
 
             background:
               linear-gradient(
@@ -1314,7 +1152,6 @@ export default function Index() {
             position: absolute;
 
             top: -12px;
-
             left: 20px;
 
             padding: 6px 12px;
@@ -1326,7 +1163,6 @@ export default function Index() {
             color: white;
 
             font-size: 12px;
-
             font-weight: 700;
           }
 
@@ -1343,27 +1179,23 @@ export default function Index() {
           }
 
 
-        .pro-plan {
-  position: relative;
-  z-index: 10;
+          .pro-plan {
+            background:
+              linear-gradient(
+                135deg,
+                rgba(255,81,47,.08),
+                rgba(221,36,118,.08)
+              );
 
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255,81,47,.08),
-      rgba(221,36,118,.08)
-    );
-
-  border:
-    2px solid #dd2476;
-}
+            border:
+              2px solid #dd2476;
+          }
 
 
           .popular-badge {
             position: absolute;
 
             top: -12px;
-
             right: 20px;
 
             padding: 6px 12px;
@@ -1375,23 +1207,19 @@ export default function Index() {
             color: white;
 
             font-size: 12px;
-
             font-weight: 700;
           }
 
 
           .feature-row {
             display: flex;
-
             align-items: center;
-
             gap: 10px;
           }
 
 
           .pro-note {
             text-align: center;
-
             opacity: .7;
           }
 
@@ -1420,7 +1248,6 @@ export default function Index() {
 
           .img-box {
             width: 100%;
-
             height: 220px;
 
             overflow: hidden;
@@ -1435,11 +1262,9 @@ export default function Index() {
 
           .img-box img {
             width: 100%;
-
             height: 100%;
 
             object-fit: contain;
-
             object-position: center;
 
             display: block;
@@ -1459,7 +1284,6 @@ export default function Index() {
 
           .video-box img {
             width: 100%;
-
             display: block;
           }
 
@@ -1508,27 +1332,71 @@ export default function Index() {
           }
 
 
-          /* =====================================
-             CANCEL MODAL
-          ===================================== */
+          /* CANCEL SUBSCRIPTION LINK */
+
+          .cancel-subscription-link {
+            display: block;
+
+            width: 100%;
+
+            padding: 5px 0;
+
+            border: none;
+
+            background: transparent;
+
+            color: #6b7280;
+
+            font-size: 12px;
+            font-weight: 400;
+
+            text-align: center;
+
+            cursor: pointer;
+
+            text-decoration: underline;
+
+            text-underline-offset: 3px;
+          }
+
+
+          .cancel-subscription-link:hover {
+            color: #374151;
+          }
+
+
+          /* CANCELLED STATE */
+
+          .cancelled-note {
+            padding: 14px;
+
+            border-radius: 14px;
+
+            background:
+              rgba(22,163,74,.08);
+
+            text-align: center;
+          }
+
+
+          /* MODAL */
 
           .cancel-modal-overlay {
             position: fixed;
 
             inset: 0;
 
-            z-index: 999999;
+            z-index: 99999;
 
             display: flex;
 
             align-items: center;
-
             justify-content: center;
 
             padding: 20px;
 
             background:
-              rgba(0,0,0,.5);
+              rgba(0,0,0,.45);
 
             backdrop-filter:
               blur(4px);
@@ -1549,8 +1417,7 @@ export default function Index() {
             background: white;
 
             box-shadow:
-              0 20px 60px
-              rgba(0,0,0,.25);
+              0 20px 60px rgba(0,0,0,.2);
           }
 
 
@@ -1558,13 +1425,9 @@ export default function Index() {
             margin:
               0 0 18px;
 
-            padding-right: 30px;
-
             font-size: 24px;
 
             line-height: 1.2;
-
-            color: #111;
           }
 
 
@@ -1584,11 +1447,9 @@ export default function Index() {
             position: absolute;
 
             top: 12px;
-
             right: 12px;
 
             width: 32px;
-
             height: 32px;
 
             border: none;
@@ -1597,20 +1458,9 @@ export default function Index() {
 
             background: #f3f3f3;
 
-            color: #333;
-
             font-size: 22px;
 
-            line-height: 32px;
-
             cursor: pointer;
-
-            padding: 0;
-          }
-
-
-          .cancel-modal-close:hover {
-            background: #e5e5e5;
           }
 
 
@@ -1620,34 +1470,46 @@ export default function Index() {
             gap: 10px;
 
             margin-top: 26px;
-
-            justify-content: flex-end;
           }
 
 
-          .cancel-error {
-            margin-top: 15px;
+          .keep-pro-btn,
+          .confirm-cancel-btn {
+            flex: 1;
 
-            padding: 12px;
+            padding: 11px 16px;
 
-            border-radius: 10px;
+            border-radius: 9px;
 
-            background:
-              rgba(216,44,13,.08);
+            font-size: 14px;
 
-            color: #d82c0d;
+            font-weight: 600;
+
+            cursor: pointer;
           }
 
 
-          .cancelled-note {
-            padding: 14px;
+          .keep-pro-btn {
+            border:
+              1px solid #ddd;
 
-            border-radius: 14px;
+            background: white;
 
-            background:
-              rgba(22,163,74,.08);
+            color: #222;
+          }
 
-            text-align: center;
+
+          .confirm-cancel-btn {
+            border: none;
+
+            background: #f1f1f1;
+
+            color: #555;
+          }
+
+
+          .confirm-cancel-btn:hover {
+            background: #e5e5e5;
           }
 
 
@@ -1661,7 +1523,6 @@ export default function Index() {
               padding: 28px;
             }
 
-
             .grid,
             .plans-grid,
             .hero-grid {
@@ -1669,16 +1530,9 @@ export default function Index() {
                 1fr;
             }
 
-
             .img-box {
               height: 240px;
             }
-
-
-            .cancel-modal {
-              padding: 28px;
-            }
-
 
             .cancel-modal-actions {
               flex-direction: column;
