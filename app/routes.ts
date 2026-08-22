@@ -20,14 +20,7 @@ export default [
   path: "/webhooks/app_subscriptions_update",
   file: "routes/webhooks.app_subscriptions_update.ts",
   },
-{
-  path: "/app/cancel-plan",
-  file: "routes/app.cancel-plan.ts",
-  },
-{
-  path: "/app/cancel-subscription",
-  file: "routes/app.cancel-subscription.ts",
-},
+
 {
   path: "/app/pricing",
   file: "routes/app.pricing.ts",
