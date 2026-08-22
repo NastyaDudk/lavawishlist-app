@@ -21,6 +21,11 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
+
+/* =========================================================
+   LOADER
+========================================================= */
+
 export async function loader({
   request,
 }: LoaderFunctionArgs) {
@@ -55,7 +60,10 @@ export async function loader({
 
   return {
     shop: session.shop,
-    limitHits: stats?.limitHits ?? 0,
+
+    limitHits:
+      stats?.limitHits ?? 0,
+
     isPro,
 
     cancellationScheduled:
@@ -68,6 +76,10 @@ export async function loader({
   };
 }
 
+
+/* =========================================================
+   INDEX
+========================================================= */
 
 export default function Index() {
 
@@ -86,11 +98,9 @@ export default function Index() {
   }>();
 
 
-  /*
-   * =================================================
-   * CANCEL CONFIRMATION MODAL
-   * =================================================
-   */
+  /* =======================================================
+     CANCEL MODAL STATE
+  ======================================================= */
 
   const [
     showCancelModal,
@@ -98,11 +108,9 @@ export default function Index() {
   ] = React.useState(false);
 
 
-  /*
-   * =================================================
-   * SHOPIFY STORE NAME
-   * =================================================
-   */
+  /* =======================================================
+     STORE NAME
+  ======================================================= */
 
   const store =
     shop.replace(
@@ -111,21 +119,21 @@ export default function Index() {
     );
 
 
-  /*
-   * =================================================
-   * SHOPIFY FREE PLAN URL
-   * =================================================
-   */
+  /* =======================================================
+     SHOPIFY BILLING URL
+  ======================================================= */
 
   const freePlanUrl =
     `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/free?interval=EVERY_30_DAYS`;
 
 
-  /*
-   * =================================================
-   * CANCELLATION DATE
-   * =================================================
-   */
+  const proPlanUrl =
+    `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
+
+
+  /* =======================================================
+     CANCELLATION DATE
+  ======================================================= */
 
   const formattedCancellationDate =
     cancellationDate
@@ -166,6 +174,7 @@ export default function Index() {
               <div className="hero-badge">
                 ❤️‍🔥 Shopify LavaWishlist App
               </div>
+
 
               <div className="hero-pill">
 
@@ -540,6 +549,7 @@ export default function Index() {
 
                     <BlockStack gap="300">
 
+
                       <Button
                         variant="primary"
                         disabled
@@ -549,9 +559,9 @@ export default function Index() {
                       </Button>
 
 
-                      {/* =================================================
-                          ALREADY CANCELLED
-                      ================================================= */}
+                      {/* =============================================
+                          ALREADY SWITCHED / CANCELLATION SCHEDULED
+                      ============================================= */}
 
                       {cancellationScheduled ? (
 
@@ -586,19 +596,29 @@ export default function Index() {
 
                       ) : (
 
-                        /* =================================================
-                           CANCEL SUBSCRIPTION
-                        ================================================= */
+                        /* =============================================
+                           CANCEL SUBSCRIPTION LINK
+                        ============================================= */
 
-                        <button
-                          type="button"
+                        <a
+                          href="#cancel-subscription"
                           className="cancel-subscription-link"
-                          onClick={() =>
-                            setShowCancelModal(true)
-                          }
+                          onClick={(event) => {
+
+                            event.preventDefault();
+
+                            console.log(
+                              "CANCEL LINK CLICKED"
+                            );
+
+                            setShowCancelModal(
+                              true
+                            );
+
+                          }}
                         >
                           Cancel subscription
-                        </button>
+                        </a>
 
                       )}
 
@@ -611,21 +631,9 @@ export default function Index() {
                     ================================================= */
 
                     <a
-                      href={
-                        `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`
-                      }
+                      href={proPlanUrl}
                       target="_top"
-                      style={{
-                        display: "block",
-                        width: "100%",
-                        textAlign: "center",
-                        padding: "10px",
-                        background: "#111",
-                        color: "white",
-                        borderRadius: "10px",
-                        textDecoration: "none",
-                        fontWeight: 600,
-                      }}
+                      className="start-pro-link"
                     >
                       Start Free Trial
                     </a>
@@ -679,33 +687,39 @@ export default function Index() {
                   label:
                     "Animated lava heart",
                 },
+
                 {
                   src: "/images/catalog.png",
                   label:
                     "Wishlist on collection pages",
                 },
+
                 {
                   src:
                     "/images/wishlist drawer.png",
                   label:
                     "Slide-out wishlist drawer",
                 },
+
                 {
                   src: "/images/icon.png",
                   label:
                     "Clean modern icons",
                 },
+
                 {
                   src: "/images/added.png",
                   label:
                     "Fast add to cart",
                 },
+
                 {
                   src:
                     "/images/header before.png",
                   label:
                     "Fits every theme",
                 },
+
               ].map((img) => (
 
                 <div
@@ -926,54 +940,84 @@ export default function Index() {
 
         {showCancelModal && (
 
-     <div className="cancel-modal-overlay">
+          <div className="cancel-modal-overlay">
 
-  <div className="cancel-modal">
+            <div className="cancel-modal">
 
-              <button
-                type="button"
+
+              {/* =============================================
+                  CLOSE
+              ============================================= */}
+
+              <a
+                href="#close"
                 className="cancel-modal-close"
-                onClick={() =>
-                  setShowCancelModal(false)
-                }
+                onClick={(event) => {
+
+                  event.preventDefault();
+
+                  setShowCancelModal(
+                    false
+                  );
+
+                }}
                 aria-label="Close"
               >
                 ×
-              </button>
+              </a>
 
+
+              {/* =============================================
+                  TITLE
+              ============================================= */}
 
               <h2>
                 Cancel your Pro subscription?
               </h2>
 
 
+              {/* =============================================
+                  WARNING
+              ============================================= */}
+
               <p>
-                We recommend cancelling at least
+
+                We recommend cancelling at least{" "}
+
                 <strong>
-                  {" "}1 day before your next
+                  1 day before your next
                   billing date.
                 </strong>
+
               </p>
 
 
               <p>
+
                 By switching to the Free Plan,
                 your Pro access will end
                 immediately.
+
                 <strong>
-                  {" "}No refund will be issued
+                  {" "}
+                  No refund will be issued
                   for the current billing period.
                 </strong>
+
               </p>
 
 
               <p>
+
                 After switching, your account
                 will have the Free Plan limits,
                 including
+
                 <strong>
-                  {" "}3 wishlist saves per month.
+                  {" "}
+                  3 wishlist saves per month.
                 </strong>
+
               </p>
 
 
@@ -983,17 +1027,28 @@ export default function Index() {
               </p>
 
 
+              {/* =============================================
+                  ACTIONS
+              ============================================= */}
+
               <div className="cancel-modal-actions">
 
-                <button
-                  type="button"
+
+                <a
+                  href="#keep-pro"
                   className="keep-pro-btn"
-                  onClick={() =>
-                    setShowCancelModal(false)
-                  }
+                  onClick={(event) => {
+
+                    event.preventDefault();
+
+                    setShowCancelModal(
+                      false
+                    );
+
+                  }}
                 >
                   Keep Pro
-                </button>
+                </a>
 
 
                 <a
@@ -1003,6 +1058,7 @@ export default function Index() {
                 >
                   Continue to Free Plan
                 </a>
+
 
               </div>
 
@@ -1019,8 +1075,13 @@ export default function Index() {
 
         <style>{`
 
+          /* =================================================
+             HERO
+          ================================================= */
+
           .hero-badge {
             display: inline-flex;
+
             align-items: center;
 
             width: fit-content;
@@ -1035,6 +1096,7 @@ export default function Index() {
             color: white;
 
             font-size: 16px;
+
             font-weight: 700;
 
             backdrop-filter:
@@ -1048,6 +1110,7 @@ export default function Index() {
 
           .hero-card {
             position: relative;
+
             overflow: hidden;
 
             padding: 48px;
@@ -1083,11 +1146,11 @@ export default function Index() {
 
           .hero-card h1,
           .hero-card p {
-            color: white;
-
             position: relative;
 
             z-index: 2;
+
+            color: white;
           }
 
 
@@ -1102,6 +1165,7 @@ export default function Index() {
             color: white;
 
             font-size: 13px;
+
             font-weight: 700;
 
             backdrop-filter:
@@ -1113,7 +1177,7 @@ export default function Index() {
             display: grid;
 
             grid-template-columns:
-              repeat(3,1fr);
+              repeat(3, 1fr);
 
             gap: 18px;
           }
@@ -1138,6 +1202,10 @@ export default function Index() {
           }
 
 
+          /* =================================================
+             PLANS
+          ================================================= */
+
           .free-info {
             padding: 8px 14px;
 
@@ -1148,6 +1216,7 @@ export default function Index() {
             color: #4f6ef7;
 
             font-size: 13px;
+
             font-weight: 700;
           }
 
@@ -1196,6 +1265,7 @@ export default function Index() {
             position: absolute;
 
             top: -12px;
+
             left: 20px;
 
             padding: 6px 12px;
@@ -1207,6 +1277,7 @@ export default function Index() {
             color: white;
 
             font-size: 12px;
+
             font-weight: 700;
           }
 
@@ -1240,6 +1311,7 @@ export default function Index() {
             position: absolute;
 
             top: -12px;
+
             right: 20px;
 
             padding: 6px 12px;
@@ -1251,6 +1323,7 @@ export default function Index() {
             color: white;
 
             font-size: 12px;
+
             font-weight: 700;
           }
 
@@ -1270,6 +1343,42 @@ export default function Index() {
             opacity: .7;
           }
 
+
+          /* =================================================
+             PRO LINK
+          ================================================= */
+
+          .start-pro-link {
+            display: block;
+
+            width: 100%;
+
+            padding: 10px;
+
+            box-sizing: border-box;
+
+            border-radius: 10px;
+
+            background: #111;
+
+            color: white;
+
+            text-align: center;
+
+            text-decoration: none;
+
+            font-weight: 600;
+          }
+
+
+          .start-pro-link:hover {
+            background: #222;
+          }
+
+
+          /* =================================================
+             SCREENSHOTS
+          ================================================= */
 
           .grid {
             display: grid;
@@ -1295,6 +1404,7 @@ export default function Index() {
 
           .img-box {
             width: 100%;
+
             height: 220px;
 
             overflow: hidden;
@@ -1309,6 +1419,7 @@ export default function Index() {
 
           .img-box img {
             width: 100%;
+
             height: 100%;
 
             object-fit: contain;
@@ -1320,6 +1431,10 @@ export default function Index() {
             background: #f6f6f7;
           }
 
+
+          /* =================================================
+             VIDEO
+          ================================================= */
 
           .video-box {
             overflow: hidden;
@@ -1337,6 +1452,10 @@ export default function Index() {
           }
 
 
+          /* =================================================
+             SETUP
+          ================================================= */
+
           .setup-banner {
             padding: 16px;
 
@@ -1350,6 +1469,10 @@ export default function Index() {
               );
           }
 
+
+          /* =================================================
+             CTA
+          ================================================= */
 
           .cta-card {
             padding: 48px;
@@ -1374,6 +1497,10 @@ export default function Index() {
             color: white;
           }
 
+
+          /* =================================================
+             FOOTER
+          ================================================= */
 
           .footer {
             padding:
@@ -1475,6 +1602,8 @@ export default function Index() {
 
             padding: 32px;
 
+            box-sizing: border-box;
+
             border-radius: 20px;
 
             background: white;
@@ -1490,6 +1619,8 @@ export default function Index() {
               0 0 18px;
 
             padding-right: 30px;
+
+            color: #222;
 
             font-size: 24px;
 
@@ -1515,7 +1646,7 @@ export default function Index() {
 
 
           /* =================================================
-             CLOSE BUTTON
+             CLOSE LINK
           ================================================= */
 
           .cancel-modal-close {
@@ -1529,17 +1660,23 @@ export default function Index() {
 
             height: 32px;
 
-            border: none;
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
 
             border-radius: 50%;
 
             background: #f3f3f3;
 
+            color: #222;
+
             font-size: 22px;
 
-            line-height: 32px;
+            line-height: 1;
 
-            cursor: pointer;
+            text-decoration: none;
           }
 
 
@@ -1549,7 +1686,7 @@ export default function Index() {
 
 
           /* =================================================
-             MODAL BUTTONS
+             MODAL ACTIONS
           ================================================= */
 
           .cancel-modal-actions {
@@ -1576,17 +1713,19 @@ export default function Index() {
             padding:
               10px 16px;
 
+            box-sizing: border-box;
+
             border-radius: 9px;
 
             font-size: 14px;
 
             font-weight: 600;
 
+            text-align: center;
+
             text-decoration: none;
 
             cursor: pointer;
-
-            box-sizing: border-box;
           }
 
 
