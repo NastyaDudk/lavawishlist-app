@@ -11,13 +11,12 @@ import {
 } from "@shopify/polaris";
 
 import { useLoaderData } from "react-router";
+import { useState } from "react";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
-
-import { useState } from "react";
 
 
 export async function loader({
@@ -87,12 +86,6 @@ export default function Index() {
     cancellationDate: string | null;
   }>();
 
-
-  /*
-   * =====================================================
-   * MODAL STATE
-   * =====================================================
-   */
 
   const [showCancelModal, setShowCancelModal] =
     useState(false);
@@ -594,15 +587,139 @@ export default function Index() {
                            CANCEL SUBSCRIPTION
                         ============================================= */
 
-                        <button
-                          type="button"
-                          className="cancel-subscription-link"
-                          onClick={() =>
-                            setShowCancelModal(true)
-                          }
-                        >
-                          Cancel subscription
-                        </button>
+                        <div className="cancel-details">
+
+                          <button
+                            type="button"
+                            className="cancel-subscription-link"
+                            onClick={() =>
+                              setShowCancelModal(true)
+                            }
+                          >
+                            Cancel subscription
+                          </button>
+
+
+                          {showCancelModal && (
+
+                            <div className="cancel-modal-overlay">
+
+                              <div
+                                className="cancel-modal"
+                                role="dialog"
+                                aria-modal="true"
+                                aria-labelledby="cancel-modal-title"
+                              >
+
+
+                                <h2 id="cancel-modal-title">
+                                  Cancel your Pro subscription?
+                                </h2>
+
+
+                                <p>
+
+                                  We recommend cancelling at least{" "}
+
+                                  <strong>
+                                    1 day before your next
+                                    billing date.
+                                  </strong>
+
+                                </p>
+
+
+                                <p>
+
+                                  By switching to the Free Plan,
+                                  your Pro access will end
+                                  immediately.
+
+                                  <strong>
+                                    {" "}
+                                    No refund will be issued
+                                    for the current billing period.
+                                  </strong>
+
+                                </p>
+
+
+                                <p>
+
+                                  After switching, your account
+                                  will have the Free Plan limits,
+                                  including{" "}
+
+                                  <strong>
+                                    50 wishlist saves per month.
+                                  </strong>
+
+                                </p>
+
+
+                                <p>
+                                  Are you sure you want to
+                                  continue?
+                                </p>
+
+
+                                <div className="cancel-modal-actions">
+
+
+                                  {/* =================================
+                                      KEEP PRO
+                                  ================================= */}
+
+                                  <button
+                                    type="button"
+                                    className="keep-pro-btn"
+                                    onClick={() =>
+                                      setShowCancelModal(false)
+                                    }
+                                  >
+                                    Keep Pro
+                                  </button>
+
+
+                                  {/* =================================
+                                      CONTINUE TO SHOPIFY FREE PLAN
+                                  ================================= */}
+
+                                  <a
+                                    href={freePlanUrl}
+                                    target="_top"
+                                    className="confirm-cancel-btn"
+                                  >
+                                    Continue to Free Plan
+                                  </a>
+
+
+                                </div>
+
+
+                                {/* =================================
+                                    CLOSE
+                                ================================= */}
+
+                                <button
+                                  type="button"
+                                  className="cancel-modal-close"
+                                  onClick={() =>
+                                    setShowCancelModal(false)
+                                  }
+                                  aria-label="Close"
+                                >
+                                  ×
+                                </button>
+
+
+                              </div>
+
+                            </div>
+
+                          )}
+
+                        </div>
 
                       )}
 
@@ -916,126 +1033,6 @@ export default function Index() {
           </InlineStack>
 
         </div>
-
-
-        {/* =================================================
-            CANCEL MODAL
-        ================================================= */}
-
-        {showCancelModal && (
-
-<div className="cancel-modal-overlay">
-            <div
-              className="cancel-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="cancel-modal-title"
-            >
-
-              <h2 id="cancel-modal-title">
-                Cancel your Pro subscription?
-              </h2>
-
-
-              <p>
-
-                We recommend cancelling at least{" "}
-
-                <strong>
-                  1 day before your next
-                  billing date.
-                </strong>
-
-              </p>
-
-
-              <p>
-
-                By switching to the Free Plan,
-                your Pro access will end
-                immediately.
-
-                <strong>
-                  {" "}
-                  No refund will be issued for
-                  the current billing period.
-                </strong>
-
-              </p>
-
-
-              <p>
-
-                After switching, your account
-                will have the Free Plan limits,
-                including{" "}
-
-                <strong>
-                  50 wishlist saves per month.
-                </strong>
-
-              </p>
-
-
-              <p>
-                Are you sure you want to
-                continue?
-              </p>
-
-
-              <div className="cancel-modal-actions">
-
-
-                {/* =================================
-                    KEEP PRO
-                ================================= */}
-
-                <button
-                  type="button"
-                  className="keep-pro-btn"
-                  onClick={() =>
-                    setShowCancelModal(false)
-                  }
-                >
-                  Keep Pro
-                </button>
-
-
-                {/* =================================
-                    CONTINUE TO FREE PLAN
-                ================================= */}
-
-                <a
-                  href={freePlanUrl}
-                  target="_top"
-                  className="confirm-cancel-btn"
-                >
-                  Continue to Free Plan
-                </a>
-
-              </div>
-
-
-              {/* =================================
-                  CLOSE
-              ================================= */}
-
-              <button
-                type="button"
-                className="cancel-modal-close"
-                onClick={() =>
-                  setShowCancelModal(false)
-                }
-                aria-label="Close"
-              >
-                ×
-              </button>
-
-            </div>
-
-          </div>
-
-        )}
 
 
         {/* =================================================
@@ -1478,6 +1475,15 @@ export default function Index() {
 
 
           /* =================================================
+             CANCEL DETAILS
+          ================================================= */
+
+          .cancel-details {
+            width: 100%;
+          }
+
+
+          /* =================================================
              CANCEL LINK
           ================================================= */
 
@@ -1538,19 +1544,9 @@ export default function Index() {
           .cancel-modal-overlay {
             position: fixed;
 
-            top: 0;
+            inset: 0;
 
-            right: 0;
-
-            bottom: 0;
-
-            left: 0;
-
-            width: 100vw;
-
-            height: 100vh;
-
-            z-index: 2147483647;
+            z-index: 99999;
 
             display: flex;
 
@@ -1560,15 +1556,11 @@ export default function Index() {
 
             padding: 20px;
 
-            box-sizing: border-box;
-
             background:
               rgba(0,0,0,.45);
 
             backdrop-filter:
               blur(4px);
-
-            isolation: isolate;
           }
 
 
@@ -1579,15 +1571,9 @@ export default function Index() {
           .cancel-modal {
             position: relative;
 
-            z-index: 2147483647;
-
             width: 100%;
 
             max-width: 480px;
-
-            max-height: calc(100vh - 40px);
-
-            overflow-y: auto;
 
             padding: 32px;
 
@@ -1645,8 +1631,6 @@ export default function Index() {
 
             right: 12px;
 
-            z-index: 3;
-
             width: 32px;
 
             height: 32px;
@@ -1656,8 +1640,6 @@ export default function Index() {
             align-items: center;
 
             justify-content: center;
-
-            padding: 0;
 
             border: none;
 
@@ -1789,9 +1771,6 @@ export default function Index() {
 
             .cancel-modal {
               padding: 26px;
-
-              max-height:
-                calc(100vh - 30px);
             }
 
 
