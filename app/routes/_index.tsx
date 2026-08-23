@@ -17,6 +17,8 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
+import { useState } from "react";
+
 
 export async function loader({
   request,
@@ -84,6 +86,16 @@ export default function Index() {
     cancellationScheduled: boolean;
     cancellationDate: string | null;
   }>();
+
+
+  /*
+   * =====================================================
+   * MODAL STATE
+   * =====================================================
+   */
+
+  const [showCancelModal, setShowCancelModal] =
+    useState(false);
 
 
   /*
@@ -285,7 +297,7 @@ export default function Index() {
 
               <div className="free-info">
                 Free includes
-                3 saves/month
+                50 saves/month
               </div>
 
             </InlineStack>
@@ -372,7 +384,7 @@ export default function Index() {
                   <BlockStack gap="200">
 
                     {[
-                      "Up to 3 wishlist saves",
+                      "Up to 50 wishlist saves",
                       "Theme App Embed",
                       "Mobile optimized",
                       "Works with all Shopify themes",
@@ -579,152 +591,18 @@ export default function Index() {
                       ) : (
 
                         /* =============================================
-                           NATIVE HTML DETAILS MODAL
+                           CANCEL SUBSCRIPTION
                         ============================================= */
 
-                        <details className="cancel-details">
-
-                          <summary className="cancel-subscription-link">
-                            Cancel subscription
-                          </summary>
-
-
-                          <div className="cancel-modal-overlay">
-
-                            <div className="cancel-modal">
-
-
-                              <h2>
-                                Cancel your Pro subscription?
-                              </h2>
-
-
-                              <p>
-
-                                We recommend cancelling at least{" "}
-
-                                <strong>
-                                  1 day before your next
-                                  billing date.
-                                </strong>
-
-                              </p>
-
-
-                              <p>
-
-                                By switching to the Free Plan,
-                                your Pro access will end
-                                immediately.
-
-                                <strong>
-                                  {" "}
-                                  No refund will be issued
-                                  for the current billing period.
-                                </strong>
-
-                              </p>
-
-
-                              <p>
-
-                                After switching, your account
-                                will have the Free Plan limits,
-                                including{" "}
-
-                                <strong>
-                                  3 wishlist saves per month.
-                                </strong>
-
-                              </p>
-
-
-                              <p>
-                                Are you sure you want to
-                                continue?
-                              </p>
-
-
-                              <div className="cancel-modal-actions">
-
-
-                                {/* =================================
-                                    KEEP PRO
-
-                                    This is a label/summary pair
-                                    that closes the details element.
-                                ================================= */}
-
-                                <a
-                                  href="#keep-pro"
-                                  className="keep-pro-btn"
-                                  onClick={(event) => {
-                                    event.preventDefault();
-
-                                    const details =
-                                      event.currentTarget.closest(
-                                        "details"
-                                      );
-
-                                    if (details) {
-                                      details.removeAttribute(
-                                        "open"
-                                      );
-                                    }
-                                  }}
-                                >
-                                  Keep Pro
-                                </a>
-
-
-                                {/* =================================
-                                    CONTINUE TO SHOPIFY FREE PLAN
-                                ================================= */}
-
-                                <a
-                                  href={freePlanUrl}
-                                  target="_top"
-                                  className="confirm-cancel-btn"
-                                >
-                                  Continue to Free Plan
-                                </a>
-
-                              </div>
-
-
-                              {/* =================================
-                                  CLOSE
-                              ================================= */}
-
-                              <a
-                                href="#close"
-                                className="cancel-modal-close"
-                                onClick={(event) => {
-
-                                  event.preventDefault();
-
-                                  const details =
-                                    event.currentTarget.closest(
-                                      "details"
-                                    );
-
-                                  if (details) {
-                                    details.removeAttribute(
-                                      "open"
-                                    );
-                                  }
-
-                                }}
-                                aria-label="Close"
-                              >
-                                ×
-                              </a>
-
-                            </div>
-
-                          </div>
-
-                        </details>
+                        <button
+                          type="button"
+                          className="cancel-subscription-link"
+                          onClick={() =>
+                            setShowCancelModal(true)
+                          }
+                        >
+                          Cancel subscription
+                        </button>
 
                       )}
 
@@ -1038,6 +916,126 @@ export default function Index() {
           </InlineStack>
 
         </div>
+
+
+        {/* =================================================
+            CANCEL MODAL
+        ================================================= */}
+
+        {showCancelModal && (
+
+<div className="cancel-modal-overlay">
+            <div
+              className="cancel-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="cancel-modal-title"
+            >
+
+              <h2 id="cancel-modal-title">
+                Cancel your Pro subscription?
+              </h2>
+
+
+              <p>
+
+                We recommend cancelling at least{" "}
+
+                <strong>
+                  1 day before your next
+                  billing date.
+                </strong>
+
+              </p>
+
+
+              <p>
+
+                By switching to the Free Plan,
+                your Pro access will end
+                immediately.
+
+                <strong>
+                  {" "}
+                  No refund will be issued for
+                  the current billing period.
+                </strong>
+
+              </p>
+
+
+              <p>
+
+                After switching, your account
+                will have the Free Plan limits,
+                including{" "}
+
+                <strong>
+                  50 wishlist saves per month.
+                </strong>
+
+              </p>
+
+
+              <p>
+                Are you sure you want to
+                continue?
+              </p>
+
+
+              <div className="cancel-modal-actions">
+
+
+                {/* =================================
+                    KEEP PRO
+                ================================= */}
+
+                <button
+                  type="button"
+                  className="keep-pro-btn"
+                  onClick={() =>
+                    setShowCancelModal(false)
+                  }
+                >
+                  Keep Pro
+                </button>
+
+
+                {/* =================================
+                    CONTINUE TO FREE PLAN
+                ================================= */}
+
+                <a
+                  href={freePlanUrl}
+                  target="_top"
+                  className="confirm-cancel-btn"
+                >
+                  Continue to Free Plan
+                </a>
+
+              </div>
+
+
+              {/* =================================
+                  CLOSE
+              ================================= */}
+
+              <button
+                type="button"
+                className="cancel-modal-close"
+                onClick={() =>
+                  setShowCancelModal(false)
+                }
+                aria-label="Close"
+              >
+                ×
+              </button>
+
+            </div>
+
+          </div>
+
+        )}
 
 
         {/* =================================================
@@ -1480,25 +1478,6 @@ export default function Index() {
 
 
           /* =================================================
-             CANCEL DETAILS
-          ================================================= */
-
-          .cancel-details {
-            width: 100%;
-          }
-
-
-          .cancel-details summary {
-            list-style: none;
-          }
-
-
-          .cancel-details summary::-webkit-details-marker {
-            display: none;
-          }
-
-
-          /* =================================================
              CANCEL LINK
           ================================================= */
 
@@ -1509,9 +1488,13 @@ export default function Index() {
 
             padding: 5px 0;
 
+            border: none;
+
             color: #6b7280;
 
             background: transparent;
+
+            font-family: inherit;
 
             font-size: 12px;
 
@@ -1555,9 +1538,19 @@ export default function Index() {
           .cancel-modal-overlay {
             position: fixed;
 
-            inset: 0;
+            top: 0;
 
-            z-index: 99999;
+            right: 0;
+
+            bottom: 0;
+
+            left: 0;
+
+            width: 100vw;
+
+            height: 100vh;
+
+            z-index: 2147483647;
 
             display: flex;
 
@@ -1567,11 +1560,15 @@ export default function Index() {
 
             padding: 20px;
 
+            box-sizing: border-box;
+
             background:
               rgba(0,0,0,.45);
 
             backdrop-filter:
               blur(4px);
+
+            isolation: isolate;
           }
 
 
@@ -1582,9 +1579,15 @@ export default function Index() {
           .cancel-modal {
             position: relative;
 
+            z-index: 2147483647;
+
             width: 100%;
 
             max-width: 480px;
+
+            max-height: calc(100vh - 40px);
+
+            overflow-y: auto;
 
             padding: 32px;
 
@@ -1642,6 +1645,8 @@ export default function Index() {
 
             right: 12px;
 
+            z-index: 3;
+
             width: 32px;
 
             height: 32px;
@@ -1652,17 +1657,23 @@ export default function Index() {
 
             justify-content: center;
 
+            padding: 0;
+
+            border: none;
+
             border-radius: 50%;
 
             background: #f3f3f3;
 
             color: #222;
 
+            font-family: inherit;
+
             font-size: 22px;
 
             line-height: 1;
 
-            text-decoration: none;
+            cursor: pointer;
           }
 
 
@@ -1703,6 +1714,8 @@ export default function Index() {
 
             border-radius: 9px;
 
+            font-family: inherit;
+
             font-size: 14px;
 
             font-weight: 600;
@@ -1710,6 +1723,8 @@ export default function Index() {
             text-align: center;
 
             text-decoration: none;
+
+            cursor: pointer;
           }
 
 
@@ -1774,6 +1789,9 @@ export default function Index() {
 
             .cancel-modal {
               padding: 26px;
+
+              max-height:
+                calc(100vh - 30px);
             }
 
 
