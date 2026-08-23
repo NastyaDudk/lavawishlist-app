@@ -650,8 +650,6 @@ export default function Index() {
 
                                 {/* =================================
                                     KEEP PRO
-
-                                    НЕ МЕНЯЕМ МЕХАНИЗМ
                                 ================================= */}
 
                                 <a
@@ -659,6 +657,7 @@ export default function Index() {
                                   className="keep-pro-btn"
                                   onClick={(event) => {
                                     event.preventDefault();
+                                    event.stopPropagation();
 
                                     const details =
                                       event.currentTarget.closest(
@@ -693,8 +692,6 @@ export default function Index() {
 
                               {/* =================================
                                   CLOSE
-
-                                  НЕ МЕНЯЕМ МЕХАНИЗМ
                               ================================= */}
 
                               <a
@@ -703,6 +700,7 @@ export default function Index() {
                                 onClick={(event) => {
 
                                   event.preventDefault();
+                                  event.stopPropagation();
 
                                   const details =
                                     event.currentTarget.closest(
@@ -1568,10 +1566,6 @@ export default function Index() {
 
             padding: 20px;
 
-            box-sizing: border-box;
-
-            overflow-y: auto;
-
             background:
               rgba(0,0,0,.45);
 
@@ -1590,10 +1584,6 @@ export default function Index() {
             width: 100%;
 
             max-width: 480px;
-
-            max-height: calc(100vh - 40px);
-
-            overflow-y: auto;
 
             padding: 32px;
 
@@ -1754,6 +1744,15 @@ export default function Index() {
 
 
           /* =================================================
+             STOP PAGE SCROLL WHILE MODAL IS OPEN
+          ================================================= */
+
+          body:has(.cancel-details[open]) {
+            overflow: hidden;
+          }
+
+
+          /* =================================================
              MOBILE
           ================================================= */
 
@@ -1782,8 +1781,6 @@ export default function Index() {
 
 
             .cancel-modal {
-              max-height: calc(100vh - 40px);
-
               padding: 26px;
             }
 
