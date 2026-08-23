@@ -665,9 +665,7 @@ export default function Index() {
                                       );
 
                                     if (details) {
-                                      details.removeAttribute(
-                                        "open"
-                                      );
+                                      details.open = false;
                                     }
                                   }}
                                 >
@@ -708,9 +706,7 @@ export default function Index() {
                                     );
 
                                   if (details) {
-                                    details.removeAttribute(
-                                      "open"
-                                    );
+                                    details.open = false;
                                   }
 
                                 }}
@@ -1484,6 +1480,8 @@ export default function Index() {
 
           .cancel-details {
             width: 100%;
+            position: relative;
+            z-index: 2147483647;
           }
 
 
@@ -1552,11 +1550,11 @@ export default function Index() {
           ================================================= */
 
           .cancel-modal-overlay {
-            position: fixed;
+            position: fixed !important;
 
             inset: 0;
 
-            z-index: 99999;
+            z-index: 2147483647 !important;
 
             display: flex;
 
