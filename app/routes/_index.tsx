@@ -1549,52 +1549,59 @@ export default function Index() {
              MODAL OVERLAY
           ================================================= */
 
-          .cancel-modal-overlay {
-            position: fixed !important;
+        .cancel-modal-overlay {
+  position: fixed;
 
-            inset: 0;
+  inset: 0;
 
-            z-index: 2147483647 !important;
+  z-index: 99999;
 
-            display: flex;
+  display: flex;
 
-            align-items: center;
+  align-items: center;
+  justify-content: center;
 
-            justify-content: center;
+  padding: 20px;
 
-            padding: 20px;
+  background: rgba(0,0,0,.45);
 
-            background:
-              rgba(0,0,0,.45);
+  backdrop-filter: blur(4px);
 
-            backdrop-filter:
-              blur(4px);
-          }
-
+  pointer-events: auto;
+}
 
           /* =================================================
              MODAL
           ================================================= */
 
-          .cancel-modal {
-            position: relative;
+         .cancel-modal {
+  position: relative;
 
-            width: 100%;
+  z-index: 100000;
 
-            max-width: 480px;
+  width: 100%;
 
-            padding: 32px;
+  max-width: 480px;
 
-            box-sizing: border-box;
+  padding: 32px;
 
-            border-radius: 20px;
+  border-radius: 20px;
 
-            background: white;
+  background: white;
 
-            box-shadow:
-              0 20px 60px
-              rgba(0,0,0,.2);
-          }
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.2);
+
+  pointer-events: auto;
+}
+
+.cancel-modal button {
+  position: relative;
+
+  z-index: 100001;
+
+  pointer-events: auto;
+}
 
 
           .cancel-modal h2 {
@@ -1632,36 +1639,33 @@ export default function Index() {
              CLOSE
           ================================================= */
 
-          .cancel-modal-close {
-            position: absolute;
+         .cancel-modal-close {
+  position: absolute;
 
-            top: 12px;
+  top: 12px;
+  right: 12px;
 
-            right: 12px;
+  width: 32px;
+  height: 32px;
 
-            width: 32px;
+  display: flex;
 
-            height: 32px;
+  align-items: center;
+  justify-content: center;
 
-            display: flex;
+  border-radius: 50%;
 
-            align-items: center;
+  background: #f3f3f3;
+  color: #222;
 
-            justify-content: center;
+  font-size: 22px;
+  line-height: 1;
 
-            border-radius: 50%;
+  text-decoration: none;
 
-            background: #f3f3f3;
-
-            color: #222;
-
-            font-size: 22px;
-
-            line-height: 1;
-
-            text-decoration: none;
-          }
-
+  cursor: pointer;
+  pointer-events: auto;
+}
 
           .cancel-modal-close:hover {
             background: #e8e8e8;
@@ -1713,7 +1717,8 @@ export default function Index() {
           .keep-pro-btn {
             border:
               1px solid #ddd;
-
+           cursor: pointer;
+           pointer-events: auto;
             background: white;
 
             color: #222;
