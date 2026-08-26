@@ -652,25 +652,22 @@ export default function Index() {
                                     KEEP PRO
                                 ================================= */}
 
-                                <a
-                                  href="#keep-pro"
-                                  className="keep-pro-btn"
-                                  onClick={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
+<button
+  type="button"
+  className="keep-pro-btn"
+  onClick={(event) => {
+    event.preventDefault();
 
-                                    const details =
-                                      event.currentTarget.closest(
-                                        "details"
-                                      );
+    const details =
+      (event.currentTarget as HTMLElement).closest("details");
 
-                                    if (details) {
-                                      details.open = false;
-                                    }
-                                  }}
-                                >
-                                  Keep Pro
-                                </a>
+    if (details) {
+      details.removeAttribute("open");
+    }
+  }}
+>
+  Keep Pro
+</button>
 
 
                                 {/* =================================
@@ -692,28 +689,23 @@ export default function Index() {
                                   CLOSE
                               ================================= */}
 
-                              <a
-                                href="#close"
-                                className="cancel-modal-close"
-                                onClick={(event) => {
+         <button
+  type="button"
+  className="cancel-modal-close"
+  onClick={(event) => {
+    event.preventDefault();
 
-                                  event.preventDefault();
-                                  event.stopPropagation();
+    const details =
+      (event.currentTarget as HTMLElement).closest("details");
 
-                                  const details =
-                                    event.currentTarget.closest(
-                                      "details"
-                                    );
-
-                                  if (details) {
-                                    details.open = false;
-                                  }
-
-                                }}
-                                aria-label="Close"
-                              >
-                                ×
-                              </a>
+    if (details) {
+      details.removeAttribute("open");
+    }
+  }}
+  aria-label="Close"
+>
+  ×
+</button>
 
                             </div>
 
@@ -1478,12 +1470,10 @@ export default function Index() {
              CANCEL DETAILS
           ================================================= */
 
-          .cancel-details {
-            width: 100%;
-            position: relative;
-            z-index: 2147483647;
-          }
-
+        .cancel-details {
+  width: 100%;
+  position: relative;
+}
 
           .cancel-details summary {
             list-style: none;
@@ -1574,34 +1564,25 @@ export default function Index() {
              MODAL
           ================================================= */
 
-         .cancel-modal {
-  position: relative;
+          .cancel-modal {
+            position: relative;
 
-  z-index: 100000;
+            width: 100%;
 
-  width: 100%;
+            max-width: 480px;
 
-  max-width: 480px;
+            padding: 32px;
 
-  padding: 32px;
+            box-sizing: border-box;
 
-  border-radius: 20px;
+            border-radius: 20px;
 
-  background: white;
+            background: white;
 
-  box-shadow:
-    0 20px 60px rgba(0,0,0,.2);
-
-  pointer-events: auto;
-}
-
-.cancel-modal button {
-  position: relative;
-
-  z-index: 100001;
-
-  pointer-events: auto;
-}
+            box-shadow:
+              0 20px 60px
+              rgba(0,0,0,.2);
+          }
 
 
           .cancel-modal h2 {
@@ -1639,33 +1620,36 @@ export default function Index() {
              CLOSE
           ================================================= */
 
-         .cancel-modal-close {
-  position: absolute;
+          .cancel-modal-close {
+            position: absolute;
 
-  top: 12px;
-  right: 12px;
+            top: 12px;
 
-  width: 32px;
-  height: 32px;
+            right: 12px;
 
-  display: flex;
+            width: 32px;
 
-  align-items: center;
-  justify-content: center;
+            height: 32px;
 
-  border-radius: 50%;
+            display: flex;
 
-  background: #f3f3f3;
-  color: #222;
+            align-items: center;
 
-  font-size: 22px;
-  line-height: 1;
+            justify-content: center;
 
-  text-decoration: none;
+            border-radius: 50%;
 
-  cursor: pointer;
-  pointer-events: auto;
-}
+            background: #f3f3f3;
+
+            color: #222;
+
+            font-size: 22px;
+
+            line-height: 1;
+
+            text-decoration: none;
+          }
+
 
           .cancel-modal-close:hover {
             background: #e8e8e8;
@@ -1717,8 +1701,7 @@ export default function Index() {
           .keep-pro-btn {
             border:
               1px solid #ddd;
-           cursor: pointer;
-           pointer-events: auto;
+
             background: white;
 
             color: #222;
@@ -1745,14 +1728,6 @@ export default function Index() {
             color: #333;
           }
 
-
-          /* =================================================
-             STOP PAGE SCROLL WHILE MODAL IS OPEN
-          ================================================= */
-
-          body:has(.cancel-details[open]) {
-            overflow: hidden;
-          }
 
 
           /* =================================================
