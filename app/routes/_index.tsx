@@ -11,7 +11,6 @@ import {
 } from "@shopify/polaris";
 
 import { useLoaderData } from "react-router";
-import { useState } from "react";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
@@ -71,8 +70,6 @@ export async function loader({
 
 
 export default function Index() {
-
-  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const {
     shop,
@@ -581,30 +578,152 @@ export default function Index() {
 
                       ) : (
 
-                        <div>
+                        /* =============================================
+                           NATIVE HTML DETAILS MODAL
+                        ============================================= */
 
-                          <button type="button" className="cancel-subscription-link" onClick={() => setShowCancelModal(true)}>
+                        <details className="cancel-details">
+
+                          <summary className="cancel-subscription-link">
                             Cancel subscription
-                          </button>
+                          </summary>
 
-                          {showCancelModal && (
-                            <div className="cancel-modal-overlay">
-                              <div className="cancel-modal">
-                                <h2>Cancel your Pro subscription?</h2>
-                                <p>We recommend cancelling at least <strong>1 day before your next billing date.</strong></p>
-                                <p>By switching to the Free Plan, your Pro access will end immediately. <strong>No refund will be issued for the current billing period.</strong></p>
-                                <p>After switching, your account will have the Free Plan limits, including <strong>50 wishlist saves per month.</strong></p>
-                                <p>Are you sure you want to continue?</p>
-                                <div className="cancel-modal-actions">
-                                  <button type="button" className="keep-pro-btn" onClick={() => setShowCancelModal(false)}>Keep Pro</button>
-                                  <a href={freePlanUrl} target="_top" className="confirm-cancel-btn">Continue to Free Plan</a>
-                                </div>
-                                <button type="button" className="cancel-modal-close" onClick={() => setShowCancelModal(false)} aria-label="Close">×</button>
+
+                          <div className="cancel-modal-overlay">
+
+                            <div className="cancel-modal">
+
+
+                              <h2>
+                                Cancel your Pro subscription?
+                              </h2>
+
+
+                              <p>
+
+                                We recommend cancelling at least{" "}
+
+                                <strong>
+                                  1 day before your next
+                                  billing date.
+                                </strong>
+
+                              </p>
+
+
+                              <p>
+
+                                By switching to the Free Plan,
+                                your Pro access will end
+                                immediately.
+
+                                <strong>
+                                  {" "}
+                                  No refund will be issued
+                                  for the current billing period.
+                                </strong>
+
+                              </p>
+
+
+                              <p>
+
+                                After switching, your account
+                                will have the Free Plan limits,
+                                including{" "}
+
+                                <strong>
+                                  50 wishlist saves per month.
+                                </strong>
+
+                              </p>
+
+
+                              <p>
+                                Are you sure you want to
+                                continue?
+                              </p>
+
+
+                              <div className="cancel-modal-actions">
+
+
+                                {/* =================================
+                                    KEEP PRO
+                                ================================= */}
+
+                                <button
+                                  type="button"
+                                  className="keep-pro-btn"
+                                  onClick={(event) => {
+
+                                    event.preventDefault();
+                                    event.stopPropagation();
+
+                                    const details =
+                                      event.currentTarget.closest(
+                                        "details"
+                                      ) as HTMLDetailsElement | null;
+
+                                    if (details) {
+                                      details.open = false;
+                                    }
+
+                                  }}
+                                >
+                                  Keep Pro
+                                </button>
+
+
+                                {/* =================================
+                                    CONTINUE TO SHOPIFY FREE PLAN
+                                ================================= */}
+
+                                <a
+                                  href={freePlanUrl}
+                                  target="_top"
+                                  className="confirm-cancel-btn"
+                                >
+                                  Continue to Free Plan
+                                </a>
+
                               </div>
-                            </div>
-                          )}
 
-                        </div>
+
+                              {/* =================================
+                                  CLOSE
+                              ================================= */}
+
+                              <button
+                                type="button"
+                                className="cancel-modal-close"
+                                onClick={(event) => {
+
+                                  event.preventDefault();
+                                  event.stopPropagation();
+
+                                  const details =
+                                    event.currentTarget.closest(
+                                      "details"
+                                    ) as HTMLDetailsElement | null;
+
+                                  if (details) {
+                                    details.open = false;
+                                  }
+
+                                }}
+                                aria-label="Close"
+                              >
+                                ×
+                              </button>
+
+
+                            </div>
+
+                          </div>
+
+                        </details>
+
                       )}
 
                     </BlockStack>
@@ -931,27 +1050,17 @@ export default function Index() {
 
           .hero-badge {
             display: inline-flex;
-
             align-items: center;
-
             width: fit-content;
-
             padding: 12px 18px;
-
             border-radius: 999px;
-
             background:
               rgba(255,255,255,.18);
-
             color: white;
-
             font-size: 16px;
-
             font-weight: 700;
-
             backdrop-filter:
               blur(12px);
-
             box-shadow:
               0 4px 18px
               rgba(0,0,0,.12);
@@ -960,31 +1069,23 @@ export default function Index() {
 
           .hero-card {
             position: relative;
-
             overflow: hidden;
-
             padding: 48px;
-
             border-radius: 28px;
-
             background:
               linear-gradient(
                 135deg,
                 #ff512f 0%,
                 #dd2476 100%
               );
-
             color: white;
           }
 
 
           .hero-overlay {
             position: absolute;
-
             inset: 0;
-
             pointer-events: none;
-
             background:
               radial-gradient(
                 circle at top right,
@@ -997,27 +1098,19 @@ export default function Index() {
           .hero-card h1,
           .hero-card p {
             color: white;
-
             position: relative;
-
             z-index: 2;
           }
 
 
           .hero-pill {
             padding: 10px 16px;
-
             border-radius: 999px;
-
             background:
               rgba(255,255,255,.18);
-
             color: white;
-
             font-size: 13px;
-
             font-weight: 700;
-
             backdrop-filter:
               blur(10px);
           }
@@ -1025,22 +1118,17 @@ export default function Index() {
 
           .hero-grid {
             display: grid;
-
             grid-template-columns:
               repeat(3,1fr);
-
             gap: 18px;
           }
 
 
           .hero-box {
             padding: 22px;
-
             border-radius: 22px;
-
             background:
               rgba(255,255,255,.12);
-
             backdrop-filter:
               blur(12px);
           }
@@ -1058,36 +1146,26 @@ export default function Index() {
 
           .free-info {
             padding: 8px 14px;
-
             border-radius: 999px;
-
             background: #eef4ff;
-
             color: #4f6ef7;
-
             font-size: 13px;
-
             font-weight: 700;
           }
 
 
           .plans-grid {
             display: grid;
-
             grid-template-columns:
               1fr 1fr;
-
             gap: 24px;
           }
 
 
           .plan-card {
             position: relative;
-
             padding: 28px;
-
             border-radius: 22px;
-
             border:
               1px solid #e1e3e5;
           }
@@ -1101,7 +1179,6 @@ export default function Index() {
           .current-plan {
             border:
               2px solid #16a34a;
-
             background:
               linear-gradient(
                 135deg,
@@ -1113,33 +1190,22 @@ export default function Index() {
 
           .current-badge {
             position: absolute;
-
             top: -12px;
-
             left: 20px;
-
             padding: 6px 12px;
-
             border-radius: 999px;
-
             background: #16a34a;
-
             color: white;
-
             font-size: 12px;
-
             font-weight: 700;
           }
 
 
           .free-plan-note {
             padding: 14px;
-
             border-radius: 14px;
-
             background:
               rgba(22,163,74,.08);
-
             text-align: center;
           }
 
@@ -1151,7 +1217,6 @@ export default function Index() {
                 rgba(255,81,47,.08),
                 rgba(221,36,118,.08)
               );
-
             border:
               2px solid #dd2476;
           }
@@ -1159,37 +1224,26 @@ export default function Index() {
 
           .popular-badge {
             position: absolute;
-
             top: -12px;
-
             right: 20px;
-
             padding: 6px 12px;
-
             border-radius: 999px;
-
             background: #dd2476;
-
             color: white;
-
             font-size: 12px;
-
             font-weight: 700;
           }
 
 
           .feature-row {
             display: flex;
-
             align-items: center;
-
             gap: 10px;
           }
 
 
           .pro-note {
             text-align: center;
-
             opacity: .7;
           }
 
@@ -1200,23 +1254,14 @@ export default function Index() {
 
           .start-pro-link {
             display: block;
-
             width: 100%;
-
             padding: 10px;
-
             box-sizing: border-box;
-
             border-radius: 10px;
-
             background: #111;
-
             color: white;
-
             text-align: center;
-
             text-decoration: none;
-
             font-weight: 600;
           }
 
@@ -1232,10 +1277,8 @@ export default function Index() {
 
           .grid {
             display: grid;
-
             grid-template-columns:
               1fr 1fr;
-
             gap: 18px;
           }
 
@@ -1254,30 +1297,20 @@ export default function Index() {
 
           .img-box {
             width: 100%;
-
             height: 220px;
-
             overflow: hidden;
-
             border-radius: 18px;
-
             background: #f6f6f7;
-
             margin-bottom: 10px;
           }
 
 
           .img-box img {
             width: 100%;
-
             height: 100%;
-
             object-fit: contain;
-
             object-position: center;
-
             display: block;
-
             background: #f6f6f7;
           }
 
@@ -1288,16 +1321,13 @@ export default function Index() {
 
           .video-box {
             overflow: hidden;
-
             border-radius: 18px;
-
             background: #f6f6f7;
           }
 
 
           .video-box img {
             width: 100%;
-
             display: block;
           }
 
@@ -1308,9 +1338,7 @@ export default function Index() {
 
           .setup-banner {
             padding: 16px;
-
             border-radius: 14px;
-
             background:
               linear-gradient(
                 135deg,
@@ -1326,18 +1354,14 @@ export default function Index() {
 
           .cta-card {
             padding: 48px;
-
             border-radius: 28px;
-
             text-align: center;
-
             background:
               linear-gradient(
                 135deg,
                 #ff512f 0%,
                 #dd2476 100%
               );
-
             color: white;
           }
 
@@ -1359,30 +1383,42 @@ export default function Index() {
 
 
           /* =================================================
+             CANCEL DETAILS
+          ================================================= */
+
+          .cancel-details {
+            width: 100%;
+            position: relative;
+            z-index: 2147483647;
+          }
+
+
+          .cancel-details summary {
+            list-style: none;
+          }
+
+
+          .cancel-details summary::-webkit-details-marker {
+            display: none;
+          }
+
+
+          /* =================================================
              CANCEL LINK
           ================================================= */
 
           .cancel-subscription-link {
             display: block;
-
             width: 100%;
-
             padding: 5px 0;
-
+            border: none;
             color: #6b7280;
-
             background: transparent;
-
             font-size: 12px;
-
             font-weight: 400;
-
             text-align: center;
-
             text-decoration: underline;
-
             text-underline-offset: 3px;
-
             cursor: pointer;
           }
 
@@ -1398,12 +1434,9 @@ export default function Index() {
 
           .cancelled-note {
             padding: 14px;
-
             border-radius: 14px;
-
             background:
               rgba(22,163,74,.08);
-
             text-align: center;
           }
 
@@ -1412,26 +1445,27 @@ export default function Index() {
              MODAL OVERLAY
           ================================================= */
 
-        .cancel-modal-overlay {
-  position: fixed;
+          .cancel-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
 
-  inset: 0;
+            display: flex;
 
-  z-index: 99999;
+            align-items: center;
+            justify-content: center;
 
-  display: flex;
+            padding: 20px;
 
-  align-items: center;
-  justify-content: center;
+            background:
+              rgba(0,0,0,.45);
 
-  padding: 20px;
+            backdrop-filter:
+              blur(4px);
 
-  background: rgba(0,0,0,.45);
+            pointer-events: auto;
+          }
 
-  backdrop-filter: blur(4px);
-
-  pointer-events: auto;
-}
 
           /* =================================================
              MODAL
@@ -1439,19 +1473,12 @@ export default function Index() {
 
           .cancel-modal {
             position: relative;
-
             width: 100%;
-
             max-width: 480px;
-
             padding: 32px;
-
             box-sizing: border-box;
-
             border-radius: 20px;
-
             background: white;
-
             box-shadow:
               0 20px 60px
               rgba(0,0,0,.2);
@@ -1497,28 +1524,28 @@ export default function Index() {
             position: absolute;
 
             top: 12px;
-
             right: 12px;
 
             width: 32px;
-
             height: 32px;
 
             display: flex;
 
             align-items: center;
-
             justify-content: center;
 
+            padding: 0;
+
+            border: none;
             border-radius: 50%;
 
             background: #f3f3f3;
-
             color: #222;
 
             font-size: 22px;
-
             line-height: 1;
+
+            cursor: pointer;
 
             text-decoration: none;
           }
@@ -1549,7 +1576,6 @@ export default function Index() {
             display: flex;
 
             align-items: center;
-
             justify-content: center;
 
             min-height: 42px;
@@ -1562,12 +1588,13 @@ export default function Index() {
             border-radius: 9px;
 
             font-size: 14px;
-
             font-weight: 600;
 
             text-align: center;
 
             text-decoration: none;
+
+            cursor: pointer;
           }
 
 
@@ -1601,6 +1628,14 @@ export default function Index() {
             color: #333;
           }
 
+
+          /* =================================================
+             STOP PAGE SCROLL WHILE MODAL IS OPEN
+          ================================================= */
+
+          body:has(.cancel-details[open]) {
+            overflow: hidden;
+          }
 
 
           /* =================================================
