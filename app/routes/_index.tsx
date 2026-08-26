@@ -12,15 +12,7 @@ import {
   Link,
 } from "@shopify/polaris";
 
-import {
-  Modal,
-  TitleBar,
-} from "@shopify/app-bridge-react";
-
-import {
-  useLoaderData,
-  useFetcher,
-} from "react-router";
+import { useLoaderData } from "react-router";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
@@ -35,40 +27,24 @@ import { authenticate } from "../shopify.server";
 export async function loader({
   request,
 }: LoaderFunctionArgs) {
+  const { session } = await authenticate.admin(request);
 
-  const { session } =
-    await authenticate.admin(request);
+  const stats = await prisma.shopStats.findUnique({
+    where: {
+      shop: session.shop,
+    },
+  });
 
-  const stats =
-    await prisma.shopStats.findUnique({
-      where: {
-        shop: session.shop,
-      },
-    });
+  const isPro = stats?.isPro ?? false;
 
-  const isPro =
-    stats?.isPro ?? false;
-
-  console.log(
-    "SHOP:",
-    session.shop
-  );
-
-  console.log(
-    "SHOP STATS:",
-    stats
-  );
-
-  console.log(
-    "IS PRO:",
-    isPro
-  );
+  console.log("SHOP:", session.shop);
+  console.log("SHOP STATS:", stats);
+  console.log("IS PRO:", isPro);
 
   return {
     shop: session.shop,
 
-    limitHits:
-      stats?.limitHits ?? 0,
+    limitHits: stats?.limitHits ?? 0,
 
     isPro,
 
@@ -88,7 +64,6 @@ export async function loader({
 ========================================================= */
 
 export default function Index() {
-
   const {
     shop,
     limitHits,
@@ -105,122 +80,29 @@ export default function Index() {
 
 
   /* =======================================================
-     FETCHER
+     CANCEL MODAL STATE
   ======================================================= */
 
-  const fetcher = useFetcher<{
-    success?: boolean;
-    cancellationScheduled?: boolean;
-    cancellationDate?: string | null;
-    error?: string;
-  }>();
+  const [showCancelModal, setShowCancelModal] =
+    React.useState(false);
 
 
   /* =======================================================
-     MODAL STATE
+     SHOP NAME
   ======================================================= */
 
-  const [
-    showCancelModal,
-    setShowCancelModal,
-  ] = React.useState(false);
+  const store = shop.replace(
+    ".myshopify.com",
+    ""
+  );
 
 
   /* =======================================================
-     LOADING
+     SHOPIFY BILLING LINKS
   ======================================================= */
 
-  const cancelling =
-    fetcher.state === "submitting";
-
-
-  /* =======================================================
-     OPEN MODAL
-  ======================================================= */
-
-  const openCancelModal = () => {
-    setShowCancelModal(true);
-  };
-
-
-  /* =======================================================
-     CLOSE MODAL
-  ======================================================= */
-
-  const closeCancelModal = () => {
-    setShowCancelModal(false);
-  };
-
-
-  /* =======================================================
-     CANCEL SUBSCRIPTION
-  ======================================================= */
-
-  const cancelSubscription = () => {
-
-    fetcher.submit(
-      {},
-      {
-        method: "post",
-        action: "/app/cancel-subscription",
-      }
-    );
-  };
-
-
-  /* =======================================================
-     FETCHER RESPONSE
-  ======================================================= */
-
-  React.useEffect(() => {
-
-    if (
-      fetcher.state === "idle" &&
-      fetcher.data?.success &&
-      fetcher.data?.cancellationScheduled
-    ) {
-
-      setShowCancelModal(false);
-
-      window.location.reload();
-    }
-
-
-    if (
-      fetcher.state === "idle" &&
-      fetcher.data?.error
-    ) {
-
-      console.error(
-        "Cancellation error:",
-        fetcher.data.error
-      );
-
-      alert(
-        fetcher.data.error
-      );
-    }
-
-  }, [
-    fetcher.state,
-    fetcher.data,
-  ]);
-
-
-  /* =======================================================
-     STORE
-  ======================================================= */
-
-  const store =
-    shop.replace(
-      ".myshopify.com",
-      ""
-    );
-
-
-  /* =======================================================
-     PRO PLAN URL
-  ======================================================= */
+  const freePlanUrl =
+    `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/free?interval=EVERY_30_DAYS`;
 
   const proPlanUrl =
     `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
@@ -245,8 +127,11 @@ export default function Index() {
       : null;
 
 
-  return (
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
+  return (
     <Page title="❤️‍🔥 Lava Wishlist">
 
       <BlockStack gap="500">
@@ -262,21 +147,16 @@ export default function Index() {
 
           <BlockStack gap="500">
 
-            <InlineStack
-              align="space-between"
-            >
+            <InlineStack align="space-between">
 
               <div className="hero-badge">
                 ❤️‍🔥 Shopify LavaWishlist App
               </div>
 
-
               <div className="hero-pill">
-
                 {isPro
                   ? "Pro Plan Active"
                   : "Free Plan Included"}
-
               </div>
 
             </InlineStack>
@@ -290,7 +170,6 @@ export default function Index() {
               >
                 Turn visitors into loyal buyers
               </Text>
-
 
               <Text
                 as="p"
@@ -382,10 +261,7 @@ export default function Index() {
 
           <BlockStack gap="500">
 
-
-            <InlineStack
-              align="space-between"
-            >
+            <InlineStack align="space-between">
 
               <Text
                 as="h2"
@@ -393,7 +269,6 @@ export default function Index() {
               >
                 Plans
               </Text>
-
 
               <div className="free-info">
                 Free includes
@@ -421,11 +296,9 @@ export default function Index() {
               >
 
                 {!isPro && (
-
                   <div className="current-badge">
                     CURRENT PLAN
                   </div>
-
                 )}
 
 
@@ -452,11 +325,9 @@ export default function Index() {
                             : "success"
                         }
                       >
-
                         {!isPro
                           ? "Active"
                           : "Inactive"}
-
                       </Badge>
 
                     </InlineStack>
@@ -518,7 +389,6 @@ export default function Index() {
                         You are currently using the free plan
                       </Text>
 
-
                       <Text
                         as="p"
                         tone="subdued"
@@ -566,6 +436,7 @@ export default function Index() {
 
                 <BlockStack gap="400">
 
+
                   <div>
 
                     <Text
@@ -574,7 +445,6 @@ export default function Index() {
                     >
                       Pro Plan
                     </Text>
-
 
                     <Text
                       as="p"
@@ -651,6 +521,10 @@ export default function Index() {
                       </Button>
 
 
+                      {/* =================================================
+                          ALREADY CANCELLED
+                      ================================================= */}
+
                       {cancellationScheduled ? (
 
                         <div className="cancelled-note">
@@ -659,35 +533,35 @@ export default function Index() {
                             Subscription cancelled
                           </Text>
 
-
                           <Text
                             as="p"
                             tone="subdued"
                           >
-
                             Your Pro plan remains
                             active
-
                             {formattedCancellationDate
                               ? ` until ${formattedCancellationDate}.`
                               : " until the end of your current billing period."
                             }
-
                             {" "}
-
                             You will not be charged
                             again after this period.
-
                           </Text>
 
                         </div>
 
                       ) : (
 
+                        /* =================================================
+                           CANCEL SUBSCRIPTION BUTTON
+                        ================================================= */
+
                         <button
                           type="button"
                           className="cancel-subscription-link"
-                          onClick={openCancelModal}
+                          onClick={() =>
+                            setShowCancelModal(true)
+                          }
                         >
                           Cancel subscription
                         </button>
@@ -758,39 +632,33 @@ export default function Index() {
                   src: "/images/header.png",
                   label: "Animated lava heart",
                 },
-
                 {
                   src: "/images/catalog.png",
                   label:
                     "Wishlist on collection pages",
                 },
-
                 {
                   src:
                     "/images/wishlist drawer.png",
                   label:
                     "Slide-out wishlist drawer",
                 },
-
                 {
                   src: "/images/icon.png",
                   label:
                     "Clean modern icons",
                 },
-
                 {
                   src: "/images/added.png",
                   label:
                     "Fast add to cart",
                 },
-
                 {
                   src:
                     "/images/header before.png",
                   label:
                     "Fits every theme",
                 },
-
               ].map((img) => (
 
                 <div
@@ -806,7 +674,6 @@ export default function Index() {
                     />
 
                   </div>
-
 
                   <Text
                     as="p"
@@ -845,7 +712,6 @@ export default function Index() {
                 Setup in under
                 1 minute 🎬
               </Text>
-
 
               <Badge tone="attention">
                 No Coding
@@ -898,22 +764,22 @@ export default function Index() {
             <List type="number">
 
               <List.Item>
-                Open Shopify Theme Customize
+                Open Shopify
+                Theme Customize
               </List.Item>
-
 
               <List.Item>
-                Enable Lava Favorites App Embed
+                Enable Lava Favorites
+                App Embed
               </List.Item>
-
 
               <List.Item>
                 Save changes
               </List.Item>
 
-
               <List.Item>
-                Customers can now save favorites ❤️
+                Customers can now
+                save favorites ❤️
               </List.Item>
 
             </List>
@@ -949,7 +815,6 @@ export default function Index() {
               wishlists? 🔥
             </Text>
 
-
             <Text
               as="p"
               variant="bodyLg"
@@ -981,14 +846,12 @@ export default function Index() {
               Privacy Policy
             </Link>
 
-
             <Link
               url="/faq"
               removeUnderline
             >
               FAQ
             </Link>
-
 
             <Link
               url="/docs"
@@ -1003,631 +866,902 @@ export default function Index() {
 
 
         {/* =================================================
-            APP BRIDGE MODAL
+            CANCEL MODAL
         ================================================= */}
 
-        <Modal
-          id="cancel-subscription-modal"
-          open={showCancelModal}
-          onHide={closeCancelModal}
-        >
+        {showCancelModal && (
 
-          <div className="cancel-modal-content">
-
-            <Text as="p">
-
-              We recommend cancelling at least{" "}
-
-              <strong>
-                1 day before your next billing date.
-              </strong>
-
-            </Text>
+          <div className="cancel-modal-wrapper">
 
 
-            <Text as="p">
+            {/* =================================================
+                BACKDROP
 
-              By switching to the Free Plan,
-              your Pro access will end immediately.
+                This is a real button so it is accessible
+                and does not create jsx-a11y errors.
+            ================================================= */}
 
-              {" "}
-
-              <strong>
-                No refund will be issued for the
-                current billing period.
-              </strong>
-
-            </Text>
-
-
-            <Text as="p">
-
-              After switching, your account will
-              have the Free Plan limits, including{" "}
-
-              <strong>
-                50 wishlist saves per month.
-              </strong>
-
-            </Text>
+            <button
+              type="button"
+              className="cancel-modal-backdrop"
+              aria-label="Close cancellation dialog"
+              onClick={() =>
+                setShowCancelModal(false)
+              }
+            />
 
 
-            <Text as="p">
-              Are you sure you want to continue?
-            </Text>
+            {/* =================================================
+                MODAL
+            ================================================= */}
+
+            <div
+              className="cancel-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="cancel-modal-title"
+            >
+
+
+              {/* =================================================
+                  CLOSE
+              ================================================= */}
+
+              <button
+                type="button"
+                className="cancel-modal-close"
+                aria-label="Close"
+                onClick={() =>
+                  setShowCancelModal(false)
+                }
+              >
+                ×
+              </button>
+
+
+              <h2 id="cancel-modal-title">
+                Cancel your Pro subscription?
+              </h2>
+
+
+              <p>
+                We recommend cancelling at least{" "}
+                <strong>
+                  1 day before your next billing date.
+                </strong>
+              </p>
+
+
+              <p>
+                By switching to the Free Plan,
+                your Pro access will end immediately.{" "}
+                <strong>
+                  No refund will be issued for the
+                  current billing period.
+                </strong>
+              </p>
+
+
+              <p>
+                After switching, your account will
+                have the Free Plan limits, including{" "}
+                <strong>
+                  50 wishlist saves per month.
+                </strong>
+              </p>
+
+
+              <p>
+                Are you sure you want to continue?
+              </p>
+
+
+              <div className="cancel-modal-actions">
+
+
+                {/* =================================================
+                    KEEP PRO
+                ================================================= */}
+
+                <button
+                  type="button"
+                  className="keep-pro-btn"
+                  onClick={() =>
+                    setShowCancelModal(false)
+                  }
+                >
+                  Keep Pro
+                </button>
+
+
+                {/* =================================================
+                    CONTINUE TO FREE PLAN
+                ================================================= */}
+
+                <a
+                  href={freePlanUrl}
+                  target="_top"
+                  className="confirm-cancel-btn"
+                >
+                  Continue to Free Plan
+                </a>
+
+              </div>
+
+            </div>
 
           </div>
 
+        )}
 
-          <TitleBar
-            title="Cancel your Pro subscription?"
-          >
+      </BlockStack>
 
-            <button
-              onClick={closeCancelModal}
-            >
-              Keep Pro
-            </button>
 
+      {/* =================================================
+          STYLES
+      ================================================= */}
 
-            <button
-              variant="primary"
-              onClick={cancelSubscription}
-              disabled={cancelling}
-            >
+      <style>{`
 
-              {cancelling
-                ? "Cancelling..."
-                : "Continue to Free Plan"}
+        /* =================================================
+           HERO
+        ================================================= */
 
-            </button>
+        .hero-badge {
+          display: inline-flex;
+          align-items: center;
 
-          </TitleBar>
+          width: fit-content;
 
-        </Modal>
+          padding: 12px 18px;
 
+          border-radius: 999px;
 
-        {/* =================================================
-            STYLES
-        ================================================= */}
+          background: rgba(255,255,255,.18);
 
-        <style>{`
+          color: white;
 
-          /* =================================================
-             HERO
-          ================================================= */
+          font-size: 16px;
+          font-weight: 700;
 
-          .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            width: fit-content;
+          backdrop-filter: blur(12px);
 
-            padding: 12px 18px;
+          box-shadow:
+            0 4px 18px rgba(0,0,0,.12);
+        }
 
-            border-radius: 999px;
 
-            background:
-              rgba(255,255,255,.18);
+        .hero-card {
+          position: relative;
 
-            color: white;
+          overflow: hidden;
 
-            font-size: 16px;
-            font-weight: 700;
+          padding: 48px;
 
-            backdrop-filter:
-              blur(12px);
+          border-radius: 28px;
 
-            box-shadow:
-              0 4px 18px
-              rgba(0,0,0,.12);
-          }
+          background:
+            linear-gradient(
+              135deg,
+              #ff512f 0%,
+              #dd2476 100%
+            );
 
+          color: white;
+        }
 
-          .hero-card {
-            position: relative;
-            overflow: hidden;
 
-            padding: 48px;
+        .hero-overlay {
+          position: absolute;
 
-            border-radius: 28px;
+          inset: 0;
 
-            background:
-              linear-gradient(
-                135deg,
-                #ff512f 0%,
-                #dd2476 100%
-              );
+          pointer-events: none;
 
-            color: white;
-          }
+          background:
+            radial-gradient(
+              circle at top right,
+              rgba(255,255,255,.16),
+              transparent 40%
+            );
+        }
 
 
-          .hero-overlay {
-            position: absolute;
-            inset: 0;
+        .hero-card h1,
+        .hero-card p {
+          position: relative;
 
-            pointer-events: none;
+          z-index: 2;
 
-            background:
-              radial-gradient(
-                circle at top right,
-                rgba(255,255,255,.16),
-                transparent 40%
-              );
-          }
+          color: white;
+        }
 
 
-          .hero-card h1,
-          .hero-card p {
-            color: white;
+        .hero-pill {
+          padding: 10px 16px;
 
-            position: relative;
-            z-index: 2;
-          }
+          border-radius: 999px;
 
+          background: rgba(255,255,255,.18);
 
-          .hero-pill {
-            padding: 10px 16px;
+          color: white;
 
-            border-radius: 999px;
+          font-size: 13px;
+          font-weight: 700;
 
-            background:
-              rgba(255,255,255,.18);
+          backdrop-filter: blur(10px);
+        }
 
-            color: white;
 
-            font-size: 13px;
-            font-weight: 700;
+        .hero-grid {
+          display: grid;
 
-            backdrop-filter:
-              blur(10px);
-          }
+          grid-template-columns:
+            repeat(3, 1fr);
 
+          gap: 18px;
+        }
 
-          .hero-grid {
-            display: grid;
 
-            grid-template-columns:
-              repeat(3,1fr);
+        .hero-box {
+          padding: 22px;
 
-            gap: 18px;
-          }
+          border-radius: 22px;
 
+          background:
+            rgba(255,255,255,.12);
 
-          .hero-box {
-            padding: 22px;
+          backdrop-filter: blur(12px);
+        }
 
-            border-radius: 22px;
 
-            background:
-              rgba(255,255,255,.12);
+        .hero-box h3,
+        .hero-box p {
+          color: white;
+        }
 
-            backdrop-filter:
-              blur(12px);
-          }
 
+        /* =================================================
+           PLANS
+        ================================================= */
 
-          .hero-box h3,
-          .hero-box p {
-            color: white;
-          }
+        .free-info {
+          padding: 8px 14px;
 
+          border-radius: 999px;
 
-          /* =================================================
-             PLANS
-          ================================================= */
+          background: #eef4ff;
 
-          .free-info {
-            padding: 8px 14px;
+          color: #4f6ef7;
 
-            border-radius: 999px;
+          font-size: 13px;
+          font-weight: 700;
+        }
 
-            background: #eef4ff;
 
-            color: #4f6ef7;
+        .plans-grid {
+          display: grid;
 
-            font-size: 13px;
-            font-weight: 700;
-          }
+          grid-template-columns:
+            1fr 1fr;
 
+          gap: 24px;
+        }
 
-          .plans-grid {
-            display: grid;
 
-            grid-template-columns:
-              1fr 1fr;
+        .plan-card {
+          position: relative;
 
-            gap: 24px;
-          }
+          padding: 28px;
 
+          border-radius: 22px;
 
+          border:
+            1px solid #e1e3e5;
+        }
+
+
+        .free-plan {
+          background: #f6f6f7;
+        }
+
+
+        .current-plan {
+          border:
+            2px solid #16a34a;
+
+          background:
+            linear-gradient(
+              135deg,
+              rgba(22,163,74,.06),
+              rgba(22,163,74,.02)
+            );
+        }
+
+
+        .current-badge {
+          position: absolute;
+
+          top: -12px;
+          left: 20px;
+
+          padding: 6px 12px;
+
+          border-radius: 999px;
+
+          background: #16a34a;
+
+          color: white;
+
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+
+        .free-plan-note {
+          padding: 14px;
+
+          border-radius: 14px;
+
+          background:
+            rgba(22,163,74,.08);
+
+          text-align: center;
+        }
+
+
+        .pro-plan {
+          background:
+            linear-gradient(
+              135deg,
+              rgba(255,81,47,.08),
+              rgba(221,36,118,.08)
+            );
+
+          border:
+            2px solid #dd2476;
+        }
+
+
+        .popular-badge {
+          position: absolute;
+
+          top: -12px;
+          right: 20px;
+
+          padding: 6px 12px;
+
+          border-radius: 999px;
+
+          background: #dd2476;
+
+          color: white;
+
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+
+        .feature-row {
+          display: flex;
+
+          align-items: center;
+
+          gap: 10px;
+        }
+
+
+        .pro-note {
+          text-align: center;
+
+          opacity: .7;
+        }
+
+
+        /* =================================================
+           START PRO
+        ================================================= */
+
+        .start-pro-link {
+          display: block;
+
+          width: 100%;
+
+          padding: 10px;
+
+          box-sizing: border-box;
+
+          border-radius: 10px;
+
+          background: #111;
+
+          color: white;
+
+          text-align: center;
+
+          text-decoration: none;
+
+          font-weight: 600;
+        }
+
+
+        .start-pro-link:hover {
+          background: #222;
+        }
+
+
+        /* =================================================
+           SCREENSHOTS
+        ================================================= */
+
+        .grid {
+          display: grid;
+
+          grid-template-columns:
+            1fr 1fr;
+
+          gap: 18px;
+        }
+
+
+        .card-preview {
+          transition:
+            transform .25s ease;
+        }
+
+
+        .card-preview:hover {
+          transform:
+            translateY(-4px);
+        }
+
+
+        .img-box {
+          width: 100%;
+
+          height: 220px;
+
+          overflow: hidden;
+
+          border-radius: 18px;
+
+          background: #f6f6f7;
+
+          margin-bottom: 10px;
+        }
+
+
+        .img-box img {
+          width: 100%;
+
+          height: 100%;
+
+          object-fit: contain;
+
+          object-position: center;
+
+          display: block;
+
+          background: #f6f6f7;
+        }
+
+
+        /* =================================================
+           VIDEO
+        ================================================= */
+
+        .video-box {
+          overflow: hidden;
+
+          border-radius: 18px;
+
+          background: #f6f6f7;
+        }
+
+
+        .video-box img {
+          width: 100%;
+
+          display: block;
+        }
+
+
+        /* =================================================
+           SETUP
+        ================================================= */
+
+        .setup-banner {
+          padding: 16px;
+
+          border-radius: 14px;
+
+          background:
+            linear-gradient(
+              135deg,
+              rgba(255,81,47,.08),
+              rgba(221,36,118,.08)
+            );
+        }
+
+
+        /* =================================================
+           CTA
+        ================================================= */
+
+        .cta-card {
+          padding: 48px;
+
+          border-radius: 28px;
+
+          text-align: center;
+
+          background:
+            linear-gradient(
+              135deg,
+              #ff512f 0%,
+              #dd2476 100%
+            );
+
+          color: white;
+        }
+
+
+        .cta-card h2,
+        .cta-card p {
+          color: white;
+        }
+
+
+        /* =================================================
+           FOOTER
+        ================================================= */
+
+        .footer {
+          padding:
+            12px 0 24px;
+        }
+
+
+        /* =================================================
+           CANCEL BUTTON
+        ================================================= */
+
+        .cancel-subscription-link {
+          display: block;
+
+          width: 100%;
+
+          padding: 5px 0;
+
+          border: none;
+
+          background: transparent;
+
+          color: #6b7280;
+
+          font-family: inherit;
+
+          font-size: 12px;
+
+          font-weight: 400;
+
+          text-align: center;
+
+          text-decoration: underline;
+
+          text-underline-offset: 3px;
+
+          cursor: pointer;
+        }
+
+
+        .cancel-subscription-link:hover {
+          color: #374151;
+        }
+
+
+        /* =================================================
+           CANCELLED STATE
+        ================================================= */
+
+        .cancelled-note {
+          padding: 14px;
+
+          border-radius: 14px;
+
+          background:
+            rgba(22,163,74,.08);
+
+          text-align: center;
+        }
+
+
+        /* =================================================
+           MODAL WRAPPER
+        ================================================= */
+
+        .cancel-modal-wrapper {
+          position: fixed;
+
+          inset: 0;
+
+          z-index: 999999;
+
+          display: flex;
+
+          align-items: center;
+
+          justify-content: center;
+
+          padding: 20px;
+        }
+
+
+        /* =================================================
+           MODAL BACKDROP
+
+           Real button instead of clickable div.
+           This avoids jsx-a11y errors.
+        ================================================= */
+
+        .cancel-modal-backdrop {
+          position: absolute;
+
+          inset: 0;
+
+          width: 100%;
+          height: 100%;
+
+          margin: 0;
+          padding: 0;
+
+          border: none;
+
+          background:
+            rgba(0,0,0,.45);
+
+          backdrop-filter:
+            blur(4px);
+
+          cursor: default;
+        }
+
+
+        /* =================================================
+           MODAL
+        ================================================= */
+
+        .cancel-modal {
+          position: relative;
+
+          z-index: 1;
+
+          width: 100%;
+
+          max-width: 480px;
+
+          padding: 32px;
+
+          box-sizing: border-box;
+
+          border-radius: 20px;
+
+          background: white;
+
+          box-shadow:
+            0 20px 60px
+            rgba(0,0,0,.2);
+        }
+
+
+        /* =================================================
+           MODAL TITLE
+        ================================================= */
+
+        .cancel-modal h2 {
+          margin:
+            0 0 18px;
+
+          padding-right: 35px;
+
+          color: #222;
+
+          font-size: 24px;
+
+          line-height: 1.2;
+        }
+
+
+        /* =================================================
+           MODAL TEXT
+        ================================================= */
+
+        .cancel-modal p {
+          margin:
+            0 0 14px;
+
+          color: #555;
+
+          font-size: 14px;
+
+          line-height: 1.55;
+        }
+
+
+        .cancel-modal strong {
+          color: #222;
+        }
+
+
+        /* =================================================
+           CLOSE
+        ================================================= */
+
+        .cancel-modal-close {
+          position: absolute;
+
+          top: 12px;
+
+          right: 12px;
+
+          width: 32px;
+
+          height: 32px;
+
+          display: flex;
+
+          align-items: center;
+
+          justify-content: center;
+
+          margin: 0;
+
+          padding: 0;
+
+          border: none;
+
+          border-radius: 50%;
+
+          background: #f3f3f3;
+
+          color: #222;
+
+          font-family: inherit;
+
+          font-size: 22px;
+
+          line-height: 1;
+
+          cursor: pointer;
+        }
+
+
+        .cancel-modal-close:hover {
+          background: #e8e8e8;
+        }
+
+
+        /* =================================================
+           MODAL ACTIONS
+        ================================================= */
+
+        .cancel-modal-actions {
+          display: flex;
+
+          gap: 10px;
+
+          margin-top: 26px;
+        }
+
+
+        /* =================================================
+           MODAL BUTTONS
+        ================================================= */
+
+        .keep-pro-btn,
+        .confirm-cancel-btn {
+          flex: 1;
+
+          display: flex;
+
+          align-items: center;
+
+          justify-content: center;
+
+          min-height: 42px;
+
+          padding:
+            10px 16px;
+
+          box-sizing: border-box;
+
+          border-radius: 9px;
+
+          font-family: inherit;
+
+          font-size: 14px;
+
+          font-weight: 600;
+
+          text-align: center;
+
+          text-decoration: none;
+
+          cursor: pointer;
+        }
+
+
+        .keep-pro-btn {
+          border:
+            1px solid #ddd;
+
+          background: white;
+
+          color: #222;
+        }
+
+
+        .keep-pro-btn:hover {
+          background: #f7f7f7;
+        }
+
+
+        .confirm-cancel-btn {
+          border: none;
+
+          background: #f1f1f1;
+
+          color: #555;
+        }
+
+
+        .confirm-cancel-btn:hover {
+          background: #e5e5e5;
+
+          color: #333;
+        }
+
+
+        /* =================================================
+           MOBILE
+        ================================================= */
+
+        @media (max-width: 768px) {
+
+          .hero-card,
+          .cta-card,
           .plan-card {
-            position: relative;
-
             padding: 28px;
-
-            border-radius: 22px;
-
-            border:
-              1px solid #e1e3e5;
           }
 
 
-          .free-plan {
-            background: #f6f6f7;
-          }
-
-
-          .current-plan {
-            border:
-              2px solid #16a34a;
-
-            background:
-              linear-gradient(
-                135deg,
-                rgba(22,163,74,.06),
-                rgba(22,163,74,.02)
-              );
-          }
-
-
-          .current-badge {
-            position: absolute;
-
-            top: -12px;
-            left: 20px;
-
-            padding: 6px 12px;
-
-            border-radius: 999px;
-
-            background: #16a34a;
-
-            color: white;
-
-            font-size: 12px;
-            font-weight: 700;
-          }
-
-
-          .free-plan-note {
-            padding: 14px;
-
-            border-radius: 14px;
-
-            background:
-              rgba(22,163,74,.08);
-
-            text-align: center;
-          }
-
-
-          .pro-plan {
-            background:
-              linear-gradient(
-                135deg,
-                rgba(255,81,47,.08),
-                rgba(221,36,118,.08)
-              );
-
-            border:
-              2px solid #dd2476;
-          }
-
-
-          .popular-badge {
-            position: absolute;
-
-            top: -12px;
-            right: 20px;
-
-            padding: 6px 12px;
-
-            border-radius: 999px;
-
-            background: #dd2476;
-
-            color: white;
-
-            font-size: 12px;
-            font-weight: 700;
-          }
-
-
-          .feature-row {
-            display: flex;
-
-            align-items: center;
-
-            gap: 10px;
-          }
-
-
-          .pro-note {
-            text-align: center;
-
-            opacity: .7;
-          }
-
-
-          /* =================================================
-             START PRO
-          ================================================= */
-
-          .start-pro-link {
-            display: block;
-
-            width: 100%;
-
-            padding: 10px;
-
-            box-sizing: border-box;
-
-            border-radius: 10px;
-
-            background: #111;
-
-            color: white;
-
-            text-align: center;
-
-            text-decoration: none;
-
-            font-weight: 600;
-          }
-
-
-          .start-pro-link:hover {
-            background: #222;
-          }
-
-
-          /* =================================================
-             CANCEL LINK
-          ================================================= */
-
-          .cancel-subscription-link {
-            display: block;
-
-            width: 100%;
-
-            padding: 5px 0;
-
-            border: none;
-
-            background: transparent;
-
-            color: #6b7280;
-
-            font-family: inherit;
-
-            font-size: 12px;
-
-            font-weight: 400;
-
-            text-align: center;
-
-            text-decoration: underline;
-
-            text-underline-offset: 3px;
-
-            cursor: pointer;
-          }
-
-
-          .cancel-subscription-link:hover {
-            color: #374151;
-          }
-
-
-          /* =================================================
-             CANCELLED NOTE
-          ================================================= */
-
-          .cancelled-note {
-            padding: 14px;
-
-            border-radius: 14px;
-
-            background:
-              rgba(22,163,74,.08);
-
-            text-align: center;
-          }
-
-
-          /* =================================================
-             MODAL CONTENT
-          ================================================= */
-
-          .cancel-modal-content {
-            padding: 20px;
-          }
-
-
-          .cancel-modal-content p {
-            margin:
-              0 0 14px;
-          }
-
-
-          .cancel-modal-content p:last-child {
-            margin-bottom: 0;
-          }
-
-
-          .cancel-modal-content strong {
-            color: #222;
-          }
-
-
-          /* =================================================
-             SCREENSHOTS
-          ================================================= */
-
-          .grid {
-            display: grid;
-
+          .grid,
+          .plans-grid,
+          .hero-grid {
             grid-template-columns:
-              1fr 1fr;
-
-            gap: 18px;
-          }
-
-
-          .card-preview {
-            transition:
-              transform .25s ease;
-          }
-
-
-          .card-preview:hover {
-            transform:
-              translateY(-4px);
+              1fr;
           }
 
 
           .img-box {
-            width: 100%;
-
-            height: 220px;
-
-            overflow: hidden;
-
-            border-radius: 18px;
-
-            background: #f6f6f7;
-
-            margin-bottom: 10px;
+            height: 240px;
           }
 
 
-          .img-box img {
-            width: 100%;
-
-            height: 100%;
-
-            object-fit: contain;
-
-            object-position: center;
-
-            display: block;
-
-            background: #f6f6f7;
+          .cancel-modal {
+            padding: 26px;
           }
 
 
-          /* =================================================
-             VIDEO
-          ================================================= */
-
-          .video-box {
-            overflow: hidden;
-
-            border-radius: 18px;
-
-            background: #f6f6f7;
+          .cancel-modal-actions {
+            flex-direction:
+              column;
           }
 
+        }
 
-          .video-box img {
-            width: 100%;
-
-            display: block;
-          }
-
-
-          /* =================================================
-             SETUP
-          ================================================= */
-
-          .setup-banner {
-            padding: 16px;
-
-            border-radius: 14px;
-
-            background:
-              linear-gradient(
-                135deg,
-                rgba(255,81,47,.08),
-                rgba(221,36,118,.08)
-              );
-          }
-
-
-          /* =================================================
-             CTA
-          ================================================= */
-
-          .cta-card {
-            padding: 48px;
-
-            border-radius: 28px;
-
-            text-align: center;
-
-            background:
-              linear-gradient(
-                135deg,
-                #ff512f 0%,
-                #dd2476 100%
-              );
-
-            color: white;
-          }
-
-
-          .cta-card h2,
-          .cta-card p {
-            color: white;
-          }
-
-
-          /* =================================================
-             FOOTER
-          ================================================= */
-
-          .footer {
-            padding:
-              12px 0 24px;
-          }
-
-
-          /* =================================================
-             MOBILE
-          ================================================= */
-
-          @media (
-            max-width: 768px
-          ) {
-
-            .hero-card,
-            .cta-card,
-            .plan-card {
-              padding: 28px;
-            }
-
-
-            .grid,
-            .plans-grid,
-            .hero-grid {
-              grid-template-columns:
-                1fr;
-            }
-
-
-            .img-box {
-              height: 240px;
-            }
-
-          }
-
-        `}</style>
-
-
-      </BlockStack>
+      `}</style>
 
     </Page>
-
   );
 }
