@@ -10,6 +10,7 @@ import {
   Badge,
   Button,
   Link,
+  Modal,
 } from "@shopify/polaris";
 
 import { useLoaderData } from "react-router";
@@ -869,130 +870,54 @@ export default function Index() {
             CANCEL MODAL
         ================================================= */}
 
-        {showCancelModal && (
-
-          <div className="cancel-modal-wrapper">
-
-
-            {/* =================================================
-                BACKDROP
-
-                This is a real button so it is accessible
-                and does not create jsx-a11y errors.
-            ================================================= */}
-
-            <button
-              type="button"
-              className="cancel-modal-backdrop"
-              aria-label="Close cancellation dialog"
-              onClick={() =>
-                setShowCancelModal(false)
-              }
-            />
-
-
-            {/* =================================================
-                MODAL
-            ================================================= */}
-
-            <div
-              className="cancel-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="cancel-modal-title"
-            >
-
-
-              {/* =================================================
-                  CLOSE
-              ================================================= */}
-
-              <button
-                type="button"
-                className="cancel-modal-close"
-                aria-label="Close"
-                onClick={() =>
-                  setShowCancelModal(false)
-                }
-              >
-                ×
-              </button>
-
-
-              <h2 id="cancel-modal-title">
-                Cancel your Pro subscription?
-              </h2>
-
-
-              <p>
+        <Modal
+          open={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          title="Cancel your Pro subscription?"
+          primaryAction={{
+            content: "Continue to Free Plan",
+            onAction: () => {
+              window.top!.location.href = freePlanUrl;
+            },
+          }}
+          secondaryActions={[
+            {
+              content: "Keep Pro",
+              onAction: () => {
+                setShowCancelModal(false);
+              },
+            },
+          ]}
+        >
+          <Modal.Section>
+            <BlockStack gap="400">
+              <Text as="p">
                 We recommend cancelling at least{" "}
                 <strong>
                   1 day before your next billing date.
                 </strong>
-              </p>
+              </Text>
 
-
-              <p>
-                By switching to the Free Plan,
-                your Pro access will end immediately.{" "}
+              <Text as="p">
+                By switching to the Free Plan, your Pro access
+                will end immediately.{" "}
                 <strong>
-                  No refund will be issued for the
-                  current billing period.
+                  No refund will be issued for the current billing period.
                 </strong>
-              </p>
+              </Text>
 
+              <Text as="p">
+                After switching, your account will have the Free Plan limits,
+                including{" "}
+                <strong>50 wishlist saves per month.</strong>
+              </Text>
 
-              <p>
-                After switching, your account will
-                have the Free Plan limits, including{" "}
-                <strong>
-                  50 wishlist saves per month.
-                </strong>
-              </p>
-
-
-              <p>
+              <Text as="p">
                 Are you sure you want to continue?
-              </p>
-
-
-              <div className="cancel-modal-actions">
-
-
-                {/* =================================================
-                    KEEP PRO
-                ================================================= */}
-
-                <button
-                  type="button"
-                  className="keep-pro-btn"
-                  onClick={() =>
-                    setShowCancelModal(false)
-                  }
-                >
-                  Keep Pro
-                </button>
-
-
-                {/* =================================================
-                    CONTINUE TO FREE PLAN
-                ================================================= */}
-
-                <a
-                  href={freePlanUrl}
-                  target="_top"
-                  className="confirm-cancel-btn"
-                >
-                  Continue to Free Plan
-                </a>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        )}
+              </Text>
+            </BlockStack>
+          </Modal.Section>
+        </Modal>
 
       </BlockStack>
 
@@ -1428,37 +1353,23 @@ export default function Index() {
 
         .cancel-subscription-link {
           display: block;
-
           width: 100%;
-
           padding: 5px 0;
-
           border: none;
-
           background: transparent;
-
           color: #6b7280;
-
           font-family: inherit;
-
           font-size: 12px;
-
           font-weight: 400;
-
           text-align: center;
-
           text-decoration: underline;
-
           text-underline-offset: 3px;
-
           cursor: pointer;
         }
-
 
         .cancel-subscription-link:hover {
           color: #374151;
         }
-
 
         /* =================================================
            CANCELLED STATE
@@ -1466,259 +1377,9 @@ export default function Index() {
 
         .cancelled-note {
           padding: 14px;
-
           border-radius: 14px;
-
-          background:
-            rgba(22,163,74,.08);
-
+          background: rgba(22,163,74,.08);
           text-align: center;
-        }
-
-
-        /* =================================================
-           MODAL WRAPPER
-        ================================================= */
-
-        .cancel-modal-wrapper {
-          position: fixed;
-
-          inset: 0;
-
-          z-index: 999999;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          padding: 20px;
-        }
-
-
-        /* =================================================
-           MODAL BACKDROP
-
-           Real button instead of clickable div.
-           This avoids jsx-a11y errors.
-        ================================================= */
-
-        .cancel-modal-backdrop {
-          position: absolute;
-
-          inset: 0;
-
-          width: 100%;
-          height: 100%;
-
-          margin: 0;
-          padding: 0;
-
-          border: none;
-
-          background:
-            rgba(0,0,0,.45);
-
-          backdrop-filter:
-            blur(4px);
-
-          cursor: default;
-        }
-
-
-        /* =================================================
-           MODAL
-        ================================================= */
-
-        .cancel-modal {
-          position: relative;
-
-          z-index: 1;
-
-          width: 100%;
-
-          max-width: 480px;
-
-          padding: 32px;
-
-          box-sizing: border-box;
-
-          border-radius: 20px;
-
-          background: white;
-
-          box-shadow:
-            0 20px 60px
-            rgba(0,0,0,.2);
-        }
-
-
-        /* =================================================
-           MODAL TITLE
-        ================================================= */
-
-        .cancel-modal h2 {
-          margin:
-            0 0 18px;
-
-          padding-right: 35px;
-
-          color: #222;
-
-          font-size: 24px;
-
-          line-height: 1.2;
-        }
-
-
-        /* =================================================
-           MODAL TEXT
-        ================================================= */
-
-        .cancel-modal p {
-          margin:
-            0 0 14px;
-
-          color: #555;
-
-          font-size: 14px;
-
-          line-height: 1.55;
-        }
-
-
-        .cancel-modal strong {
-          color: #222;
-        }
-
-
-        /* =================================================
-           CLOSE
-        ================================================= */
-
-        .cancel-modal-close {
-          position: absolute;
-
-          top: 12px;
-
-          right: 12px;
-
-          width: 32px;
-
-          height: 32px;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          margin: 0;
-
-          padding: 0;
-
-          border: none;
-
-          border-radius: 50%;
-
-          background: #f3f3f3;
-
-          color: #222;
-
-          font-family: inherit;
-
-          font-size: 22px;
-
-          line-height: 1;
-
-          cursor: pointer;
-        }
-
-
-        .cancel-modal-close:hover {
-          background: #e8e8e8;
-        }
-
-
-        /* =================================================
-           MODAL ACTIONS
-        ================================================= */
-
-        .cancel-modal-actions {
-          display: flex;
-
-          gap: 10px;
-
-          margin-top: 26px;
-        }
-
-
-        /* =================================================
-           MODAL BUTTONS
-        ================================================= */
-
-        .keep-pro-btn,
-        .confirm-cancel-btn {
-          flex: 1;
-
-          display: flex;
-
-          align-items: center;
-
-          justify-content: center;
-
-          min-height: 42px;
-
-          padding:
-            10px 16px;
-
-          box-sizing: border-box;
-
-          border-radius: 9px;
-
-          font-family: inherit;
-
-          font-size: 14px;
-
-          font-weight: 600;
-
-          text-align: center;
-
-          text-decoration: none;
-
-          cursor: pointer;
-        }
-
-
-        .keep-pro-btn {
-          border:
-            1px solid #ddd;
-
-          background: white;
-
-          color: #222;
-        }
-
-
-        .keep-pro-btn:hover {
-          background: #f7f7f7;
-        }
-
-
-        .confirm-cancel-btn {
-          border: none;
-
-          background: #f1f1f1;
-
-          color: #555;
-        }
-
-
-        .confirm-cancel-btn:hover {
-          background: #e5e5e5;
-
-          color: #333;
         }
 
 
