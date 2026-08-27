@@ -73,8 +73,6 @@ export async function loader({
 
 export default function Index() {
 
-  const [cancelModalOpen, setCancelModalOpen] = useState(false);
-
   const {
     shop,
     limitHits,
@@ -90,11 +88,11 @@ export default function Index() {
   }>();
 
 
-  /*
-   * =====================================================
-   * SHOP NAME
-   * =====================================================
-   */
+  const [
+    cancelModalOpen,
+    setCancelModalOpen,
+  ] = useState(false);
+
 
   const store =
     shop.replace(
@@ -103,24 +101,12 @@ export default function Index() {
     );
 
 
-  /*
-   * =====================================================
-   * SHOPIFY BILLING LINKS
-   * =====================================================
-   */
-
   const freePlanUrl =
     `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/free?interval=EVERY_30_DAYS`;
 
   const proPlanUrl =
     `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
 
-
-  /*
-   * =====================================================
-   * CANCELLATION DATE
-   * =====================================================
-   */
 
   const formattedCancellationDate =
     cancellationDate
@@ -162,13 +148,10 @@ export default function Index() {
                 ❤️‍🔥 Shopify LavaWishlist App
               </div>
 
-
               <div className="hero-pill">
-
                 {isPro
                   ? "Pro Plan Active"
                   : "Free Plan Included"}
-
               </div>
 
             </InlineStack>
@@ -182,7 +165,6 @@ export default function Index() {
               >
                 Turn visitors into loyal buyers
               </Text>
-
 
               <Text
                 as="p"
@@ -286,7 +268,6 @@ export default function Index() {
                 Plans
               </Text>
 
-
               <div className="free-info">
                 Free includes
                 50 saves/month
@@ -323,7 +304,6 @@ export default function Index() {
 
                 <BlockStack gap="400">
 
-
                   <div>
 
                     <InlineStack
@@ -337,7 +317,6 @@ export default function Index() {
                         Free Plan
                       </Text>
 
-
                       <Badge
                         tone={
                           isPro
@@ -345,11 +324,9 @@ export default function Index() {
                             : "success"
                         }
                       >
-
                         {!isPro
                           ? "Active"
                           : "Inactive"}
-
                       </Badge>
 
                     </InlineStack>
@@ -411,7 +388,6 @@ export default function Index() {
                         You are currently using the free plan
                       </Text>
 
-
                       <Text
                         as="p"
                         tone="subdued"
@@ -459,7 +435,6 @@ export default function Index() {
 
                 <BlockStack gap="400">
 
-
                   <div>
 
                     <Text
@@ -468,7 +443,6 @@ export default function Index() {
                     >
                       Pro Plan
                     </Text>
-
 
                     <Text
                       as="p"
@@ -545,10 +519,6 @@ export default function Index() {
                       </Button>
 
 
-                      {/* =============================================
-                          ALREADY SWITCHED
-                      ============================================= */}
-
                       {cancellationScheduled ? (
 
                         <div className="cancelled-note">
@@ -556,7 +526,6 @@ export default function Index() {
                           <Text as="p">
                             Subscription cancelled
                           </Text>
-
 
                           <Text
                             as="p"
@@ -582,106 +551,21 @@ export default function Index() {
 
                       ) : (
 
-                        /* =============================================
-                           NATIVE HTML DETAILS MODAL
-                        ============================================= */
-<div className="cancel-details">
-
-  <button
-    type="button"
-    className="cancel-subscription-link"
-    onClick={() => setCancelModalOpen(true)}
-  >
-    Cancel subscription
-  </button>
-
-  {cancelModalOpen && (
-    <div className="cancel-modal-overlay">
-
-      <div
-        className="cancel-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="cancel-modal-title"
-      >
-
-        <h2 id="cancel-modal-title">
-          Cancel your Pro subscription?
-        </h2>
-
-        <p>
-          We recommend cancelling at least{" "}
-          <strong>
-            1 day before your next billing date.
-          </strong>
-        </p>
-
-        <p>
-          By switching to the Free Plan,
-          your Pro access will end immediately.
-          <strong>
-            {" "}No refund will be issued
-            for the current billing period.
-          </strong>
-        </p>
-
-        <p>
-          After switching, your account will have the Free Plan limits,
-          including{" "}
-          <strong>
-            50 wishlist saves per month.
-          </strong>
-        </p>
-
-        <p>
-          Are you sure you want to continue?
-        </p>
-
-        <div className="cancel-modal-actions">
-
-          <button
-            type="button"
-            className="keep-pro-btn"
-            onClick={() => setCancelModalOpen(false)}
-          >
-            Keep Pro
-          </button>
-
-          <a
-            href={freePlanUrl}
-            target="_top"
-            className="confirm-cancel-btn"
-          >
-            Continue to Free Plan
-          </a>
-
-        </div>
-
-        <button
-          type="button"
-          className="cancel-modal-close"
-          onClick={() => setCancelModalOpen(false)}
-          aria-label="Close"
-        >
-          ×
-        </button>
-
-      </div>
-
-    </div>
-  )}
-
-</div>
+                        <div className="cancel-button-layer">
+                          <button
+                            type="button"
+                            className="cancel-subscription-link"
+                            onClick={() => setCancelModalOpen(true)}
+                          >
+                            Cancel subscription
+                          </button>
+                        </div>
 
                       )}
 
                     </BlockStack>
 
                   ) : (
-
-                    /* =================================================
-                       START FREE TRIAL
-                    ================================================= */
 
                     <a
                       href={proPlanUrl}
@@ -714,6 +598,92 @@ export default function Index() {
           </BlockStack>
 
         </Card>
+
+
+        {/* =================================================
+            CANCEL MODAL
+        ================================================= */}
+
+        {cancelModalOpen &&
+          createPortal(
+            <div
+              className="cancel-modal-overlay"
+              role="presentation"
+            >
+              <div
+                className="cancel-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="cancel-modal-title"
+              >
+
+                <button
+                  type="button"
+                  className="cancel-modal-close"
+                  onClick={() => setCancelModalOpen(false)}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+
+                <h2 id="cancel-modal-title">
+                  Cancel your Pro subscription?
+                </h2>
+
+                <p>
+                  We recommend cancelling at least{" "}
+                  <strong>
+                    1 day before your next billing date.
+                  </strong>
+                </p>
+
+                <p>
+                  By switching to the Free Plan,
+                  your Pro access will end immediately.
+                  <strong>
+                    {" "}
+                    No refund will be issued
+                    for the current billing period.
+                  </strong>
+                </p>
+
+                <p>
+                  After switching, your account
+                  will have the Free Plan limits,
+                  including{" "}
+                  <strong>
+                    50 wishlist saves per month.
+                  </strong>
+                </p>
+
+                <p>
+                  Are you sure you want to continue?
+                </p>
+
+                <div className="cancel-modal-actions">
+
+                  <button
+                    type="button"
+                    className="keep-pro-btn"
+                    onClick={() => setCancelModalOpen(false)}
+                  >
+                    Keep Pro
+                  </button>
+
+                  <a
+                    href={freePlanUrl}
+                    target="_top"
+                    className="confirm-cancel-btn"
+                  >
+                    Continue to Free Plan
+                  </a>
+
+                </div>
+
+              </div>
+            </div>,
+            document.body
+          )}
 
 
         {/* =================================================
@@ -828,7 +798,6 @@ export default function Index() {
                 1 minute 🎬
               </Text>
 
-
               <Badge tone="attention">
                 No Coding
               </Badge>
@@ -884,17 +853,14 @@ export default function Index() {
                 Theme Customize
               </List.Item>
 
-
               <List.Item>
                 Enable Lava Favorites
                 App Embed
               </List.Item>
 
-
               <List.Item>
                 Save changes
               </List.Item>
-
 
               <List.Item>
                 Customers can now
@@ -934,7 +900,6 @@ export default function Index() {
               wishlists? 🔥
             </Text>
 
-
             <Text
               as="p"
               variant="bodyLg"
@@ -966,14 +931,12 @@ export default function Index() {
               Privacy Policy
             </Link>
 
-
             <Link
               url="/faq"
               removeUnderline
             >
               FAQ
             </Link>
-
 
             <Link
               url="/docs"
@@ -1003,16 +966,12 @@ export default function Index() {
             width: fit-content;
             padding: 12px 18px;
             border-radius: 999px;
-            background:
-              rgba(255,255,255,.18);
+            background: rgba(255,255,255,.18);
             color: white;
             font-size: 16px;
             font-weight: 700;
-            backdrop-filter:
-              blur(12px);
-            box-shadow:
-              0 4px 18px
-              rgba(0,0,0,.12);
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 18px rgba(0,0,0,.12);
           }
 
 
@@ -1055,13 +1014,11 @@ export default function Index() {
           .hero-pill {
             padding: 10px 16px;
             border-radius: 999px;
-            background:
-              rgba(255,255,255,.18);
+            background: rgba(255,255,255,.18);
             color: white;
             font-size: 13px;
             font-weight: 700;
-            backdrop-filter:
-              blur(10px);
+            backdrop-filter: blur(10px);
           }
 
 
@@ -1076,10 +1033,8 @@ export default function Index() {
           .hero-box {
             padding: 22px;
             border-radius: 22px;
-            background:
-              rgba(255,255,255,.12);
-            backdrop-filter:
-              blur(12px);
+            background: rgba(255,255,255,.12);
+            backdrop-filter: blur(12px);
           }
 
 
@@ -1115,8 +1070,7 @@ export default function Index() {
             position: relative;
             padding: 28px;
             border-radius: 22px;
-            border:
-              1px solid #e1e3e5;
+            border: 1px solid #e1e3e5;
           }
 
 
@@ -1153,8 +1107,7 @@ export default function Index() {
           .free-plan-note {
             padding: 14px;
             border-radius: 14px;
-            background:
-              rgba(22,163,74,.08);
+            background: rgba(22,163,74,.08);
             text-align: center;
           }
 
@@ -1335,19 +1288,39 @@ export default function Index() {
              CANCEL LINK
           ================================================= */
 
+          .cancel-button-layer {
+            position: relative;
+            z-index: 2147483646;
+            width: 100%;
+            isolation: isolate;
+          }
+
+
           .cancel-subscription-link {
+            position: relative;
+            z-index: 2147483647;
+
             display: block;
             width: 100%;
+            min-height: 28px;
             padding: 5px 0;
+
             border: none;
+
             color: #6b7280;
             background: transparent;
+
             font-size: 12px;
             font-weight: 400;
+
             text-align: center;
             text-decoration: underline;
             text-underline-offset: 3px;
+
             cursor: pointer;
+
+            pointer-events: auto !important;
+            touch-action: manipulation;
           }
 
 
@@ -1374,16 +1347,22 @@ export default function Index() {
           ================================================= */
 
           .cancel-modal-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 99999;
+            position: fixed !important;
+            isolation: isolate;
+            inset: 0 !important;
 
-            display: flex;
+            width: 100vw;
+            height: 100vh;
+
+            z-index: 2147483647 !important;
+
+            display: flex !important;
 
             align-items: center;
             justify-content: center;
 
             padding: 20px;
+            box-sizing: border-box;
 
             background:
               rgba(0,0,0,.45);
@@ -1391,7 +1370,7 @@ export default function Index() {
             backdrop-filter:
               blur(4px);
 
-            pointer-events: auto;
+            pointer-events: auto !important;
           }
 
 
@@ -1401,15 +1380,22 @@ export default function Index() {
 
           .cancel-modal {
             position: relative;
+
             width: 100%;
             max-width: 480px;
+
             padding: 32px;
             box-sizing: border-box;
+
             border-radius: 20px;
+
             background: white;
+
             box-shadow:
               0 20px 60px
               rgba(0,0,0,.2);
+
+            pointer-events: auto !important;
           }
 
 
@@ -1476,6 +1462,10 @@ export default function Index() {
             cursor: pointer;
 
             text-decoration: none;
+
+            z-index: 10;
+
+            pointer-events: auto;
           }
 
 
@@ -1558,13 +1548,6 @@ export default function Index() {
 
 
           /* =================================================
-             STOP PAGE SCROLL WHILE MODAL IS OPEN
-          ================================================= */
-
-
-
-
-          /* =================================================
              MOBILE
           ================================================= */
 
@@ -1605,6 +1588,7 @@ export default function Index() {
           }
 
         `}</style>
+
 
       </BlockStack>
 
