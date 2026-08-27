@@ -10,7 +10,7 @@ import {
   Link,
 } from "@shopify/polaris";
 
-import { useState } from "react";
+
 import { useLoaderData } from "react-router";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
@@ -85,12 +85,6 @@ export default function Index() {
     cancellationScheduled: boolean;
     cancellationDate: string | null;
   }>();
-
-
-  const [
-    cancelWarningOpen,
-    setCancelWarningOpen,
-  ] = useState(false);
 
 
   const store =
@@ -548,102 +542,73 @@ export default function Index() {
 
                         <BlockStack gap="200">
 
-                          <div className="cancel-button-layer">
+<div className="cancel-button-layer">
 
-                            <button
-                              type="button"
-                              className="cancel-subscription-link"
-                              onClick={() =>
-                                setCancelWarningOpen(
-                                  (open) => !open
-                                )
-                              }
-                            >
-                              Cancel subscription
-                            </button>
+  <a
+    href="#cancel-warning"
+    className="cancel-subscription-link"
+  >
+    Cancel subscription
+  </a>
 
-                          </div>
+</div>
 
+<div
+  id="cancel-warning"
+  className="cancel-warning"
+  role="alert"
+>
 
-                          {cancelWarningOpen && (
+  <div className="cancel-warning-title">
+    Cancel your Pro subscription?
+  </div>
 
-                            <div
-                              className="cancel-warning"
-                              role="alert"
-                            >
+  <div className="cancel-warning-text">
+    We recommend cancelling at least{" "}
+    <strong>
+      1 day before your next billing date.
+    </strong>
+  </div>
 
-                              <button
-                                type="button"
-                                className="cancel-warning-close"
-                                onClick={() =>
-                                  setCancelWarningOpen(false)
-                                }
-                                aria-label="Close"
-                              >
-                                ×
-                              </button>
+  <div className="cancel-warning-text">
+    By switching to the Free Plan,
+    your Pro access will end immediately.
 
+    <strong>
+      {" "}
+      No refund will be issued
+      for the current billing period.
+    </strong>
+  </div>
 
-                              <div className="cancel-warning-title">
-                                Cancel your Pro subscription?
-                              </div>
+  <div className="cancel-warning-text">
+    After switching, your account will have
+    the Free Plan limits, including{" "}
+    <strong>
+      50 wishlist saves per month.
+    </strong>
+  </div>
 
+  <div className="cancel-warning-actions">
 
-                              <div className="cancel-warning-text">
-                                We recommend cancelling at least{" "}
-                                <strong>
-                                  1 day before your next billing date.
-                                </strong>
-                              </div>
+  <a
+  href="#plans"
+  className="keep-pro-btn"
+>
+  Keep Pro
+</a>
 
+    <a
+      href={freePlanUrl}
+      target="_top"
+      className="confirm-cancel-btn"
+    >
+      Continue to Free Plan
+    </a>
 
-                              <div className="cancel-warning-text">
-                                By switching to the Free Plan,
-                                your Pro access will end immediately.
+  </div>
 
-                                <strong>
-                                  {" "}
-                                  No refund will be issued
-                                  for the current billing period.
-                                </strong>
-                              </div>
-
-
-                              <div className="cancel-warning-text">
-                                After switching, your account will have
-                                the Free Plan limits, including{" "}
-                                <strong>
-                                  50 wishlist saves per month.
-                                </strong>
-                              </div>
-
-
-                              <div className="cancel-warning-actions">
-
-                                <button
-                                  type="button"
-                                  className="keep-pro-btn"
-                                  onClick={() =>
-                                    setCancelWarningOpen(false)
-                                  }
-                                >
-                                  Keep Pro
-                                </button>
-
-
-                                <a
-                                  href={freePlanUrl}
-                                  target="_top"
-                                  className="confirm-cancel-btn"
-                                >
-                                  Continue to Free Plan
-                                </a>
-
-                              </div>
-
-                            </div>
-
-                          )}
+</div>
 
                         </BlockStack>
 
@@ -1329,6 +1294,7 @@ export default function Index() {
           ================================================= */
 
           .cancel-warning {
+            display: none;
             position: relative;
 
             width: 100%;
@@ -1346,6 +1312,11 @@ export default function Index() {
 
             box-shadow:
               0 4px 14px rgba(0,0,0,.06);
+          }
+
+
+          .cancel-warning:target {
+            display: block;
           }
 
 
@@ -1455,20 +1426,40 @@ export default function Index() {
           }
 
 
-          .keep-pro-btn {
-            border:
-              1px solid #d7d7d7;
+       .keep-pro-btn {
+  flex: 1;
 
-            background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-            color: #222;
-          }
+  min-height: 40px;
 
+  padding: 9px 14px;
 
-          .keep-pro-btn:hover {
-            background: #f7f7f7;
-          }
+  box-sizing: border-box;
 
+  border: 1px solid #d7d7d7;
+  border-radius: 9px;
+
+  background: white;
+  color: #222;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  text-align: center;
+  text-decoration: none !important;
+
+  cursor: pointer;
+}
+
+         .keep-pro-btn:hover,
+.keep-pro-btn:focus,
+.keep-pro-btn:visited {
+  color: #222;
+  text-decoration: none !important;
+}
 
           .confirm-cancel-btn {
             border:
