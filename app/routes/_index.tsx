@@ -11,8 +11,8 @@ import {
 } from "@shopify/polaris";
 
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { useLoaderData } from "react-router";
+import { createPortal } from "react-dom";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
@@ -595,76 +595,6 @@ export default function Index() {
     Cancel subscription
   </button>
 
-  {cancelModalOpen &&
-  createPortal(
-    <div className="cancel-modal-overlay">
-      <div
-        className="cancel-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="cancel-modal-title"
-      >
-        <h2 id="cancel-modal-title">
-          Cancel your Pro subscription?
-        </h2>
-
-        <p>
-          We recommend cancelling at least{" "}
-          <strong>
-            1 day before your next billing date.
-          </strong>
-        </p>
-
-        <p>
-          By switching to the Free Plan,
-          your Pro access will end immediately.
-          <strong>
-            {" "}No refund will be issued for the current billing period.
-          </strong>
-        </p>
-
-        <p>
-          After switching, your account will have the Free Plan limits,
-          including{" "}
-          <strong>
-            50 wishlist saves per month.
-          </strong>
-        </p>
-
-        <p>
-          Are you sure you want to continue?
-        </p>
-
-        <div className="cancel-modal-actions">
-          <button
-            type="button"
-            className="keep-pro-btn"
-            onClick={() => setCancelModalOpen(false)}
-          >
-            Keep Pro
-          </button>
-
-          <a
-            href={freePlanUrl}
-            target="_top"
-            className="confirm-cancel-btn"
-          >
-            Continue to Free Plan
-          </a>
-        </div>
-
-        <button
-          type="button"
-          className="cancel-modal-close"
-          onClick={() => setCancelModalOpen(false)}
-          aria-label="Close"
-        >
-          ×
-        </button>
-      </div>
-    </div>,
-    document.body
-  )}
 
 </div>
 
@@ -981,6 +911,76 @@ export default function Index() {
 
         </div>
 
+{cancelModalOpen &&
+  createPortal(
+    <div className="cancel-modal-overlay">
+      <div
+        className="cancel-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cancel-modal-title"
+      >
+        <h2 id="cancel-modal-title">
+          Cancel your Pro subscription?
+        </h2>
+
+        <p>
+          We recommend cancelling at least{" "}
+          <strong>
+            1 day before your next billing date.
+          </strong>
+        </p>
+
+        <p>
+          By switching to the Free Plan,
+          your Pro access will end immediately.
+          <strong>
+            {" "}No refund will be issued for the current billing period.
+          </strong>
+        </p>
+
+        <p>
+          After switching, your account will have the Free Plan limits,
+          including{" "}
+          <strong>
+            50 wishlist saves per month.
+          </strong>
+        </p>
+
+        <p>
+          Are you sure you want to continue?
+        </p>
+
+        <div className="cancel-modal-actions">
+          <button
+            type="button"
+            className="keep-pro-btn"
+            onClick={() => setCancelModalOpen(false)}
+          >
+            Keep Pro
+          </button>
+
+          <a
+            href={freePlanUrl}
+            target="_top"
+            className="confirm-cancel-btn"
+          >
+            Continue to Free Plan
+          </a>
+        </div>
+
+        <button
+          type="button"
+          className="cancel-modal-close"
+          onClick={() => setCancelModalOpen(false)}
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+    </div>,
+    document.body
+  )}
 
         {/* =================================================
             STYLES
