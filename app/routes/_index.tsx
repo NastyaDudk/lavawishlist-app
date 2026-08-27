@@ -10,6 +10,8 @@ import {
   Link,
 } from "@shopify/polaris";
 
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useLoaderData } from "react-router";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
@@ -70,6 +72,8 @@ export async function loader({
 
 
 export default function Index() {
+
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
   const {
     shop,
@@ -581,148 +585,88 @@ export default function Index() {
                         /* =============================================
                            NATIVE HTML DETAILS MODAL
                         ============================================= */
+<div className="cancel-details">
 
-                        <details className="cancel-details">
+  <button
+    type="button"
+    className="cancel-subscription-link"
+    onClick={() => setCancelModalOpen(true)}
+  >
+    Cancel subscription
+  </button>
 
-                          <summary className="cancel-subscription-link">
-                            Cancel subscription
-                          </summary>
+  {cancelModalOpen &&
+  createPortal(
+    <div className="cancel-modal-overlay">
+      <div
+        className="cancel-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cancel-modal-title"
+      >
+        <h2 id="cancel-modal-title">
+          Cancel your Pro subscription?
+        </h2>
 
+        <p>
+          We recommend cancelling at least{" "}
+          <strong>
+            1 day before your next billing date.
+          </strong>
+        </p>
 
-                          <div className="cancel-modal-overlay">
+        <p>
+          By switching to the Free Plan,
+          your Pro access will end immediately.
+          <strong>
+            {" "}No refund will be issued for the current billing period.
+          </strong>
+        </p>
 
-                            <div className="cancel-modal">
+        <p>
+          After switching, your account will have the Free Plan limits,
+          including{" "}
+          <strong>
+            50 wishlist saves per month.
+          </strong>
+        </p>
 
+        <p>
+          Are you sure you want to continue?
+        </p>
 
-                              <h2>
-                                Cancel your Pro subscription?
-                              </h2>
+        <div className="cancel-modal-actions">
+          <button
+            type="button"
+            className="keep-pro-btn"
+            onClick={() => setCancelModalOpen(false)}
+          >
+            Keep Pro
+          </button>
 
+          <a
+            href={freePlanUrl}
+            target="_top"
+            className="confirm-cancel-btn"
+          >
+            Continue to Free Plan
+          </a>
+        </div>
 
-                              <p>
+        <button
+          type="button"
+          className="cancel-modal-close"
+          onClick={() => setCancelModalOpen(false)}
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+    </div>,
+    document.body
+  )}
 
-                                We recommend cancelling at least{" "}
-
-                                <strong>
-                                  1 day before your next
-                                  billing date.
-                                </strong>
-
-                              </p>
-
-
-                              <p>
-
-                                By switching to the Free Plan,
-                                your Pro access will end
-                                immediately.
-
-                                <strong>
-                                  {" "}
-                                  No refund will be issued
-                                  for the current billing period.
-                                </strong>
-
-                              </p>
-
-
-                              <p>
-
-                                After switching, your account
-                                will have the Free Plan limits,
-                                including{" "}
-
-                                <strong>
-                                  50 wishlist saves per month.
-                                </strong>
-
-                              </p>
-
-
-                              <p>
-                                Are you sure you want to
-                                continue?
-                              </p>
-
-
-                              <div className="cancel-modal-actions">
-
-
-                                {/* =================================
-                                    KEEP PRO
-                                ================================= */}
-
-                                <button
-                                  type="button"
-                                  className="keep-pro-btn"
-                                  onClick={(event) => {
-
-                                    event.preventDefault();
-                                    event.stopPropagation();
-
-                                    const details =
-                                      event.currentTarget.closest(
-                                        "details"
-                                      ) as HTMLDetailsElement | null;
-
-                                    if (details) {
-                                      details.open = false;
-                                    }
-
-                                  }}
-                                >
-                                  Keep Pro
-                                </button>
-
-
-                                {/* =================================
-                                    CONTINUE TO SHOPIFY FREE PLAN
-                                ================================= */}
-
-                                <a
-                                  href={freePlanUrl}
-                                  target="_top"
-                                  className="confirm-cancel-btn"
-                                >
-                                  Continue to Free Plan
-                                </a>
-
-                              </div>
-
-
-                              {/* =================================
-                                  CLOSE
-                              ================================= */}
-
-                              <button
-                                type="button"
-                                className="cancel-modal-close"
-                                onClick={(event) => {
-
-                                  event.preventDefault();
-                                  event.stopPropagation();
-
-                                  const details =
-                                    event.currentTarget.closest(
-                                      "details"
-                                    ) as HTMLDetailsElement | null;
-
-                                  if (details) {
-                                    details.open = false;
-                                  }
-
-                                }}
-                                aria-label="Close"
-                              >
-                                ×
-                              </button>
-
-
-                            </div>
-
-                          </div>
-
-                        </details>
+</div>
 
                       )}
 
@@ -1383,27 +1327,6 @@ export default function Index() {
 
 
           /* =================================================
-             CANCEL DETAILS
-          ================================================= */
-
-          .cancel-details {
-            width: 100%;
-            position: relative;
-            z-index: 2147483647;
-          }
-
-
-          .cancel-details summary {
-            list-style: none;
-          }
-
-
-          .cancel-details summary::-webkit-details-marker {
-            display: none;
-          }
-
-
-          /* =================================================
              CANCEL LINK
           ================================================= */
 
@@ -1448,7 +1371,7 @@ export default function Index() {
           .cancel-modal-overlay {
             position: fixed;
             inset: 0;
-            z-index: 99999;
+           z-index: 2147483647;
 
             display: flex;
 
@@ -1482,6 +1405,7 @@ export default function Index() {
             box-shadow:
               0 20px 60px
               rgba(0,0,0,.2);
+              pointer-events: auto;
           }
 
 
@@ -1633,9 +1557,7 @@ export default function Index() {
              STOP PAGE SCROLL WHILE MODAL IS OPEN
           ================================================= */
 
-          body:has(.cancel-details[open]) {
-            overflow: hidden;
-          }
+
 
 
           /* =================================================
