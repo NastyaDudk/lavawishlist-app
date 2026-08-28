@@ -10,8 +10,9 @@ import {
   Link,
 } from "@shopify/polaris";
 
-import { useState, useEffect } from "react";
+
 import { useLoaderData } from "react-router";
+import { useEffect, useState } from "react";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
@@ -19,12 +20,59 @@ import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
 
+type ShopifySubscription = {
+  id: string;
+  name: string;
+  status: string;
+  createdAt: string;
+  currentPeriodEnd: string | null;
+  trialDays: number;
+};
+
+
 export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { session } =
+  const { admin, session } =
     await authenticate.admin(request);
+
+  let subscription:
+    ShopifySubscription | null =
+    null;
+
+  try {
+    const response = await admin.graphql(
+      `#graphql
+        query CurrentAppSubscriptions {
+          currentAppInstallation {
+            activeSubscriptions {
+              id
+              name
+              status
+              createdAt
+              currentPeriodEnd
+              trialDays
+            }
+          }
+        }
+      `
+    );
+
+    const data = await response.json();
+
+    subscription =
+      data?.data?.currentAppInstallation?.activeSubscriptions?.[0] ??
+      null;
+
+  } catch (error) {
+
+    console.error(
+      "Failed to load Shopify subscription:",
+      error
+    );
+
+  }
 
   const stats =
     await prisma.shopStats.findUnique({
@@ -51,6 +99,11 @@ export async function loader({
     isPro
   );
 
+  console.log(
+    "SHOPIFY SUBSCRIPTION:",
+    subscription
+  );
+
   return {
     shop: session.shop,
 
@@ -66,13 +119,20 @@ export async function loader({
       stats?.cancellationDate
         ? stats.cancellationDate.toISOString()
         : null,
+
+    subscriptionCreatedAt:
+      subscription?.createdAt ?? null,
+
+    subscriptionCurrentPeriodEnd:
+      subscription?.currentPeriodEnd ?? null,
+
+    subscriptionTrialDays:
+      subscription?.trialDays ?? 0,
   };
 }
 
 
 export default function Index() {
-
-
 
   const {
     shop,
@@ -80,73 +140,26 @@ export default function Index() {
     isPro,
     cancellationScheduled,
     cancellationDate,
+    subscriptionCreatedAt,
+    subscriptionCurrentPeriodEnd,
+    subscriptionTrialDays,
   } = useLoaderData<{
     shop: string;
     limitHits: number;
     isPro: boolean;
     cancellationScheduled: boolean;
     cancellationDate: string | null;
+    subscriptionCreatedAt: string | null;
+    subscriptionCurrentPeriodEnd: string | null;
+    subscriptionTrialDays: number;
   }>();
 
-  const [timeLeft, setTimeLeft] = useState("");
 
-useEffect(() => {
-  if (!isPro) return;
-
-  const storageKey = `lava_pro_start_${shop}`;
-
-  let startTime = localStorage.getItem(storageKey);
-
-  if (!startTime) {
-    startTime = Date.now().toString();
-    localStorage.setItem(storageKey, startTime);
-  }
-
-  const trialEnd =
-    Number(startTime) + 3 * 24 * 60 * 60 * 1000;
-
-  const updateTimer = () => {
-    const difference =
-      trialEnd - Date.now();
-
-    if (difference <= 0) {
-      setTimeLeft("Trial ended");
-      return;
-    }
-
-    const days = Math.floor(
-      difference / (1000 * 60 * 60 * 24)
-    );
-
-    const hours = Math.floor(
-      (difference / (1000 * 60 * 60)) % 24
-    );
-
-    const minutes = Math.floor(
-      (difference / (1000 * 60)) % 60
-    );
-
-    const seconds = Math.floor(
-      (difference / 1000) % 60
-    );
-
-    setTimeLeft(
-      `${days}d ${hours}h ${minutes}m ${seconds}s`
-    );
-  };
-
-  updateTimer();
-
-  const interval = window.setInterval(
-    updateTimer,
-    1000
-  );
-
-  return () => {
-    window.clearInterval(interval);
-  };
-}, [isPro, shop]);
-
+  /*
+   * =====================================================
+   * SHOP NAME
+   * =====================================================
+   */
 
   const store =
     shop.replace(
@@ -155,12 +168,24 @@ useEffect(() => {
     );
 
 
+  /*
+   * =====================================================
+   * SHOPIFY BILLING LINKS
+   * =====================================================
+   */
+
   const freePlanUrl =
     `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/free?interval=EVERY_30_DAYS`;
 
   const proPlanUrl =
     `https://admin.shopify.com/store/${store}/charges/wishlist-pro-36/plans/pro?interval=EVERY_30_DAYS`;
 
+
+  /*
+   * =====================================================
+   * CANCELLATION DATE
+   * =====================================================
+   */
 
   const formattedCancellationDate =
     cancellationDate
@@ -175,6 +200,207 @@ useEffect(() => {
           }
         )
       : null;
+
+
+  /*
+   * =====================================================
+   * SUBSCRIPTION COUNTDOWN
+   * =====================================================
+   */
+
+  const [countdown, setCountdown] =
+    useState("");
+
+  const [isTrial, setIsTrial] =
+    useState(false);
+
+
+  useEffect(() => {
+
+    if (
+      !isPro ||
+      !subscriptionCreatedAt
+    ) {
+
+      setCountdown("");
+      setIsTrial(false);
+
+      return;
+    }
+
+
+    const createdAt =
+      new Date(
+        subscriptionCreatedAt
+      ).getTime();
+
+
+    const trialDays =
+      Number(subscriptionTrialDays) || 0;
+
+
+    /*
+     * Trial ends exactly trialDays
+     * after Shopify subscription creation.
+     */
+
+    const trialEndsAt =
+      trialDays > 0
+        ? createdAt +
+          trialDays *
+            24 *
+            60 *
+            60 *
+            1000
+        : null;
+
+
+    /*
+     * If cancellation was already
+     * scheduled, use our stored
+     * cancellation date.
+     *
+     * Otherwise use Shopify's
+     * currentPeriodEnd.
+     */
+
+    const billingEndsAt =
+      cancellationScheduled &&
+      cancellationDate
+        ? new Date(
+            cancellationDate
+          ).getTime()
+        : subscriptionCurrentPeriodEnd
+          ? new Date(
+              subscriptionCurrentPeriodEnd
+            ).getTime()
+          : null;
+
+
+    const formatRemaining = (
+      milliseconds: number
+    ) => {
+
+      if (milliseconds <= 0) {
+        return "0d 0h 0m 0s";
+      }
+
+
+      const totalSeconds =
+        Math.floor(
+          milliseconds / 1000
+        );
+
+
+      const days =
+        Math.floor(
+          totalSeconds /
+            (24 * 60 * 60)
+        );
+
+
+      const hours =
+        Math.floor(
+          (totalSeconds %
+            (24 * 60 * 60)) /
+            (60 * 60)
+        );
+
+
+      const minutes =
+        Math.floor(
+          (totalSeconds %
+            (60 * 60)) /
+            60
+        );
+
+
+      const seconds =
+        totalSeconds % 60;
+
+
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    };
+
+
+    const updateCountdown = () => {
+
+      const now = Date.now();
+
+
+      /*
+       * TRIAL
+       */
+
+      if (
+        trialEndsAt &&
+        now < trialEndsAt
+      ) {
+
+        setIsTrial(true);
+
+        setCountdown(
+          formatRemaining(
+            trialEndsAt - now
+          )
+        );
+
+        return;
+      }
+
+
+      /*
+       * PAID PERIOD
+       */
+
+      setIsTrial(false);
+
+
+      if (
+        billingEndsAt &&
+        billingEndsAt > now
+      ) {
+
+        setCountdown(
+          formatRemaining(
+            billingEndsAt - now
+          )
+        );
+
+        return;
+      }
+
+
+      setCountdown("");
+    };
+
+
+    updateCountdown();
+
+
+    const interval =
+      window.setInterval(
+        updateCountdown,
+        1000
+      );
+
+
+    return () => {
+
+      window.clearInterval(
+        interval
+      );
+
+    };
+
+  }, [
+    isPro,
+    cancellationScheduled,
+    cancellationDate,
+    subscriptionCreatedAt,
+    subscriptionCurrentPeriodEnd,
+    subscriptionTrialDays,
+  ]);
 
 
   return (
@@ -202,10 +428,13 @@ useEffect(() => {
                 ❤️‍🔥 Shopify LavaWishlist App
               </div>
 
+
               <div className="hero-pill">
+
                 {isPro
                   ? "Pro Plan Active"
                   : "Free Plan Included"}
+
               </div>
 
             </InlineStack>
@@ -219,6 +448,7 @@ useEffect(() => {
               >
                 Turn visitors into loyal buyers
               </Text>
+
 
               <Text
                 as="p"
@@ -322,11 +552,6 @@ useEffect(() => {
                 Plans
               </Text>
 
-              <div className="free-info">
-                Free includes
-                50 saves/month
-              </div>
-
             </InlineStack>
 
 
@@ -356,6 +581,11 @@ useEffect(() => {
                 )}
 
 
+                <div className="free-info">
+                  Free includes 50 saves/month
+                </div>
+
+
                 <BlockStack gap="400">
 
                   <div>
@@ -371,6 +601,7 @@ useEffect(() => {
                         Free Plan
                       </Text>
 
+
                       <Badge
                         tone={
                           isPro
@@ -378,9 +609,11 @@ useEffect(() => {
                             : "success"
                         }
                       >
+
                         {!isPro
                           ? "Active"
                           : "Inactive"}
+
                       </Badge>
 
                     </InlineStack>
@@ -498,6 +731,7 @@ useEffect(() => {
                       Pro Plan
                     </Text>
 
+
                     <Text
                       as="p"
                       tone="subdued"
@@ -572,18 +806,50 @@ useEffect(() => {
                         Pro Active ✓
                       </Button>
 
-                      {timeLeft && (
-  <div className="subscription-countdown">
-    <Text
-      as="p"
-      variant="bodyMd"
-    >
-      {timeLeft === "Trial ended"
-        ? "Your trial has ended."
-        : `Free trial ends in ${timeLeft}`}
-    </Text>
-  </div>
-)}
+
+                      {/* =================================================
+                          SUBSCRIPTION COUNTDOWN
+                      ================================================= */}
+
+                      {countdown && (
+
+                        <div className="subscription-timer">
+
+                          <Text
+                            as="p"
+                            tone="subdued"
+                          >
+
+                            {isTrial
+                              ? "Your free trial ends in"
+                              : cancellationScheduled
+                                ? "Your Pro access ends in"
+                                : "Next payment in"}
+
+                          </Text>
+
+
+                          <div className="countdown-value">
+                            {countdown}
+                          </div>
+
+
+                          <Text
+                            as="p"
+                            tone="subdued"
+                          >
+
+                            {isTrial
+                              ? "You won't be charged before the trial ends."
+                              : cancellationScheduled
+                                ? "Your subscription will end after this period."
+                                : "Your next subscription payment will be charged after this period."}
+
+                          </Text>
+
+                        </div>
+
+                      )}
 
 
                       {cancellationScheduled ? (
@@ -594,11 +860,14 @@ useEffect(() => {
                             Subscription cancelled
                           </Text>
 
+
                           <Text
                             as="p"
                             tone="subdued"
                           >
+
                             Your Pro plan remains active
+
                             {formattedCancellationDate
                               ? ` until ${formattedCancellationDate}.`
                               : " until the end of your current billing period."
@@ -608,6 +877,7 @@ useEffect(() => {
 
                             You will not be charged
                             again after this period.
+
                           </Text>
 
                         </div>
@@ -616,73 +886,88 @@ useEffect(() => {
 
                         <BlockStack gap="200">
 
-<div className="cancel-button-layer">
 
-  <a
-    href="#cancel-warning"
-    className="cancel-subscription-link"
-  >
-    Cancel subscription
-  </a>
+                          <div className="cancel-button-layer">
 
-</div>
+                            <a
+                              href="#cancel-warning"
+                              className="cancel-subscription-link"
+                            >
+                              Cancel subscription
+                            </a>
 
-<div
-  id="cancel-warning"
-  className="cancel-warning"
-  role="alert"
->
+                          </div>
 
-  <div className="cancel-warning-title">
-    Cancel your Pro subscription?
-  </div>
 
-  <div className="cancel-warning-text">
-    We recommend cancelling at least{" "}
-    <strong>
-      1 day before your next billing date.
-    </strong>
-  </div>
+                          <div
+                            id="cancel-warning"
+                            className="cancel-warning"
+                            role="alert"
+                          >
 
-  <div className="cancel-warning-text">
-    By switching to the Free Plan,
-    your Pro access will end immediately.
+                            <div className="cancel-warning-title">
+                              Cancel your Pro subscription?
+                            </div>
 
-    <strong>
-      {" "}
-      No refund will be issued
-      for the current billing period.
-    </strong>
-  </div>
 
-  <div className="cancel-warning-text">
-    After switching, your account will have
-    the Free Plan limits, including{" "}
-    <strong>
-      50 wishlist saves per month.
-    </strong>
-  </div>
+                            <div className="cancel-warning-text">
 
-  <div className="cancel-warning-actions">
+                              We recommend cancelling at least{" "}
 
-  <a
-  href="#plans"
-  className="keep-pro-btn"
->
-  Keep Pro
-</a>
+                              <strong>
+                                1 day before your next billing date.
+                              </strong>
 
-    <a
-      href={freePlanUrl}
-      target="_top"
-      className="confirm-cancel-btn"
-    >
-      Continue to Free Plan
-    </a>
+                            </div>
 
-  </div>
 
-</div>
+                            <div className="cancel-warning-text">
+
+                              By switching to the Free Plan,
+                              your Pro access will end immediately.
+
+                              <strong>
+                                {" "}
+                                No refund will be issued
+                                for the current billing period.
+                              </strong>
+
+                            </div>
+
+
+                            <div className="cancel-warning-text">
+
+                              After switching, your account will have
+                              the Free Plan limits, including{" "}
+
+                              <strong>
+                                50 wishlist saves per month.
+                              </strong>
+
+                            </div>
+
+
+                            <div className="cancel-warning-actions">
+
+                              <a
+                                href="#plans"
+                                className="keep-pro-btn"
+                              >
+                                Keep Pro
+                              </a>
+
+
+                              <a
+                                href={freePlanUrl}
+                                target="_top"
+                                className="confirm-cancel-btn"
+                              >
+                                Continue to Free Plan
+                              </a>
+
+                            </div>
+
+                          </div>
 
                         </BlockStack>
 
@@ -837,6 +1122,7 @@ useEffect(() => {
                 1 minute 🎬
               </Text>
 
+
               <Badge tone="attention">
                 No Coding
               </Badge>
@@ -892,14 +1178,17 @@ useEffect(() => {
                 Theme Customize
               </List.Item>
 
+
               <List.Item>
                 Enable Lava Favorites
                 App Embed
               </List.Item>
 
+
               <List.Item>
                 Save changes
               </List.Item>
+
 
               <List.Item>
                 Customers can now
@@ -939,6 +1228,7 @@ useEffect(() => {
               wishlists? 🔥
             </Text>
 
+
             <Text
               as="p"
               variant="bodyLg"
@@ -970,12 +1260,14 @@ useEffect(() => {
               Privacy Policy
             </Link>
 
+
             <Link
               url="/faq"
               removeUnderline
             >
               FAQ
             </Link>
+
 
             <Link
               url="/docs"
@@ -1001,38 +1293,60 @@ useEffect(() => {
 
           .hero-badge {
             display: inline-flex;
+
             align-items: center;
+
             width: fit-content;
+
             padding: 12px 18px;
+
             border-radius: 999px;
-            background: rgba(255,255,255,.18);
+
+            background:
+              rgba(255,255,255,.18);
+
             color: white;
+
             font-size: 16px;
+
             font-weight: 700;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 4px 18px rgba(0,0,0,.12);
+
+            backdrop-filter:
+              blur(12px);
+
+            box-shadow:
+              0 4px 18px
+              rgba(0,0,0,.12);
           }
 
 
           .hero-card {
             position: relative;
+
             overflow: hidden;
+
             padding: 48px;
+
             border-radius: 28px;
+
             background:
               linear-gradient(
                 135deg,
                 #ff512f 0%,
                 #dd2476 100%
               );
+
             color: white;
           }
 
 
           .hero-overlay {
             position: absolute;
+
             inset: 0;
+
             pointer-events: none;
+
             background:
               radial-gradient(
                 circle at top right,
@@ -1045,35 +1359,52 @@ useEffect(() => {
           .hero-card h1,
           .hero-card p {
             color: white;
+
             position: relative;
+
             z-index: 2;
           }
 
 
           .hero-pill {
             padding: 10px 16px;
+
             border-radius: 999px;
-            background: rgba(255,255,255,.18);
+
+            background:
+              rgba(255,255,255,.18);
+
             color: white;
+
             font-size: 13px;
+
             font-weight: 700;
-            backdrop-filter: blur(10px);
+
+            backdrop-filter:
+              blur(10px);
           }
 
 
           .hero-grid {
             display: grid;
+
             grid-template-columns:
               repeat(3,1fr);
+
             gap: 18px;
           }
 
 
           .hero-box {
             padding: 22px;
+
             border-radius: 22px;
-            background: rgba(255,255,255,.12);
-            backdrop-filter: blur(12px);
+
+            background:
+              rgba(255,255,255,.12);
+
+            backdrop-filter:
+              blur(12px);
           }
 
 
@@ -1088,28 +1419,45 @@ useEffect(() => {
           ================================================= */
 
           .free-info {
+            width: fit-content;
+
+            margin-left: auto;
+
+            margin-bottom: 16px;
+
             padding: 8px 14px;
+
             border-radius: 999px;
+
             background: #eef4ff;
+
             color: #4f6ef7;
+
             font-size: 13px;
+
             font-weight: 700;
           }
 
 
           .plans-grid {
             display: grid;
+
             grid-template-columns:
               1fr 1fr;
+
             gap: 24px;
           }
 
 
           .plan-card {
             position: relative;
+
             padding: 28px;
+
             border-radius: 22px;
-            border: 1px solid #e1e3e5;
+
+            border:
+              1px solid #e1e3e5;
           }
 
 
@@ -1121,6 +1469,7 @@ useEffect(() => {
           .current-plan {
             border:
               2px solid #16a34a;
+
             background:
               linear-gradient(
                 135deg,
@@ -1132,21 +1481,33 @@ useEffect(() => {
 
           .current-badge {
             position: absolute;
+
             top: -12px;
+
             left: 20px;
+
             padding: 6px 12px;
+
             border-radius: 999px;
+
             background: #16a34a;
+
             color: white;
+
             font-size: 12px;
+
             font-weight: 700;
           }
 
 
           .free-plan-note {
             padding: 14px;
+
             border-radius: 14px;
-            background: rgba(22,163,74,.08);
+
+            background:
+              rgba(22,163,74,.08);
+
             text-align: center;
           }
 
@@ -1158,6 +1519,7 @@ useEffect(() => {
                 rgba(255,81,47,.08),
                 rgba(221,36,118,.08)
               );
+
             border:
               2px solid #dd2476;
           }
@@ -1165,27 +1527,88 @@ useEffect(() => {
 
           .popular-badge {
             position: absolute;
+
             top: -12px;
+
             right: 20px;
+
             padding: 6px 12px;
+
             border-radius: 999px;
+
             background: #dd2476;
+
             color: white;
+
             font-size: 12px;
+
             font-weight: 700;
           }
 
 
           .feature-row {
             display: flex;
+
             align-items: center;
+
             gap: 10px;
           }
 
 
           .pro-note {
             text-align: center;
+
             opacity: .7;
+          }
+
+
+          /* =================================================
+             SUBSCRIPTION TIMER
+          ================================================= */
+
+          .subscription-timer {
+            width: 100%;
+
+            padding: 14px;
+
+            box-sizing: border-box;
+
+            border-radius: 14px;
+
+            background:
+              rgba(221,36,118,.08);
+
+            text-align: center;
+          }
+
+
+          .subscription-timer p {
+            margin:
+              0 0 6px;
+
+            font-size: 13px;
+          }
+
+
+          .subscription-timer p:last-child {
+            margin:
+              6px 0 0;
+
+            font-size: 11px;
+          }
+
+
+          .countdown-value {
+            color: #222;
+
+            font-size: 20px;
+
+            font-weight: 700;
+
+            line-height: 1.2;
+
+            font-variant-numeric:
+              tabular-nums;
           }
 
 
@@ -1195,14 +1618,23 @@ useEffect(() => {
 
           .start-pro-link {
             display: block;
+
             width: 100%;
+
             padding: 10px;
+
             box-sizing: border-box;
+
             border-radius: 10px;
+
             background: #111;
+
             color: white;
+
             text-align: center;
+
             text-decoration: none;
+
             font-weight: 600;
           }
 
@@ -1218,8 +1650,10 @@ useEffect(() => {
 
           .grid {
             display: grid;
+
             grid-template-columns:
               1fr 1fr;
+
             gap: 18px;
           }
 
@@ -1238,20 +1672,30 @@ useEffect(() => {
 
           .img-box {
             width: 100%;
+
             height: 220px;
+
             overflow: hidden;
+
             border-radius: 18px;
+
             background: #f6f6f7;
+
             margin-bottom: 10px;
           }
 
 
           .img-box img {
             width: 100%;
+
             height: 100%;
+
             object-fit: contain;
+
             object-position: center;
+
             display: block;
+
             background: #f6f6f7;
           }
 
@@ -1262,13 +1706,16 @@ useEffect(() => {
 
           .video-box {
             overflow: hidden;
+
             border-radius: 18px;
+
             background: #f6f6f7;
           }
 
 
           .video-box img {
             width: 100%;
+
             display: block;
           }
 
@@ -1279,7 +1726,9 @@ useEffect(() => {
 
           .setup-banner {
             padding: 16px;
+
             border-radius: 14px;
+
             background:
               linear-gradient(
                 135deg,
@@ -1295,14 +1744,18 @@ useEffect(() => {
 
           .cta-card {
             padding: 48px;
+
             border-radius: 28px;
+
             text-align: center;
+
             background:
               linear-gradient(
                 135deg,
                 #ff512f 0%,
                 #dd2476 100%
               );
+
             color: white;
           }
 
@@ -1336,6 +1789,7 @@ useEffect(() => {
             display: block;
 
             width: 100%;
+
             min-height: 28px;
 
             padding: 5px 0;
@@ -1343,13 +1797,17 @@ useEffect(() => {
             border: none;
 
             color: #6b7280;
+
             background: transparent;
 
             font-size: 12px;
+
             font-weight: 400;
 
             text-align: center;
+
             text-decoration: underline;
+
             text-underline-offset: 3px;
 
             cursor: pointer;
@@ -1369,6 +1827,7 @@ useEffect(() => {
 
           .cancel-warning {
             display: none;
+
             position: relative;
 
             width: 100%;
@@ -1378,6 +1837,7 @@ useEffect(() => {
             box-sizing: border-box;
 
             border: 1px solid #f0c36d;
+
             border-radius: 14px;
 
             background: #fff8e6;
@@ -1402,6 +1862,7 @@ useEffect(() => {
             color: #222;
 
             font-size: 16px;
+
             font-weight: 700;
 
             line-height: 1.3;
@@ -1433,25 +1894,31 @@ useEffect(() => {
             position: absolute;
 
             top: 10px;
+
             right: 10px;
 
             width: 28px;
+
             height: 28px;
 
             display: flex;
 
             align-items: center;
+
             justify-content: center;
 
             padding: 0;
 
             border: none;
+
             border-radius: 50%;
 
             background: #f3ead7;
+
             color: #444;
 
             font-size: 20px;
+
             line-height: 1;
 
             cursor: pointer;
@@ -1479,6 +1946,7 @@ useEffect(() => {
             display: flex;
 
             align-items: center;
+
             justify-content: center;
 
             min-height: 40px;
@@ -1490,6 +1958,7 @@ useEffect(() => {
             border-radius: 9px;
 
             font-size: 13px;
+
             font-weight: 600;
 
             text-align: center;
@@ -1500,40 +1969,49 @@ useEffect(() => {
           }
 
 
-       .keep-pro-btn {
-  flex: 1;
+          .keep-pro-btn {
+            flex: 1;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+            display: flex;
 
-  min-height: 40px;
+            align-items: center;
 
-  padding: 9px 14px;
+            justify-content: center;
 
-  box-sizing: border-box;
+            min-height: 40px;
 
-  border: 1px solid #d7d7d7;
-  border-radius: 9px;
+            padding: 9px 14px;
 
-  background: white;
-  color: #222;
+            box-sizing: border-box;
 
-  font-size: 13px;
-  font-weight: 600;
+            border: 1px solid #d7d7d7;
 
-  text-align: center;
-  text-decoration: none !important;
+            border-radius: 9px;
 
-  cursor: pointer;
-}
+            background: white;
 
-         .keep-pro-btn:hover,
-.keep-pro-btn:focus,
-.keep-pro-btn:visited {
-  color: #222;
-  text-decoration: none !important;
-}
+            color: #222;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            text-align: center;
+
+            text-decoration: none !important;
+
+            cursor: pointer;
+          }
+
+
+          .keep-pro-btn:hover,
+          .keep-pro-btn:focus,
+          .keep-pro-btn:visited {
+            color: #222;
+
+            text-decoration: none !important;
+          }
+
 
           .confirm-cancel-btn {
             border:
@@ -1601,22 +2079,6 @@ useEffect(() => {
             }
 
           }
-
-          .subscription-countdown {
-  width: 100%;
-  padding: 12px 14px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  background: rgba(221, 36, 118, 0.08);
-  text-align: center;
-}
-
-.subscription-countdown p {
-  margin: 0;
-  color: #555;
-  font-size: 13px;
-  font-weight: 600;
-}
 
         `}</style>
 
