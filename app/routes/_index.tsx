@@ -11,6 +11,8 @@ import {
 } from "@shopify/polaris";
 
 
+import { useEffect, useState } from "react";
+
 import { useLoaderData } from "react-router";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
@@ -19,11 +21,28 @@ import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
 
+type ActiveSubscription = {
+  createdAt: string;
+  currentPeriodEnd: string | null;
+  trialDays: number;
+  lineItems?: Array<{
+    plan?: {
+      pricingDetails?: {
+        interval?: string | null;
+        price?: {
+          amount?: string | number | null;
+          currencyCode?: string | null;
+        } | null;
+      } | null;
+    } | null;
+  }>;
+};
+
 export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { session } =
+  const { session, admin } =
     await authenticate.admin(request);
 
   const stats =
@@ -35,6 +54,57 @@ export async function loader({
 
   const isPro =
     stats?.isPro ?? false;
+
+  let subscription: ActiveSubscription | null = null;
+
+  if (isPro) {
+    const subscriptionResponse =
+      await admin.graphql(`
+        #graphql
+        query GetActiveSubscription {
+          currentAppInstallation {
+            activeSubscriptions {
+              id
+              name
+              status
+              createdAt
+              currentPeriodEnd
+              trialDays
+              lineItems {
+                plan {
+                  pricingDetails {
+                    __typename
+                    ... on AppRecurringPricing {
+                      interval
+                      price {
+                        amount
+                        currencyCode
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+    const subscriptionJson =
+      await subscriptionResponse.json();
+
+    const subscriptionData =
+      subscriptionJson as {
+        data?: {
+          currentAppInstallation?: {
+            activeSubscriptions?: ActiveSubscription[];
+          };
+        };
+      };
+
+    subscription =
+      subscriptionData.data?.currentAppInstallation
+        ?.activeSubscriptions?.[0] ?? null;
+  }
 
   console.log(
     "SHOP:",
@@ -66,9 +136,87 @@ export async function loader({
       stats?.cancellationDate
         ? stats.cancellationDate.toISOString()
         : null,
+
+    subscriptionCreatedAt:
+      subscription?.createdAt ?? null,
+
+    subscriptionTrialDays:
+      subscription?.trialDays ?? 0,
+
+    subscriptionPeriodEnd:
+      subscription?.currentPeriodEnd ?? null,
+
+    subscriptionInterval:
+      subscription?.lineItems?.[0]?.plan?.pricingDetails
+        ?.interval ?? null,
+
+    subscriptionPriceAmount:
+      subscription?.lineItems?.[0]?.plan?.pricingDetails
+        ?.price?.amount ?? null,
+
+    subscriptionPriceCurrency:
+      subscription?.lineItems?.[0]?.plan?.pricingDetails
+        ?.price?.currencyCode ?? null,
   };
 }
 
+
+function useCountdown(targetDate: string | null) {
+  const [now, setNow] =
+    useState<number | null>(null);
+
+  useEffect(() => {
+    if (!targetDate) {
+      setNow(null);
+      return;
+    }
+
+    const update = () => setNow(Date.now());
+    update();
+
+    const timer = window.setInterval(update, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [targetDate]);
+
+  if (!targetDate || now === null) {
+    return null;
+  }
+
+  return Math.max(
+    0,
+    new Date(targetDate).getTime() - now
+  );
+}
+
+function formatCountdown(
+  difference: number | null
+) {
+  if (difference === null) {
+    return "";
+  }
+
+  const totalSeconds = Math.floor(
+    difference / 1000
+  );
+
+  const days = Math.floor(
+    totalSeconds / 86400
+  );
+
+  const hours = Math.floor(
+    (totalSeconds % 86400) / 3600
+  );
+
+  const minutes = Math.floor(
+    (totalSeconds % 3600) / 60
+  );
+
+  const seconds =
+    totalSeconds % 60;
+
+  return `${days}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+}
 
 export default function Index() {
 
@@ -78,12 +226,24 @@ export default function Index() {
     isPro,
     cancellationScheduled,
     cancellationDate,
+    subscriptionCreatedAt,
+    subscriptionTrialDays,
+    subscriptionPeriodEnd,
+    subscriptionInterval,
+    subscriptionPriceAmount,
+    subscriptionPriceCurrency,
   } = useLoaderData<{
     shop: string;
     limitHits: number;
     isPro: boolean;
     cancellationScheduled: boolean;
     cancellationDate: string | null;
+    subscriptionCreatedAt: string | null;
+    subscriptionTrialDays: number;
+    subscriptionPeriodEnd: string | null;
+    subscriptionInterval: string | null;
+    subscriptionPriceAmount: string | number | null;
+    subscriptionPriceCurrency: string | null;
   }>();
 
 
@@ -113,6 +273,50 @@ export default function Index() {
             day: "numeric",
           }
         )
+      : null;
+
+  const trialEndDate =
+    subscriptionCreatedAt &&
+    subscriptionTrialDays > 0
+      ? new Date(
+          new Date(subscriptionCreatedAt).getTime() +
+            subscriptionTrialDays * 24 * 60 * 60 * 1000
+        ).toISOString()
+      : null;
+
+  const trialRemaining =
+    useCountdown(trialEndDate);
+
+  const subscriptionRemaining =
+    useCountdown(subscriptionPeriodEnd);
+
+  const isTrialActive =
+    trialRemaining !== null &&
+    trialRemaining > 0;
+
+  const formattedSubscriptionPeriodEnd =
+    subscriptionPeriodEnd
+      ? new Date(subscriptionPeriodEnd).toLocaleDateString(
+          "en-US",
+          {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }
+        )
+      : null;
+
+  const billingIntervalLabel =
+    subscriptionInterval === "ANNUAL"
+      ? "Annual"
+      : "Monthly";
+
+  const billingPrice =
+    subscriptionPriceAmount !== null
+      ? new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: subscriptionPriceCurrency ?? "USD",
+        }).format(Number(subscriptionPriceAmount))
       : null;
 
 
@@ -261,10 +465,6 @@ export default function Index() {
                 Plans
               </Text>
 
-              <div className="free-info">
-                Free includes
-                50 saves/month
-              </div>
 
             </InlineStack>
 
@@ -331,6 +531,10 @@ export default function Index() {
                     >
                       Perfect for small stores
                     </Text>
+
+                    <div className="free-info free-info-card">
+                      Free includes 50 saves/month
+                    </div>
 
                   </div>
 
@@ -511,6 +715,51 @@ export default function Index() {
                         Pro Active ✓
                       </Button>
 
+                      {(trialEndDate || subscriptionPeriodEnd) ? (
+                        <div className="billing-countdown-card">
+
+                        {isTrialActive && trialEndDate ? (
+                          <>
+                            <div className="billing-countdown-label">
+                              Free trial ends in
+                            </div>
+
+                            <div className="billing-countdown-value">
+                              {formatCountdown(trialRemaining)}
+                            </div>
+
+                            <div className="billing-countdown-date">
+                              Trial ends on {new Date(trialEndDate).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </div>
+                          </>
+                        ) : null}
+
+                        {subscriptionPeriodEnd ? (
+                          <div className="billing-next-payment">
+                            <div className="billing-countdown-label">
+                              {isTrialActive ? "First payment in" : "Next payment in"}
+                            </div>
+
+                            <div className="billing-countdown-value">
+                              {formatCountdown(subscriptionRemaining)}
+                            </div>
+
+                            <div className="billing-countdown-date">
+                              {isTrialActive ? "First payment" : "Next payment"} on {formattedSubscriptionPeriodEnd}
+                            </div>
+
+                            <div className="billing-plan-type">
+                              {billingIntervalLabel} billing{billingPrice ? ` · ${billingPrice}` : ""}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        </div>
+                      ) : null}
 
                       {cancellationScheduled ? (
 
@@ -1020,6 +1269,60 @@ export default function Index() {
             color: #4f6ef7;
             font-size: 13px;
             font-weight: 700;
+          }
+
+          .free-info-card {
+            display: inline-block;
+            margin-top: 12px;
+          }
+
+          .billing-countdown-card {
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(221,36,118,.07);
+            border: 1px solid rgba(221,36,118,.18);
+            text-align: center;
+          }
+
+          .billing-countdown-label {
+            color: #555;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+          }
+
+          .billing-countdown-value {
+            color: #dd2476;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: .2px;
+          }
+
+          .countdown-value {
+            display: inline-block;
+          }
+
+          .countdown-finished {
+            color: #777;
+            font-size: 13px;
+          }
+
+          .billing-countdown-date {
+            margin-top: 5px;
+            color: #777;
+            font-size: 12px;
+          }
+
+          .billing-next-payment {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(0,0,0,.08);
+          }
+
+          .billing-plan-type {
+            margin-top: 6px;
+            color: #999;
+            font-size: 11px;
           }
 
 
