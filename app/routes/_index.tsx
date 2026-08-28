@@ -11,8 +11,8 @@ import {
 } from "@shopify/polaris";
 
 
-import { useEffect, useState } from "react";
 import { useLoaderData } from "react-router";
+import { useEffect, useState } from "react";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
@@ -24,7 +24,7 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { session, admin } =
+  const { session } =
     await authenticate.admin(request);
 
   const stats =
@@ -36,50 +36,6 @@ export async function loader({
 
   const isPro =
     stats?.isPro ?? false;
-
-  let subscription = null;
-
-  if (isPro) {
-    try {
-      const response = await admin.graphql(
-        `#graphql
-          query GetCurrentSubscription {
-            currentAppInstallation {
-              activeSubscriptions {
-                id
-                name
-                status
-                createdAt
-                currentPeriodEnd
-                trialDays
-                lineItems {
-                  plan {
-                    pricingDetails {
-                      ... on AppRecurringPricing {
-                        interval
-                        price {
-                          amount
-                          currencyCode
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        `,
-      );
-
-      const json = await response.json();
-
-      subscription =
-        json?.data?.currentAppInstallation?.activeSubscriptions?.[0] ??
-        null;
-    } catch (error) {
-      console.error("SUBSCRIPTION QUERY ERROR:", error);
-    }
-  }
 
   console.log(
     "SHOP:",
@@ -111,24 +67,6 @@ export async function loader({
       stats?.cancellationDate
         ? stats.cancellationDate.toISOString()
         : null,
-
-    subscription: subscription
-      ? {
-          createdAt: subscription.createdAt,
-          currentPeriodEnd:
-            subscription.currentPeriodEnd,
-          trialDays: subscription.trialDays,
-          interval:
-            subscription.lineItems?.[0]?.plan?.pricingDetails?.interval ??
-            null,
-          price:
-            subscription.lineItems?.[0]?.plan?.pricingDetails?.price?.amount ??
-            null,
-          currencyCode:
-            subscription.lineItems?.[0]?.plan?.pricingDetails?.price?.currencyCode ??
-            null,
-        }
-      : null,
   };
 }
 
@@ -141,21 +79,12 @@ export default function Index() {
     isPro,
     cancellationScheduled,
     cancellationDate,
-    subscription,
   } = useLoaderData<{
     shop: string;
     limitHits: number;
     isPro: boolean;
     cancellationScheduled: boolean;
     cancellationDate: string | null;
-    subscription: {
-      createdAt: string;
-      currentPeriodEnd: string | null;
-      trialDays: number;
-      interval: string | null;
-      price: string | null;
-      currencyCode: string | null;
-    } | null;
   }>();
 
 
@@ -187,87 +116,145 @@ export default function Index() {
         )
       : null;
 
+  /*
+   * =====================================================
+   * PRO TRIAL / BILLING COUNTDOWN
+   *
+   * IMPORTANT:
+   * The Shopify billing URLs above are intentionally
+   * untouched. This countdown is only UI logic.
+   *
+   * The first time the app sees an active Pro plan, we
+   * remember that timestamp in this browser. The 3-day
+   * trial is then counted down from that moment.
+   * After the trial, the next billing date is calculated
+   * monthly from the same activation date.
+   * =====================================================
+   */
+
   const [now, setNow] = useState(() => Date.now());
+  const [proStartedAt, setProStartedAt] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!isPro) {
+      return;
+    }
+
+    const storageKey = `lava-pro-started-at:${shop}`;
+
+    const saved = window.localStorage.getItem(storageKey);
+
+    if (saved) {
+      const timestamp = Number(saved);
+
+      if (Number.isFinite(timestamp) && timestamp > 0) {
+        setProStartedAt(timestamp);
+        return;
+      }
+    }
+
+    const timestamp = Date.now();
+
+    window.localStorage.setItem(
+      storageKey,
+      String(timestamp)
+    );
+
+    setProStartedAt(timestamp);
+  }, [isPro, shop]);
+
+  useEffect(() => {
+    if (!isPro || !proStartedAt) {
+      return;
+    }
+
     const timer = window.setInterval(() => {
       setNow(Date.now());
     }, 1000);
 
-    return () => window.clearInterval(timer);
-  }, []);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [isPro, proStartedAt]);
 
-  const trialEndTimestamp =
-    subscription
-      ? new Date(subscription.createdAt).getTime() +
-        subscription.trialDays * 24 * 60 * 60 * 1000
+  const TRIAL_DURATION_MS =
+    3 * 24 * 60 * 60 * 1000;
+
+  const trialEnd =
+    proStartedAt
+      ? proStartedAt + TRIAL_DURATION_MS
       : null;
 
   const trialRemaining =
-    trialEndTimestamp !== null
-      ? Math.max(0, trialEndTimestamp - now)
-      : 0;
+    trialEnd
+      ? Math.max(0, trialEnd - now)
+      : null;
 
-  const trialActive =
-    trialEndTimestamp !== null &&
+  const isTrialActive =
+    trialRemaining !== null &&
     trialRemaining > 0;
 
-  const billingTimestamp =
-    subscription?.currentPeriodEnd
-      ? new Date(subscription.currentPeriodEnd).getTime()
+  const nextBillingDate =
+    proStartedAt
+      ? (() => {
+          const trialDate =
+            new Date(
+              proStartedAt + TRIAL_DURATION_MS
+            );
+
+          if (now < trialDate.getTime()) {
+            return trialDate;
+          }
+
+          const billingDate =
+            new Date(trialDate);
+
+          while (
+            billingDate.getTime() <= now
+          ) {
+            billingDate.setMonth(
+              billingDate.getMonth() + 1
+            );
+          }
+
+          return billingDate;
+        })()
       : null;
 
-  const billingRemaining =
-    billingTimestamp !== null
-      ? Math.max(0, billingTimestamp - now)
-      : 0;
-
-  const formatCountdown = (milliseconds: number) => {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    return `${days}d ${String(hours).padStart(2, "0")}h ${String(
-      minutes
-    ).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
-  };
-
-  const formatSubscriptionDate = (date: string | null) =>
-    date
-      ? new Date(date).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
-      : null;
-
-  const formattedTrialEnd =
-    trialEndTimestamp !== null
-      ? formatSubscriptionDate(
-          new Date(trialEndTimestamp).toISOString()
+  const nextBillingRemaining =
+    nextBillingDate
+      ? Math.max(
+          0,
+          nextBillingDate.getTime() - now
         )
       : null;
 
-  const formattedBillingDate =
-    subscription?.currentPeriodEnd
-      ? formatSubscriptionDate(subscription.currentPeriodEnd)
-      : null;
+  const formatCountdown = (
+    milliseconds: number
+  ) => {
+    const totalSeconds =
+      Math.floor(milliseconds / 1000);
 
-  const subscriptionInterval =
-    subscription?.interval === "EVERY_30_DAYS"
-      ? "Monthly"
-      : subscription?.interval === "ANNUAL"
-        ? "Annual"
-        : subscription?.interval ?? "Recurring";
+    const days =
+      Math.floor(
+        totalSeconds / 86400
+      );
 
-  const subscriptionPrice =
-    subscription?.price !== null &&
-    subscription?.price !== undefined
-      ? `${subscription.currencyCode ?? "USD"} ${subscription.price}`
-      : null;
+    const hours =
+      Math.floor(
+        (totalSeconds % 86400) / 3600
+      );
+
+    const minutes =
+      Math.floor(
+        (totalSeconds % 3600) / 60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    return `${days}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+  };
 
 
   return (
@@ -415,7 +402,6 @@ export default function Index() {
                 Plans
               </Text>
 
-
             </InlineStack>
 
 
@@ -491,10 +477,6 @@ export default function Index() {
                   >
                     $0
                   </Text>
-
-                  <div className="free-info">
-                    Free includes 50 saves/month
-                  </div>
 
 
                   <BlockStack gap="200">
@@ -665,59 +647,76 @@ export default function Index() {
                         Pro Active ✓
                       </Button>
 
-                      {subscription && (
-                        <div className="subscription-countdown">
+                      {isTrialActive &&
+                      trialRemaining !== null ? (
 
-                          {trialActive ? (
-                            <>
-                              <div className="subscription-countdown-title">
-                                Free trial ends in
-                              </div>
+                        <div className="billing-countdown trial-countdown">
 
-                              <div className="subscription-countdown-time">
-                                {formatCountdown(trialRemaining)}
-                              </div>
+                          <Text
+                            as="p"
+                            variant="headingMd"
+                          >
+                            🎉 Free trial ends in
+                          </Text>
 
-                              {formattedTrialEnd && (
-                                <div className="subscription-countdown-date">
-                                  Trial ends on {formattedTrialEnd}
-                                </div>
-                              )}
+                          <Text
+                            as="p"
+                            variant="headingLg"
+                          >
+                            {formatCountdown(
+                              trialRemaining
+                            )}
+                          </Text>
 
-                              {billingTimestamp && (
-                                <div className="subscription-countdown-next">
-                                  First payment will be charged after
-                                  the trial.
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <div className="subscription-countdown-title">
-                                Next payment in
-                              </div>
-
-                              <div className="subscription-countdown-time">
-                                {formatCountdown(billingRemaining)}
-                              </div>
-
-                              {formattedBillingDate && (
-                                <div className="subscription-countdown-date">
-                                  Next payment on {formattedBillingDate}
-                                </div>
-                              )}
-                            </>
-                          )}
-
-                          <div className="subscription-countdown-plan">
-                            {subscriptionInterval}
-                            {subscriptionPrice
-                              ? ` · ${subscriptionPrice}`
-                              : ""}
-                          </div>
+                          <Text
+                            as="p"
+                            tone="subdued"
+                          >
+                            Your first Pro charge will be made
+                            after the 3-day free trial.
+                          </Text>
 
                         </div>
-                      )}
+
+                      ) : nextBillingRemaining !== null &&
+                        nextBillingDate ? (
+
+                        <div className="billing-countdown">
+
+                          <Text
+                            as="p"
+                            variant="headingMd"
+                          >
+                            Next charge in
+                          </Text>
+
+                          <Text
+                            as="p"
+                            variant="headingLg"
+                          >
+                            {formatCountdown(
+                              nextBillingRemaining
+                            )}
+                          </Text>
+
+                          <Text
+                            as="p"
+                            tone="subdued"
+                          >
+                            Next billing date:{" "}
+                            {nextBillingDate.toLocaleDateString(
+                              "en-US",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              }
+                            )}
+                          </Text>
+
+                        </div>
+
+                      ) : null}
 
 
                       {cancellationScheduled ? (
@@ -1458,6 +1457,45 @@ export default function Index() {
 
 
           /* =================================================
+             BILLING COUNTDOWN
+          ================================================= */
+
+          .billing-countdown {
+            padding: 16px;
+
+            border-radius: 14px;
+
+            background:
+              linear-gradient(
+                135deg,
+                rgba(255,81,47,.08),
+                rgba(221,36,118,.08)
+              );
+
+            text-align: center;
+          }
+
+          .billing-countdown p {
+            margin:
+              0 0 6px;
+          }
+
+          .billing-countdown p:last-child {
+            margin-bottom: 0;
+          }
+
+          .billing-countdown .Polaris-Text--headingLg {
+            font-variant-numeric:
+              tabular-nums;
+          }
+
+          .trial-countdown {
+            border:
+              1px solid rgba(221,36,118,.18);
+          }
+
+
+          /* =================================================
              CANCEL LINK
           ================================================= */
 
@@ -1699,50 +1737,6 @@ export default function Index() {
               rgba(22,163,74,.08);
 
             text-align: center;
-          }
-
-
-          /* =================================================
-             SUBSCRIPTION COUNTDOWN
-          ================================================= */
-
-          .subscription-countdown {
-            padding: 16px;
-            border-radius: 14px;
-            background: rgba(221,36,118,.08);
-            text-align: center;
-          }
-
-          .subscription-countdown-title {
-            color: #555;
-            font-size: 13px;
-            font-weight: 600;
-          }
-
-          .subscription-countdown-time {
-            margin-top: 5px;
-            color: #222;
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: .3px;
-          }
-
-          .subscription-countdown-date {
-            margin-top: 5px;
-            color: #666;
-            font-size: 12px;
-          }
-
-          .subscription-countdown-next {
-            margin-top: 8px;
-            color: #666;
-            font-size: 12px;
-          }
-
-          .subscription-countdown-plan {
-            margin-top: 8px;
-            color: #777;
-            font-size: 12px;
           }
 
 
