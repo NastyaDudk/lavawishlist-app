@@ -10,9 +10,8 @@ import {
   Link,
 } from "@shopify/polaris";
 
-
+import { useState, useEffect } from "react";
 import { useLoaderData } from "react-router";
-import { useEffect, useState } from "react";
 
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
@@ -73,6 +72,8 @@ export async function loader({
 
 export default function Index() {
 
+
+
   const {
     shop,
     limitHits,
@@ -86,6 +87,65 @@ export default function Index() {
     cancellationScheduled: boolean;
     cancellationDate: string | null;
   }>();
+
+  const [timeLeft, setTimeLeft] = useState("");
+
+useEffect(() => {
+  if (!isPro) return;
+
+  const storageKey = `lava_pro_start_${shop}`;
+
+  let startTime = localStorage.getItem(storageKey);
+
+  if (!startTime) {
+    startTime = Date.now().toString();
+    localStorage.setItem(storageKey, startTime);
+  }
+
+  const trialEnd =
+    Number(startTime) + 3 * 24 * 60 * 60 * 1000;
+
+  const updateTimer = () => {
+    const difference =
+      trialEnd - Date.now();
+
+    if (difference <= 0) {
+      setTimeLeft("Trial ended");
+      return;
+    }
+
+    const days = Math.floor(
+      difference / (1000 * 60 * 60 * 24)
+    );
+
+    const hours = Math.floor(
+      (difference / (1000 * 60 * 60)) % 24
+    );
+
+    const minutes = Math.floor(
+      (difference / (1000 * 60)) % 60
+    );
+
+    const seconds = Math.floor(
+      (difference / 1000) % 60
+    );
+
+    setTimeLeft(
+      `${days}d ${hours}h ${minutes}m ${seconds}s`
+    );
+  };
+
+  updateTimer();
+
+  const interval = window.setInterval(
+    updateTimer,
+    1000
+  );
+
+  return () => {
+    window.clearInterval(interval);
+  };
+}, [isPro, shop]);
 
 
   const store =
@@ -115,146 +175,6 @@ export default function Index() {
           }
         )
       : null;
-
-  /*
-   * =====================================================
-   * PRO TRIAL / BILLING COUNTDOWN
-   *
-   * IMPORTANT:
-   * The Shopify billing URLs above are intentionally
-   * untouched. This countdown is only UI logic.
-   *
-   * The first time the app sees an active Pro plan, we
-   * remember that timestamp in this browser. The 3-day
-   * trial is then counted down from that moment.
-   * After the trial, the next billing date is calculated
-   * monthly from the same activation date.
-   * =====================================================
-   */
-
-  const [now, setNow] = useState(() => Date.now());
-  const [proStartedAt, setProStartedAt] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!isPro) {
-      return;
-    }
-
-    const storageKey = `lava-pro-started-at:${shop}`;
-
-    const saved = window.localStorage.getItem(storageKey);
-
-    if (saved) {
-      const timestamp = Number(saved);
-
-      if (Number.isFinite(timestamp) && timestamp > 0) {
-        setProStartedAt(timestamp);
-        return;
-      }
-    }
-
-    const timestamp = Date.now();
-
-    window.localStorage.setItem(
-      storageKey,
-      String(timestamp)
-    );
-
-    setProStartedAt(timestamp);
-  }, [isPro, shop]);
-
-  useEffect(() => {
-    if (!isPro || !proStartedAt) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [isPro, proStartedAt]);
-
-  const TRIAL_DURATION_MS =
-    3 * 24 * 60 * 60 * 1000;
-
-  const trialEnd =
-    proStartedAt
-      ? proStartedAt + TRIAL_DURATION_MS
-      : null;
-
-  const trialRemaining =
-    trialEnd
-      ? Math.max(0, trialEnd - now)
-      : null;
-
-  const isTrialActive =
-    trialRemaining !== null &&
-    trialRemaining > 0;
-
-  const nextBillingDate =
-    proStartedAt
-      ? (() => {
-          const trialDate =
-            new Date(
-              proStartedAt + TRIAL_DURATION_MS
-            );
-
-          if (now < trialDate.getTime()) {
-            return trialDate;
-          }
-
-          const billingDate =
-            new Date(trialDate);
-
-          while (
-            billingDate.getTime() <= now
-          ) {
-            billingDate.setMonth(
-              billingDate.getMonth() + 1
-            );
-          }
-
-          return billingDate;
-        })()
-      : null;
-
-  const nextBillingRemaining =
-    nextBillingDate
-      ? Math.max(
-          0,
-          nextBillingDate.getTime() - now
-        )
-      : null;
-
-  const formatCountdown = (
-    milliseconds: number
-  ) => {
-    const totalSeconds =
-      Math.floor(milliseconds / 1000);
-
-    const days =
-      Math.floor(
-        totalSeconds / 86400
-      );
-
-    const hours =
-      Math.floor(
-        (totalSeconds % 86400) / 3600
-      );
-
-    const minutes =
-      Math.floor(
-        (totalSeconds % 3600) / 60
-      );
-
-    const seconds =
-      totalSeconds % 60;
-
-    return `${days}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
-  };
 
 
   return (
@@ -401,6 +321,11 @@ export default function Index() {
               >
                 Plans
               </Text>
+
+              <div className="free-info">
+                Free includes
+                50 saves/month
+              </div>
 
             </InlineStack>
 
@@ -647,76 +572,18 @@ export default function Index() {
                         Pro Active ✓
                       </Button>
 
-                      {isTrialActive &&
-                      trialRemaining !== null ? (
-
-                        <div className="billing-countdown trial-countdown">
-
-                          <Text
-                            as="p"
-                            variant="headingMd"
-                          >
-                            🎉 Free trial ends in
-                          </Text>
-
-                          <Text
-                            as="p"
-                            variant="headingLg"
-                          >
-                            {formatCountdown(
-                              trialRemaining
-                            )}
-                          </Text>
-
-                          <Text
-                            as="p"
-                            tone="subdued"
-                          >
-                            Your first Pro charge will be made
-                            after the 3-day free trial.
-                          </Text>
-
-                        </div>
-
-                      ) : nextBillingRemaining !== null &&
-                        nextBillingDate ? (
-
-                        <div className="billing-countdown">
-
-                          <Text
-                            as="p"
-                            variant="headingMd"
-                          >
-                            Next charge in
-                          </Text>
-
-                          <Text
-                            as="p"
-                            variant="headingLg"
-                          >
-                            {formatCountdown(
-                              nextBillingRemaining
-                            )}
-                          </Text>
-
-                          <Text
-                            as="p"
-                            tone="subdued"
-                          >
-                            Next billing date:{" "}
-                            {nextBillingDate.toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              }
-                            )}
-                          </Text>
-
-                        </div>
-
-                      ) : null}
+                      {timeLeft && (
+  <div className="subscription-countdown">
+    <Text
+      as="p"
+      variant="bodyMd"
+    >
+      {timeLeft === "Trial ended"
+        ? "Your trial has ended."
+        : `Free trial ends in ${timeLeft}`}
+    </Text>
+  </div>
+)}
 
 
                       {cancellationScheduled ? (
@@ -1457,45 +1324,6 @@ export default function Index() {
 
 
           /* =================================================
-             BILLING COUNTDOWN
-          ================================================= */
-
-          .billing-countdown {
-            padding: 16px;
-
-            border-radius: 14px;
-
-            background:
-              linear-gradient(
-                135deg,
-                rgba(255,81,47,.08),
-                rgba(221,36,118,.08)
-              );
-
-            text-align: center;
-          }
-
-          .billing-countdown p {
-            margin:
-              0 0 6px;
-          }
-
-          .billing-countdown p:last-child {
-            margin-bottom: 0;
-          }
-
-          .billing-countdown .Polaris-Text--headingLg {
-            font-variant-numeric:
-              tabular-nums;
-          }
-
-          .trial-countdown {
-            border:
-              1px solid rgba(221,36,118,.18);
-          }
-
-
-          /* =================================================
              CANCEL LINK
           ================================================= */
 
@@ -1773,6 +1601,22 @@ export default function Index() {
             }
 
           }
+
+          .subscription-countdown {
+  width: 100%;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  background: rgba(221, 36, 118, 0.08);
+  text-align: center;
+}
+
+.subscription-countdown p {
+  margin: 0;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+}
 
         `}</style>
 
