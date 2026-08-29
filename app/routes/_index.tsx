@@ -99,14 +99,15 @@ console.log(
   allSubscriptions
 );
 
-/*
- * Prefer active subscription.
- * If Shopify doesn't put it into activeSubscriptions,
- * use the latest subscription from allSubscriptions.
- */
+const sortedSubscriptions = [...allSubscriptions].sort(
+  (a, b) =>
+    new Date(b.createdAt).getTime() -
+    new Date(a.createdAt).getTime()
+);
+
 subscription =
   activeSubscription ??
-  allSubscriptions[0] ??
+  sortedSubscriptions[0] ??
   null;
 
   } catch (error) {
@@ -193,24 +194,12 @@ console.log("🔥 TIMER DATA:", {
   const [isTrial, setIsTrial] =
     useState(false);
 
-useEffect(() => {
+    useEffect(() => {
   if (!isPro) {
     setCountdown("");
     setIsTrial(false);
     return;
   }
-
-  console.log("========== TIMER DEBUG ==========");
-  console.log("subscriptionCreatedAt:", subscriptionCreatedAt);
-  console.log(
-    "subscriptionCurrentPeriodEnd:",
-    subscriptionCurrentPeriodEnd
-  );
-  console.log(
-    "subscriptionTrialDays:",
-    subscriptionTrialDays
-  );
-  console.log("=================================");
 
   const createdAtMs = subscriptionCreatedAt
     ? new Date(subscriptionCreatedAt).getTime()
@@ -220,55 +209,36 @@ useEffect(() => {
     ? new Date(subscriptionCurrentPeriodEnd).getTime()
     : 0;
 
-  const trialDays =
-    Number(subscriptionTrialDays) || 0;
+  const trialDays = Number(subscriptionTrialDays) || 0;
 
-  /*
-   * Shopify says trialDays starts from createdAt.
-   */
   const trialEndMs =
     createdAtMs > 0 && trialDays > 0
       ? createdAtMs +
-        trialDays *
-          24 *
-          60 *
-          60 *
-          1000
+        trialDays * 24 * 60 * 60 * 1000
       : 0;
 
-  console.log("createdAtMs:", createdAtMs);
-  console.log("trialEndMs:", trialEndMs);
-  console.log("periodEndMs:", periodEndMs);
-
-  const formatTime = (
-    milliseconds: number
-  ) => {
+  const formatTime = (milliseconds: number) => {
     if (milliseconds <= 0) {
       return "0d 0h 0m 0s";
     }
 
-    const totalSeconds =
-      Math.floor(
-        milliseconds / 1000
-      );
+    const totalSeconds = Math.floor(
+      milliseconds / 1000
+    );
 
-    const days =
-      Math.floor(
-        totalSeconds / 86400
-      );
+    const days = Math.floor(
+      totalSeconds / 86400
+    );
 
-    const hours =
-      Math.floor(
-        (totalSeconds % 86400) / 3600
-      );
+    const hours = Math.floor(
+      (totalSeconds % 86400) / 3600
+    );
 
-    const minutes =
-      Math.floor(
-        (totalSeconds % 3600) / 60
-      );
+    const minutes = Math.floor(
+      (totalSeconds % 3600) / 60
+    );
 
-    const seconds =
-      totalSeconds % 60;
+    const seconds = totalSeconds % 60;
 
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
   };
@@ -276,72 +246,59 @@ useEffect(() => {
   const updateTimer = () => {
     const now = Date.now();
 
-    /*
-     * ==============================
-     * TRIAL
-     * ==============================
-     */
-
-    if (
-      trialEndMs > now &&
-      trialDays > 0
-    ) {
+    // FREE TRIAL
+    if (trialEndMs > now && trialDays > 0) {
       setIsTrial(true);
-
       setCountdown(
-        formatTime(
-          trialEndMs - now
-        )
+        formatTime(trialEndMs - now)
       );
-
       return;
     }
 
-    /*
-     * ==============================
-     * AFTER TRIAL
-     * ==============================
-     */
-
-    setIsTrial(false);
-
+    // CURRENT BILLING PERIOD
     if (periodEndMs > now) {
+      setIsTrial(false);
       setCountdown(
-        formatTime(
-          periodEndMs - now
-        )
+        formatTime(periodEndMs - now)
       );
-
       return;
     }
 
-    /*
-     * ==============================
-     * NOTHING AVAILABLE
-     * ==============================
-     */
-
+    // NO VALID DATE
+    setIsTrial(false);
     setCountdown("");
   };
 
   updateTimer();
 
-  const timer =
-    window.setInterval(
-      updateTimer,
-      1000
-    );
+  const interval = window.setInterval(
+    updateTimer,
+    1000
+  );
 
   return () => {
-    window.clearInterval(timer);
+    window.clearInterval(interval);
   };
-
 }, [
   isPro,
   subscriptionCreatedAt,
   subscriptionCurrentPeriodEnd,
   subscriptionTrialDays,
 ]);
+
+<div
+  style={{
+    padding: "10px",
+    background: "#eee",
+    marginBottom: "10px",
+  }}
+>
+  createdAt: {subscriptionCreatedAt || "NULL"}
+  <br />
+  currentPeriodEnd: {subscriptionCurrentPeriodEnd || "NULL"}
+  <br />
+  trialDays: {subscriptionTrialDays}
+</div>
 
   /*
    * =====================================================
@@ -390,19 +347,7 @@ useEffect(() => {
   return (
 
      <>
-    <div
-      style={{
-        padding: "10px",
-        background: "#eee",
-        marginBottom: "10px",
-      }}
-    >
-      createdAt: {subscriptionCreatedAt || "NULL"}
-      <br />
-      currentPeriodEnd: {subscriptionCurrentPeriodEnd || "NULL"}
-      <br />
-      trialDays: {subscriptionTrialDays}
-    </div>
+
     <Page title="❤️‍🔥 Lava Wishlist">
 
       <BlockStack gap="500">
