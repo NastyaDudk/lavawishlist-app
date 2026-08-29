@@ -77,25 +77,6 @@ export async function loader({
   const isPro =
     stats?.isPro ?? false;
 
-  console.log(
-    "SHOP:",
-    session.shop
-  );
-
-  console.log(
-    "SHOP STATS:",
-    stats
-  );
-
-  console.log(
-    "IS PRO:",
-    isPro
-  );
-
-  console.log(
-    "SHOPIFY SUBSCRIPTION:",
-    subscription
-  );
 
   return {
     shop: session.shop,
@@ -145,6 +126,12 @@ export default function Index() {
     subscriptionTrialDays: number;
   }>();
 
+console.log("🔥 TIMER DATA:", {
+  isPro,
+  subscriptionCreatedAt,
+  subscriptionCurrentPeriodEnd,
+  subscriptionTrialDays,
+});
   /*
    * =====================================================
    * COUNTDOWN
@@ -352,6 +339,21 @@ useEffect(() => {
       : null;
 
   return (
+
+     <>
+    <div
+      style={{
+        padding: "10px",
+        background: "#eee",
+        marginBottom: "10px",
+      }}
+    >
+      createdAt: {subscriptionCreatedAt || "NULL"}
+      <br />
+      currentPeriodEnd: {subscriptionCurrentPeriodEnd || "NULL"}
+      <br />
+      trialDays: {subscriptionTrialDays}
+    </div>
     <Page title="❤️‍🔥 Lava Wishlist">
 
       <BlockStack gap="500">
@@ -1710,5 +1712,7 @@ useEffect(() => {
       </BlockStack>
 
     </Page>
+      </>
+
   );
 }
