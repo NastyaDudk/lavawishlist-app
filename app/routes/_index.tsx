@@ -12,8 +12,7 @@ import {
 
 
 import { useLoaderData } from "react-router";
-import { useEffect, useState } from "react";
-
+import { useState, useEffect } from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
 
 import prisma from "../db.server";
@@ -153,7 +152,6 @@ export default function Index() {
     subscriptionCurrentPeriodEnd: string | null;
     subscriptionTrialDays: number;
   }>();
-
 
   /*
    * =====================================================
@@ -805,6 +803,9 @@ export default function Index() {
                       >
                         Pro Active ✓
                       </Button>
+
+
+
 
 
                       {/* =================================================
@@ -2079,6 +2080,28 @@ export default function Index() {
             }
 
           }
+
+          .subscription-timer {
+  width: 100%;
+  padding: 14px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: rgba(221, 36, 118, 0.08);
+  text-align: center;
+}
+
+.subscription-timer p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.countdown-value {
+  margin-top: 5px;
+  color: #222;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
 
         `}</style>
 
