@@ -741,43 +741,47 @@ export default function Index() {
                           COUNTDOWN
                       ================================================= */}
 
-                      {countdown && (
+                 {isPro && (
+  <div className="subscription-notice">
 
-                        <div className="subscription-timer">
+    <div className="subscription-notice-title">
+      {isTrial
+        ? "🔥 Free trial active"
+        : cancellationScheduled
+          ? "⚠️ Subscription cancellation scheduled"
+          : "💳 Pro subscription active"}
+    </div>
 
-                          <Text
-                            as="p"
-                            tone="subdued"
-                          >
+    {countdown ? (
+      <>
+        <div className="subscription-notice-label">
+          {isTrial
+            ? "Your free trial ends in:"
+            : cancellationScheduled
+              ? "Your Pro access ends in:"
+              : "Next payment in:"}
+        </div>
 
-                            {isTrial
-                              ? "Your free trial ends in"
-                              : cancellationScheduled
-                                ? "Your Pro access ends in"
-                                : "Next payment in"}
+        <div className="subscription-notice-countdown">
+          {countdown}
+        </div>
 
-                          </Text>
+        <div className="subscription-notice-text">
+          {isTrial
+            ? "You won't be charged before the trial ends."
+            : cancellationScheduled
+              ? "Your Pro plan remains active until the end of the current billing period."
+              : "Your next subscription payment will be charged after this period."}
+        </div>
+      </>
+    ) : (
+      <div className="subscription-notice-text">
+        Subscription information is being loaded...
+      </div>
+    )}
 
-                          <div className="countdown-value">
-                            {countdown}
-                          </div>
-
-                          <Text
-                            as="p"
-                            tone="subdued"
-                          >
-
-                            {isTrial
-                              ? "You won't be charged before the trial ends."
-                              : cancellationScheduled
-                                ? "Your subscription will end after this period."
-                                : "Your next subscription payment will be charged after this period."}
-
-                          </Text>
-
-                        </div>
-
-                      )}
+  </div>
+)}
 
                       {cancellationScheduled ? (
 
@@ -1368,34 +1372,6 @@ export default function Index() {
             opacity: .7;
           }
 
-          /* =================================================
-             COUNTDOWN
-          ================================================= */
-
-          .subscription-timer {
-            width: 100%;
-            padding: 16px;
-            box-sizing: border-box;
-            border-radius: 14px;
-            background:
-              rgba(221,36,118,.08);
-            text-align: center;
-          }
-
-          .subscription-timer p {
-            margin: 0;
-          }
-
-          .countdown-value {
-            margin-top: 5px;
-            margin-bottom: 5px;
-            color: #222;
-            font-size: 22px;
-            line-height: 1.2;
-            font-weight: 700;
-            font-variant-numeric:
-              tabular-nums;
-          }
 
           /* =================================================
              START PRO
@@ -1698,6 +1674,49 @@ export default function Index() {
             }
 
           }
+
+          .subscription-notice {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 81, 47, 0.10),
+    rgba(221, 36, 118, 0.10)
+  );
+  border: 1px solid rgba(221, 36, 118, 0.18);
+  text-align: center;
+}
+
+.subscription-notice-title {
+  margin-bottom: 8px;
+  color: #222;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.subscription-notice-label {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.subscription-notice-countdown {
+  margin-top: 5px;
+  color: #222;
+  font-size: 24px;
+  line-height: 1.3;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
+
+.subscription-notice-text {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
 
         `}</style>
 
