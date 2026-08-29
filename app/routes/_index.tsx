@@ -37,28 +37,77 @@ export async function loader({
     ShopifySubscription | null = null;
 
   try {
-    const response = await admin.graphql(
-      `#graphql
-        query CurrentAppSubscriptions {
-          currentAppInstallation {
-            activeSubscriptions {
-              id
-              name
-              status
-              createdAt
-              currentPeriodEnd
-              trialDays
-            }
+   const response = await admin.graphql(
+  `#graphql
+    query CurrentAppSubscriptions {
+      currentAppInstallation {
+        activeSubscriptions {
+          id
+          name
+          status
+          createdAt
+          currentPeriodEnd
+          trialDays
+          test
+        }
+
+        allSubscriptions(first: 10) {
+          nodes {
+            id
+            name
+            status
+            createdAt
+            currentPeriodEnd
+            trialDays
+            test
           }
         }
-      `
-    );
+      }
+    }
+  `
+);
 
     const data = await response.json();
 
-    subscription =
-      data?.data?.currentAppInstallation
-        ?.activeSubscriptions?.[0] ?? null;
+    console.log(
+  "🔥 SHOPIFY BILLING RESPONSE:",
+  JSON.stringify(
+    data,
+    null,
+    2
+  )
+);
+
+  const installation =
+  data?.data?.currentAppInstallation;
+
+const activeSubscription =
+  installation?.activeSubscriptions?.[0] ??
+  null;
+
+const allSubscriptions =
+  installation?.allSubscriptions?.nodes ??
+  [];
+
+console.log(
+  "🔥 ACTIVE SUBSCRIPTIONS:",
+  activeSubscription
+);
+
+console.log(
+  "🔥 ALL SUBSCRIPTIONS:",
+  allSubscriptions
+);
+
+/*
+ * Prefer active subscription.
+ * If Shopify doesn't put it into activeSubscriptions,
+ * use the latest subscription from allSubscriptions.
+ */
+subscription =
+  activeSubscription ??
+  allSubscriptions[0] ??
+  null;
 
   } catch (error) {
     console.error(
