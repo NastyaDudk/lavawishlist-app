@@ -212,194 +212,157 @@ export default function Index() {
   const [isTrial, setIsTrial] =
     useState(false);
 
+useEffect(() => {
+  if (!isPro) {
+    setCountdown("");
+    setIsTrial(false);
+    return;
+  }
 
-  useEffect(() => {
+  const createdAt = subscriptionCreatedAt
+    ? new Date(subscriptionCreatedAt).getTime()
+    : null;
 
+  const currentPeriodEnd = subscriptionCurrentPeriodEnd
+    ? new Date(subscriptionCurrentPeriodEnd).getTime()
+    : null;
+
+  const trialDays =
+    Number(subscriptionTrialDays) || 0;
+
+  /*
+   * Trial end
+   */
+  const trialEndsAt =
+    createdAt && trialDays > 0
+      ? createdAt +
+        trialDays *
+          24 *
+          60 *
+          60 *
+          1000
+      : null;
+
+  /*
+   * Cancellation end
+   */
+  const cancellationEndsAt =
+    cancellationScheduled && cancellationDate
+      ? new Date(cancellationDate).getTime()
+      : null;
+
+  const formatRemaining = (
+    milliseconds: number
+  ) => {
+    if (milliseconds <= 0) {
+      return "0d 0h 0m 0s";
+    }
+
+    const totalSeconds = Math.floor(
+      milliseconds / 1000
+    );
+
+    const days = Math.floor(
+      totalSeconds / 86400
+    );
+
+    const hours = Math.floor(
+      (totalSeconds % 86400) / 3600
+    );
+
+    const minutes = Math.floor(
+      (totalSeconds % 3600) / 60
+    );
+
+    const seconds =
+      totalSeconds % 60;
+
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  const updateCountdown = () => {
+    const now = Date.now();
+
+    /*
+     * 1. FREE TRIAL
+     */
     if (
-      !isPro ||
-      !subscriptionCreatedAt
+      trialEndsAt &&
+      now < trialEndsAt
     ) {
+      setIsTrial(true);
 
-      setCountdown("");
-      setIsTrial(false);
+      setCountdown(
+        formatRemaining(
+          trialEndsAt - now
+        )
+      );
 
       return;
     }
 
-
-    const createdAt =
-      new Date(
-        subscriptionCreatedAt
-      ).getTime();
-
-
-    const trialDays =
-      Number(subscriptionTrialDays) || 0;
-
-
     /*
-     * Trial ends exactly trialDays
-     * after Shopify subscription creation.
+     * 2. CANCELLED SUBSCRIPTION
      */
-
-    const trialEndsAt =
-      trialDays > 0
-        ? createdAt +
-          trialDays *
-            24 *
-            60 *
-            60 *
-            1000
-        : null;
-
-
-    /*
-     * If cancellation was already
-     * scheduled, use our stored
-     * cancellation date.
-     *
-     * Otherwise use Shopify's
-     * currentPeriodEnd.
-     */
-
-    const billingEndsAt =
-      cancellationScheduled &&
-      cancellationDate
-        ? new Date(
-            cancellationDate
-          ).getTime()
-        : subscriptionCurrentPeriodEnd
-          ? new Date(
-              subscriptionCurrentPeriodEnd
-            ).getTime()
-          : null;
-
-
-    const formatRemaining = (
-      milliseconds: number
-    ) => {
-
-      if (milliseconds <= 0) {
-        return "0d 0h 0m 0s";
-      }
-
-
-      const totalSeconds =
-        Math.floor(
-          milliseconds / 1000
-        );
-
-
-      const days =
-        Math.floor(
-          totalSeconds /
-            (24 * 60 * 60)
-        );
-
-
-      const hours =
-        Math.floor(
-          (totalSeconds %
-            (24 * 60 * 60)) /
-            (60 * 60)
-        );
-
-
-      const minutes =
-        Math.floor(
-          (totalSeconds %
-            (60 * 60)) /
-            60
-        );
-
-
-      const seconds =
-        totalSeconds % 60;
-
-
-      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    };
-
-
-    const updateCountdown = () => {
-
-      const now = Date.now();
-
-
-      /*
-       * TRIAL
-       */
-
-      if (
-        trialEndsAt &&
-        now < trialEndsAt
-      ) {
-
-        setIsTrial(true);
-
-        setCountdown(
-          formatRemaining(
-            trialEndsAt - now
-          )
-        );
-
-        return;
-      }
-
-
-      /*
-       * PAID PERIOD
-       */
-
+    if (
+      cancellationEndsAt &&
+      now < cancellationEndsAt
+    ) {
       setIsTrial(false);
 
-
-      if (
-        billingEndsAt &&
-        billingEndsAt > now
-      ) {
-
-        setCountdown(
-          formatRemaining(
-            billingEndsAt - now
-          )
-        );
-
-        return;
-      }
-
-
-      setCountdown("");
-    };
-
-
-    updateCountdown();
-
-
-    const interval =
-      window.setInterval(
-        updateCountdown,
-        1000
+      setCountdown(
+        formatRemaining(
+          cancellationEndsAt - now
+        )
       );
 
+      return;
+    }
 
-    return () => {
+    /*
+     * 3. NORMAL PAID SUBSCRIPTION
+     */
+    if (
+      currentPeriodEnd &&
+      now < currentPeriodEnd
+    ) {
+      setIsTrial(false);
 
-      window.clearInterval(
-        interval
+      setCountdown(
+        formatRemaining(
+          currentPeriodEnd - now
+        )
       );
 
-    };
+      return;
+    }
 
-  }, [
-    isPro,
-    cancellationScheduled,
-    cancellationDate,
-    subscriptionCreatedAt,
-    subscriptionCurrentPeriodEnd,
-    subscriptionTrialDays,
-  ]);
+    /*
+     * Nothing available
+     */
+    setCountdown("");
+    setIsTrial(false);
+  };
 
+  updateCountdown();
+
+  const interval =
+    window.setInterval(
+      updateCountdown,
+      1000
+    );
+
+  return () => {
+    window.clearInterval(interval);
+  };
+}, [
+  isPro,
+  cancellationScheduled,
+  cancellationDate,
+  subscriptionCreatedAt,
+  subscriptionCurrentPeriodEnd,
+  subscriptionTrialDays,
+]);
 
   return (
 
