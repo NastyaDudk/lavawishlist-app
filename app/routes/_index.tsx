@@ -112,16 +112,143 @@ export default function Index() {
     proStartedAt: string | null;
   }>();
 
-
   /* =======================================================
      TIMER STATE
   ======================================================= */
 
+  const getTimerData = (
+    startedAt: string | null
+  ) => {
+
+    if (!startedAt) {
+      return {
+        countdown: "",
+        isTrial: false,
+      };
+    }
+
+    const start =
+      new Date(startedAt).getTime();
+
+    if (Number.isNaN(start)) {
+      return {
+        countdown: "",
+        isTrial: false,
+      };
+    }
+
+    const TRIAL_MS =
+      3 *
+      24 *
+      60 *
+      60 *
+      1000;
+
+    const BILLING_MS =
+      30 *
+      24 *
+      60 *
+      60 *
+      1000;
+
+    const trialEnd =
+      start + TRIAL_MS;
+
+    const now =
+      Date.now();
+
+    const formatTime = (
+      milliseconds: number
+    ) => {
+
+      if (milliseconds <= 0) {
+        return "0d 0h 0m 0s";
+      }
+
+      const totalSeconds =
+        Math.floor(
+          milliseconds / 1000
+        );
+
+      const days =
+        Math.floor(
+          totalSeconds / 86400
+        );
+
+      const hours =
+        Math.floor(
+          (totalSeconds % 86400) / 3600
+        );
+
+      const minutes =
+        Math.floor(
+          (totalSeconds % 3600) / 60
+        );
+
+      const seconds =
+        totalSeconds % 60;
+
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    };
+
+
+    if (now < trialEnd) {
+
+      return {
+        countdown:
+          formatTime(
+            trialEnd - now
+          ),
+
+        isTrial: true,
+      };
+
+    }
+
+
+    const periodsPassed =
+      Math.floor(
+        (now - trialEnd) /
+        BILLING_MS
+      );
+
+
+    const nextPayment =
+      trialEnd +
+      (periodsPassed + 1) *
+      BILLING_MS;
+
+
+    return {
+      countdown:
+        formatTime(
+          nextPayment - now
+        ),
+
+      isTrial: false,
+    };
+
+  };
+
+
+  const initialTimer =
+    getTimerData(
+      isPro
+        ? proStartedAt
+        : null
+    );
+
+
   const [countdown, setCountdown] =
-    useState("");
+    useState(
+      initialTimer.countdown
+    );
+
 
   const [isTrial, setIsTrial] =
-    useState(false);
+    useState(
+      initialTimer.isTrial
+    );
 
 
   /* =======================================================
@@ -142,179 +269,26 @@ export default function Index() {
     }
 
 
-    const start =
-      new Date(
-        proStartedAt
-      ).getTime();
-
-
-    if (
-      Number.isNaN(start)
-    ) {
-
-      setCountdown("");
-      setIsTrial(false);
-
-      return;
-    }
-
-
-    /*
-     * 3-day free trial
-     */
-
-    const TRIAL_MS =
-      3 *
-      24 *
-      60 *
-      60 *
-      1000;
-
-
-    /*
-     * Billing interval:
-     * every 30 days
-     */
-
-    const BILLING_MS =
-      30 *
-      24 *
-      60 *
-      60 *
-      1000;
-
-
-    const trialEnd =
-      start + TRIAL_MS;
-
-
-    const formatTime = (
-      milliseconds: number
-    ) => {
-
-      if (
-        milliseconds <= 0
-      ) {
-
-        return "0d 0h 0m 0s";
-      }
-
-
-      const totalSeconds =
-        Math.floor(
-          milliseconds / 1000
-        );
-
-
-      const days =
-        Math.floor(
-          totalSeconds / 86400
-        );
-
-
-      const hours =
-        Math.floor(
-          (totalSeconds % 86400) /
-          3600
-        );
-
-
-      const minutes =
-        Math.floor(
-          (totalSeconds % 3600) /
-          60
-        );
-
-
-      const seconds =
-        totalSeconds % 60;
-
-
-      return (
-        `${days}d ` +
-        `${hours}h ` +
-        `${minutes}m ` +
-        `${seconds}s`
-      );
-    };
-
-
     const updateTimer = () => {
 
-      const now =
-        Date.now();
-
-
-      /*
-       * TRIAL
-       */
-
-      if (
-        now < trialEnd
-      ) {
-
-        setIsTrial(true);
-
-        setCountdown(
-          formatTime(
-            trialEnd - now
-          )
+      const timer =
+        getTimerData(
+          proStartedAt
         );
-
-        return;
-      }
-
-
-      /*
-       * AFTER TRIAL
-       */
-
-      setIsTrial(false);
-
-
-      /*
-       * First payment:
-       *
-       * trialEnd + 30 days
-       *
-       * Every next payment:
-       * +30 days
-       */
-
-      const periodsPassed =
-        Math.floor(
-          (now - trialEnd) /
-          BILLING_MS
-        );
-
-
-      const nextPayment =
-        trialEnd +
-        (
-          periodsPassed + 1
-        ) *
-        BILLING_MS;
-
 
       setCountdown(
-        formatTime(
-          nextPayment - now
-        )
+        timer.countdown
+      );
+
+      setIsTrial(
+        timer.isTrial
       );
 
     };
 
-
-    /*
-     * Calculate immediately
-     */
 
     updateTimer();
 
-
-    /*
-     * Update every second
-     */
 
     const interval =
       window.setInterval(
@@ -335,7 +309,6 @@ export default function Index() {
     isPro,
     proStartedAt,
   ]);
-
 
   /* =======================================================
      SHOP NAME
@@ -812,7 +785,7 @@ export default function Index() {
                           </div>
 
 
-                          {countdown ? (
+                         {isPro && proStartedAt ? (
 
                             <>
 
