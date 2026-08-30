@@ -18,113 +18,12 @@ import type { LoaderFunctionArgs } from "@remix-run/node";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
 
-type ShopifySubscription = {
-  id: string;
-  name: string;
-  status: string;
-  createdAt: string;
-  currentPeriodEnd: string | null;
-  trialDays: number;
-};
-
 export async function loader({
   request,
 }: LoaderFunctionArgs) {
-  const { admin, session } =
+
+  const { session } =
     await authenticate.admin(request);
-
-  let subscription:
-    ShopifySubscription | null = null;
-
-    try {
-  const response = await admin.graphql(
-    `#graphql
-      query CurrentAppSubscriptions {
-        currentAppInstallation {
-          activeSubscriptions {
-            id
-            name
-            status
-            createdAt
-            currentPeriodEnd
-            trialDays
-          }
-
-          allSubscriptions(
-            first: 10
-            reverse: true
-          ) {
-            nodes {
-              id
-              name
-              status
-              createdAt
-              currentPeriodEnd
-              trialDays
-            }
-          }
-        }
-      }
-    `
-  );
-
-  const data = await response.json();
-
-  console.log(
-    "🔥 SHOPIFY GRAPHQL FULL RESPONSE:",
-    JSON.stringify(data, null, 2)
-  );
-
-
-
-  const installation =
-    data?.data?.currentAppInstallation;
-
-  console.log(
-    "🔥 INSTALLATION:",
-    installation
-  );
-
-  const activeSubscriptions =
-    installation?.activeSubscriptions ?? [];
-
-  const allSubscriptions =
-    installation?.allSubscriptions?.nodes ?? [];
-
-  console.log(
-    "🔥 ACTIVE:",
-    activeSubscriptions
-  );
-
-  console.log(
-    "🔥 ALL:",
-    allSubscriptions
-  );
-
-  /*
-   * First try active subscription.
-   * If there is no active subscription,
-   * use the newest subscription from Shopify.
-   */
-
-  subscription =
-    activeSubscriptions[0] ??
-    allSubscriptions[0] ??
-    null;
-
-  console.log(
-    "🔥 FINAL SUBSCRIPTION:",
-    subscription
-  );
-
-} catch (error) {
-
-  console.error(
-    "🔥 SHOPIFY SUBSCRIPTION REQUEST FAILED:",
-    error
-  );
-
-}
 
   const stats =
     await prisma.shopStats.findUnique({
@@ -135,6 +34,21 @@ export async function loader({
 
   const isPro =
     stats?.isPro ?? false;
+
+  console.log(
+    "SHOP:",
+    session.shop
+  );
+
+  console.log(
+    "SHOP STATS:",
+    stats
+  );
+
+  console.log(
+    "IS PRO:",
+    isPro
+  );
 
 
   return {
@@ -153,14 +67,10 @@ export async function loader({
         ? stats.cancellationDate.toISOString()
         : null,
 
-    subscriptionCreatedAt:
-      subscription?.createdAt ?? null,
-
-    subscriptionCurrentPeriodEnd:
-      subscription?.currentPeriodEnd ?? null,
-
-    subscriptionTrialDays:
-      subscription?.trialDays ?? 0,
+proStartedAt:
+  stats?.proStartedAt
+    ? stats.proStartedAt.toISOString()
+    : null,
   };
 }
 
@@ -171,143 +81,166 @@ export default function Index() {
     isPro,
     cancellationScheduled,
     cancellationDate,
-    subscriptionCreatedAt,
-    subscriptionCurrentPeriodEnd,
-    subscriptionTrialDays,
+    proStartedAt,
   } = useLoaderData<{
     shop: string;
     limitHits: number;
     isPro: boolean;
     cancellationScheduled: boolean;
     cancellationDate: string | null;
-    subscriptionCreatedAt: string | null;
-    subscriptionCurrentPeriodEnd: string | null;
-    subscriptionTrialDays: number;
+    proStartedAt: string | null;
   }>();
 
-console.log("🔥 TIMER DATA:", {
-  isPro,
-  subscriptionCreatedAt,
-  subscriptionCurrentPeriodEnd,
-  subscriptionTrialDays,
-});
+
   /*
    * =====================================================
    * COUNTDOWN
    * =====================================================
    */
+useEffect(() => {
 
+  if (!isPro || !proStartedAt) {
+    setCountdown("");
+    setIsTrial(false);
+    return;
+  }
+
+  const proStartedMs =
+    new Date(proStartedAt).getTime();
+
+  if (!proStartedMs) {
+    setCountdown("");
+    setIsTrial(false);
+    return;
+  }
+
+  const trialEndMs =
+    proStartedMs +
+    3 * 24 * 60 * 60 * 1000;
+
+  /*
+   * Shopify subscription interval:
+   * EVERY_30_DAYS
+   */
+
+  const updateTimer = () => {
+
+    const now = Date.now();
+
+    /*
+     * ================================
+     * 3-DAY FREE TRIAL
+     * ================================
+     */
+
+    if (trialEndMs > now) {
+
+      setIsTrial(true);
+
+      setCountdown(
+        formatTime(
+          trialEndMs - now
+        )
+      );
+
+      return;
+    }
+
+    /*
+     * ================================
+     * AFTER TRIAL
+     * ================================
+     *
+     * Subscription renews every 30 days.
+     */
+
+    const trialFinishedAt =
+      trialEndMs;
+
+    const elapsedSinceTrial =
+      now - trialFinishedAt;
+
+    const thirtyDays =
+      30 * 24 * 60 * 60 * 1000;
+
+    const periodsPassed =
+      Math.floor(
+        elapsedSinceTrial / thirtyDays
+      );
+
+    const nextPaymentMs =
+      trialFinishedAt +
+      (periodsPassed + 1) *
+      thirtyDays;
+
+    setIsTrial(false);
+
+    setCountdown(
+      formatTime(
+        nextPaymentMs - now
+      )
+    );
+  };
+
+  const formatTime = (
+    milliseconds: number
+  ) => {
+
+    if (milliseconds <= 0) {
+      return "0d 0h 0m 0s";
+    }
+
+    const totalSeconds =
+      Math.floor(
+        milliseconds / 1000
+      );
+
+    const days =
+      Math.floor(
+        totalSeconds / 86400
+      );
+
+    const hours =
+      Math.floor(
+        (totalSeconds % 86400) / 3600
+      );
+
+    const minutes =
+      Math.floor(
+        (totalSeconds % 3600) / 60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  updateTimer();
+
+  const interval =
+    window.setInterval(
+      updateTimer,
+      1000
+    );
+
+  return () => {
+    window.clearInterval(
+      interval
+    );
+  };
+
+}, [
+  isPro,
+  proStartedAt,
+]);
   const [countdown, setCountdown] =
     useState("");
 
   const [isTrial, setIsTrial] =
     useState(false);
 
-    useEffect(() => {
-  if (!isPro) {
-    setCountdown("");
-    setIsTrial(false);
-    return;
-  }
 
-  const createdAtMs = subscriptionCreatedAt
-    ? new Date(subscriptionCreatedAt).getTime()
-    : 0;
-
-  const periodEndMs = subscriptionCurrentPeriodEnd
-    ? new Date(subscriptionCurrentPeriodEnd).getTime()
-    : 0;
-
-  const trialDays = Number(subscriptionTrialDays) || 0;
-
-  const trialEndMs =
-    createdAtMs > 0 && trialDays > 0
-      ? createdAtMs +
-        trialDays * 24 * 60 * 60 * 1000
-      : 0;
-
-  const formatTime = (milliseconds: number) => {
-    if (milliseconds <= 0) {
-      return "0d 0h 0m 0s";
-    }
-
-    const totalSeconds = Math.floor(
-      milliseconds / 1000
-    );
-
-    const days = Math.floor(
-      totalSeconds / 86400
-    );
-
-    const hours = Math.floor(
-      (totalSeconds % 86400) / 3600
-    );
-
-    const minutes = Math.floor(
-      (totalSeconds % 3600) / 60
-    );
-
-    const seconds = totalSeconds % 60;
-
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  };
-
-  const updateTimer = () => {
-    const now = Date.now();
-
-    // FREE TRIAL
-    if (trialEndMs > now && trialDays > 0) {
-      setIsTrial(true);
-      setCountdown(
-        formatTime(trialEndMs - now)
-      );
-      return;
-    }
-
-    // CURRENT BILLING PERIOD
-    if (periodEndMs > now) {
-      setIsTrial(false);
-      setCountdown(
-        formatTime(periodEndMs - now)
-      );
-      return;
-    }
-
-    // NO VALID DATE
-    setIsTrial(false);
-    setCountdown("");
-  };
-
-  updateTimer();
-
-  const interval = window.setInterval(
-    updateTimer,
-    1000
-  );
-
-  return () => {
-    window.clearInterval(interval);
-  };
-}, [
-  isPro,
-  subscriptionCreatedAt,
-  subscriptionCurrentPeriodEnd,
-  subscriptionTrialDays,
-]);
-
-<div
-  style={{
-    padding: "10px",
-    background: "#eee",
-    marginBottom: "10px",
-  }}
->
-  createdAt: {subscriptionCreatedAt || "NULL"}
-  <br />
-  currentPeriodEnd: {subscriptionCurrentPeriodEnd || "NULL"}
-  <br />
-  trialDays: {subscriptionTrialDays}
-</div>
 
   /*
    * =====================================================
