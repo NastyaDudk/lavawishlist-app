@@ -36,86 +36,95 @@ export async function loader({
   let subscription:
     ShopifySubscription | null = null;
 
-  try {
-   const response = await admin.graphql(
-  `#graphql
-    query CurrentAppSubscriptions {
-      currentAppInstallation {
-        activeSubscriptions {
-          id
-          name
-          status
-          createdAt
-          currentPeriodEnd
-          trialDays
-          test
-        }
-
-        allSubscriptions(first: 10) {
-          nodes {
+    try {
+  const response = await admin.graphql(
+    `#graphql
+      query CurrentAppSubscriptions {
+        currentAppInstallation {
+          activeSubscriptions {
             id
             name
             status
             createdAt
             currentPeriodEnd
             trialDays
-            test
+          }
+
+          allSubscriptions(
+            first: 10
+            reverse: true
+          ) {
+            nodes {
+              id
+              name
+              status
+              createdAt
+              currentPeriodEnd
+              trialDays
+            }
           }
         }
       }
-    }
-  `
-);
+    `
+  );
 
-    const data = await response.json();
+  const data = await response.json();
 
-    console.log(
-  "🔥 SHOPIFY BILLING RESPONSE:",
-  JSON.stringify(
-    data,
-    null,
-    2
-  )
-);
+  console.log(
+    "🔥 SHOPIFY GRAPHQL FULL RESPONSE:",
+    JSON.stringify(data, null, 2)
+  );
+
+
 
   const installation =
-  data?.data?.currentAppInstallation;
+    data?.data?.currentAppInstallation;
 
-const activeSubscription =
-  installation?.activeSubscriptions?.[0] ??
-  null;
+  console.log(
+    "🔥 INSTALLATION:",
+    installation
+  );
 
-const allSubscriptions =
-  installation?.allSubscriptions?.nodes ??
-  [];
+  const activeSubscriptions =
+    installation?.activeSubscriptions ?? [];
 
-console.log(
-  "🔥 ACTIVE SUBSCRIPTIONS:",
-  activeSubscription
-);
+  const allSubscriptions =
+    installation?.allSubscriptions?.nodes ?? [];
 
-console.log(
-  "🔥 ALL SUBSCRIPTIONS:",
-  allSubscriptions
-);
+  console.log(
+    "🔥 ACTIVE:",
+    activeSubscriptions
+  );
 
-const sortedSubscriptions = [...allSubscriptions].sort(
-  (a, b) =>
-    new Date(b.createdAt).getTime() -
-    new Date(a.createdAt).getTime()
-);
+  console.log(
+    "🔥 ALL:",
+    allSubscriptions
+  );
 
-subscription =
-  activeSubscription ??
-  sortedSubscriptions[0] ??
-  null;
+  /*
+   * First try active subscription.
+   * If there is no active subscription,
+   * use the newest subscription from Shopify.
+   */
 
-  } catch (error) {
-    console.error(
-      "Failed to load Shopify subscription:",
-      error
-    );
-  }
+  subscription =
+    activeSubscriptions[0] ??
+    allSubscriptions[0] ??
+    null;
+
+  console.log(
+    "🔥 FINAL SUBSCRIPTION:",
+    subscription
+  );
+
+} catch (error) {
+
+  console.error(
+    "🔥 SHOPIFY SUBSCRIPTION REQUEST FAILED:",
+    error
+  );
+
+}
 
   const stats =
     await prisma.shopStats.findUnique({
