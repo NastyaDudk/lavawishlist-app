@@ -96,6 +96,8 @@ export async function loader({
 
 export default function Index() {
 
+   console.log("🔥🔥🔥 NEW INDEX CODE LOADED 🔥🔥🔥");
+
   const {
     shop,
     limitHits,
@@ -229,11 +231,6 @@ useEffect(() => {
 
 }, [isPro, proStartedAt]);
 
-
-
-  /* =======================================================
-     FORMAT COUNTDOWN
-  ======================================================= */
 
 
   /* =======================================================
