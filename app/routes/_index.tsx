@@ -128,218 +128,119 @@ export default function Index() {
      TIMER
   ======================================================= */
 
-  useEffect(() => {
-
-    console.log(
-      "🔥 TIMER EFFECT:",
-      {
-        isPro,
-        proStartedAt,
-      }
-    );
-
-    if (!isPro || !proStartedAt) {
-
-      setCountdown("");
-      setIsTrial(false);
-
-      return;
-    }
-
-
-    const startedAt =
-      new Date(proStartedAt).getTime();
-
-
-    if (
-      Number.isNaN(startedAt)
-    ) {
-
-      console.log(
-        "❌ INVALID PRO START DATE:",
-        proStartedAt
-      );
-
-      setCountdown("");
-      setIsTrial(false);
-
-      return;
-    }
-
-
-    /*
-     * Shopify trial = 3 days
-     */
-
-    const trialDuration =
-      3 * 24 * 60 * 60 * 1000;
-
-
-    const trialEnd =
-      startedAt +
-      trialDuration;
-
-
-    /*
-     * IMPORTANT:
-     *
-     * We calculate the timer from the date
-     * stored in our database.
-     *
-     * We do NOT call Shopify API here.
-     *
-     * Therefore Shopify 403 does not affect
-     * the countdown.
-     */
-
-    const updateTimer = () => {
-
-      const now =
-        Date.now();
-
-
-      /* ==============================================
-         TRIAL
-      ============================================== */
-
-      if (now < trialEnd) {
-
-        setIsTrial(true);
-
-
-        const diff =
-          trialEnd - now;
-
-
-        setCountdown(
-          formatCountdown(diff)
-        );
-
-
-        return;
-      }
-
-
-      /* ==============================================
-         AFTER TRIAL
-      ============================================== */
-
-      setIsTrial(false);
-
-
-      /*
-       * Pro renews every 30 days
-       */
-
-      const billingPeriod =
-        30 * 24 * 60 * 60 * 1000;
-
-
-      const periodsPassed =
-        Math.floor(
-          (now - trialEnd) /
-          billingPeriod
-        );
-
-
-      const nextPayment =
-        trialEnd +
-        (periodsPassed + 1) *
-        billingPeriod;
-
-
-      const diff =
-        nextPayment - now;
-
-
-      setCountdown(
-        formatCountdown(diff)
-      );
-
-    };
-
-
-    /*
-     * Initial calculation
-     */
-
-    updateTimer();
-
-
-    /*
-     * Update every second
-     */
-
-    const interval =
-      window.setInterval(
-        updateTimer,
-        1000
-      );
-
-
-    return () => {
-
-      window.clearInterval(
-        interval
-      );
-
-    };
-
-  }, [
+useEffect(() => {
+  console.log("🔥 TIMER EFFECT:", {
     isPro,
     proStartedAt,
-  ]);
+  });
 
+  if (!isPro || !proStartedAt) {
+    setCountdown("");
+    setIsTrial(false);
+    return;
+  }
 
-  /* =======================================================
-     FORMAT COUNTDOWN
-  ======================================================= */
+  const start = new Date(proStartedAt).getTime();
 
-  function formatCountdown(
-    milliseconds: number
-  ) {
+  if (Number.isNaN(start)) {
+    console.log("❌ BAD DATE:", proStartedAt);
+    return;
+  }
 
-    if (
-      milliseconds <= 0
-    ) {
+  const TRIAL_MS =
+    3 * 24 * 60 * 60 * 1000;
 
+  const BILLING_MS =
+    30 * 24 * 60 * 60 * 1000;
+
+  const trialEnd =
+    start + TRIAL_MS;
+
+  const format = (ms: number) => {
+    if (ms <= 0) {
       return "0d 0h 0m 0s";
-
     }
 
-
     const totalSeconds =
-      Math.floor(
-        milliseconds / 1000
-      );
-
+      Math.floor(ms / 1000);
 
     const days =
-      Math.floor(
-        totalSeconds / 86400
-      );
-
+      Math.floor(totalSeconds / 86400);
 
     const hours =
       Math.floor(
-        (totalSeconds % 86400) /
-        3600
+        (totalSeconds % 86400) / 3600
       );
-
 
     const minutes =
       Math.floor(
-        (totalSeconds % 3600) /
-        60
+        (totalSeconds % 3600) / 60
       );
-
 
     const seconds =
       totalSeconds % 60;
 
-
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  }
+  };
+
+  const tick = () => {
+    const now = Date.now();
+
+    if (now < trialEnd) {
+      setIsTrial(true);
+
+      setCountdown(
+        format(trialEnd - now)
+      );
+
+      return;
+    }
+
+    setIsTrial(false);
+
+    const periodsPassed =
+      Math.floor(
+        (now - trialEnd) / BILLING_MS
+      );
+
+    const nextPayment =
+      trialEnd +
+      (periodsPassed + 1) *
+        BILLING_MS;
+
+    setCountdown(
+      format(nextPayment - now)
+    );
+  };
+
+  tick();
+
+  const interval =
+    window.setInterval(
+      tick,
+      1000
+    );
+
+  return () => {
+    window.clearInterval(interval);
+  };
+
+}, [isPro, proStartedAt]);
+
+<div
+  style={{
+    padding: "15px",
+    background: "#fff3cd",
+    borderRadius: "10px",
+    marginBottom: "15px",
+  }}
+>
+  TIMER TEST: {countdown || "EMPTY"}
+</div>
+
+  /* =======================================================
+     FORMAT COUNTDOWN
+  ======================================================= */
 
 
   /* =======================================================
