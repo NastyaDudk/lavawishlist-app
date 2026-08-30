@@ -96,8 +96,6 @@ export async function loader({
 
 export default function Index() {
 
-   console.log("🔥🔥🔥 NEW INDEX CODE LOADED 🔥🔥🔥");
-
   const {
     shop,
     limitHits,
@@ -130,107 +128,213 @@ export default function Index() {
      TIMER
   ======================================================= */
 
-useEffect(() => {
+  useEffect(() => {
 
-  console.log("🔥🔥🔥 TIMER EFFECT IS RUNNING 🔥🔥🔥");
-  console.log("🔥 TIMER EFFECT:", {
-    isPro,
-    proStartedAt,
-  });
+    if (
+      !isPro ||
+      !proStartedAt
+    ) {
 
-  if (!isPro || !proStartedAt) {
-    setCountdown("");
-    setIsTrial(false);
-    return;
-  }
-
-  const start = new Date(proStartedAt).getTime();
-
-  if (Number.isNaN(start)) {
-    console.log("❌ BAD DATE:", proStartedAt);
-    return;
-  }
-
-  const TRIAL_MS =
-    3 * 24 * 60 * 60 * 1000;
-
-  const BILLING_MS =
-    30 * 24 * 60 * 60 * 1000;
-
-  const trialEnd =
-    start + TRIAL_MS;
-
-  const format = (ms: number) => {
-    if (ms <= 0) {
-      return "0d 0h 0m 0s";
-    }
-
-    const totalSeconds =
-      Math.floor(ms / 1000);
-
-    const days =
-      Math.floor(totalSeconds / 86400);
-
-    const hours =
-      Math.floor(
-        (totalSeconds % 86400) / 3600
-      );
-
-    const minutes =
-      Math.floor(
-        (totalSeconds % 3600) / 60
-      );
-
-    const seconds =
-      totalSeconds % 60;
-
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  };
-
-  const tick = () => {
-    const now = Date.now();
-
-    if (now < trialEnd) {
-      setIsTrial(true);
-
-      setCountdown(
-        format(trialEnd - now)
-      );
+      setCountdown("");
+      setIsTrial(false);
 
       return;
     }
 
-    setIsTrial(false);
 
-    const periodsPassed =
-      Math.floor(
-        (now - trialEnd) / BILLING_MS
+    const start =
+      new Date(
+        proStartedAt
+      ).getTime();
+
+
+    if (
+      Number.isNaN(start)
+    ) {
+
+      setCountdown("");
+      setIsTrial(false);
+
+      return;
+    }
+
+
+    /*
+     * 3-day free trial
+     */
+
+    const TRIAL_MS =
+      3 *
+      24 *
+      60 *
+      60 *
+      1000;
+
+
+    /*
+     * Billing interval:
+     * every 30 days
+     */
+
+    const BILLING_MS =
+      30 *
+      24 *
+      60 *
+      60 *
+      1000;
+
+
+    const trialEnd =
+      start + TRIAL_MS;
+
+
+    const formatTime = (
+      milliseconds: number
+    ) => {
+
+      if (
+        milliseconds <= 0
+      ) {
+
+        return "0d 0h 0m 0s";
+      }
+
+
+      const totalSeconds =
+        Math.floor(
+          milliseconds / 1000
+        );
+
+
+      const days =
+        Math.floor(
+          totalSeconds / 86400
+        );
+
+
+      const hours =
+        Math.floor(
+          (totalSeconds % 86400) /
+          3600
+        );
+
+
+      const minutes =
+        Math.floor(
+          (totalSeconds % 3600) /
+          60
+        );
+
+
+      const seconds =
+        totalSeconds % 60;
+
+
+      return (
+        `${days}d ` +
+        `${hours}h ` +
+        `${minutes}m ` +
+        `${seconds}s`
       );
+    };
 
-    const nextPayment =
-      trialEnd +
-      (periodsPassed + 1) *
+
+    const updateTimer = () => {
+
+      const now =
+        Date.now();
+
+
+      /*
+       * TRIAL
+       */
+
+      if (
+        now < trialEnd
+      ) {
+
+        setIsTrial(true);
+
+        setCountdown(
+          formatTime(
+            trialEnd - now
+          )
+        );
+
+        return;
+      }
+
+
+      /*
+       * AFTER TRIAL
+       */
+
+      setIsTrial(false);
+
+
+      /*
+       * First payment:
+       *
+       * trialEnd + 30 days
+       *
+       * Every next payment:
+       * +30 days
+       */
+
+      const periodsPassed =
+        Math.floor(
+          (now - trialEnd) /
+          BILLING_MS
+        );
+
+
+      const nextPayment =
+        trialEnd +
+        (
+          periodsPassed + 1
+        ) *
         BILLING_MS;
 
-    setCountdown(
-      format(nextPayment - now)
-    );
-  };
 
-  tick();
+      setCountdown(
+        formatTime(
+          nextPayment - now
+        )
+      );
 
-  const interval =
-    window.setInterval(
-      tick,
-      1000
-    );
+    };
 
-  return () => {
-    window.clearInterval(interval);
-  };
 
-}, [isPro, proStartedAt]);
+    /*
+     * Calculate immediately
+     */
 
+    updateTimer();
+
+
+    /*
+     * Update every second
+     */
+
+    const interval =
+      window.setInterval(
+        updateTimer,
+        1000
+      );
+
+
+    return () => {
+
+      window.clearInterval(
+        interval
+      );
+
+    };
+
+  }, [
+    isPro,
+    proStartedAt,
+  ]);
 
 
   /* =======================================================
@@ -245,7 +349,7 @@ useEffect(() => {
 
 
   /* =======================================================
-     SHOPIFY BILLING LINKS
+     BILLING LINKS
   ======================================================= */
 
   const freePlanUrl =
@@ -276,7 +380,7 @@ useEffect(() => {
 
 
   /* =======================================================
-     RETURN
+     PAGE
   ======================================================= */
 
   return (
@@ -307,6 +411,7 @@ useEffect(() => {
                 <div className="hero-badge">
                   ❤️‍🔥 Shopify LavaWishlist App
                 </div>
+
 
                 <div className="hero-pill">
 
@@ -535,6 +640,7 @@ useEffect(() => {
                             🔥
                           </span>
 
+
                           <Text as="p">
                             {item}
                           </Text>
@@ -553,6 +659,7 @@ useEffect(() => {
                         <Text as="p">
                           You are currently using the free plan
                         </Text>
+
 
                         <Text
                           as="p"
@@ -658,6 +765,7 @@ useEffect(() => {
                             🚀
                           </span>
 
+
                           <Text as="p">
                             {item}
                           </Text>
@@ -688,7 +796,7 @@ useEffect(() => {
 
 
                         {/* =================================================
-                            SUBSCRIPTION TIMER
+                            TIMER
                         ================================================= */}
 
                         <div className="subscription-notice">
@@ -938,33 +1046,39 @@ useEffect(() => {
                     label:
                       "Animated lava heart",
                   },
+
                   {
                     src: "/images/catalog.png",
                     label:
                       "Wishlist on collection pages",
                   },
+
                   {
                     src:
                       "/images/wishlist drawer.png",
                     label:
                       "Slide-out wishlist drawer",
                   },
+
                   {
                     src: "/images/icon.png",
                     label:
                       "Clean modern icons",
                   },
+
                   {
                     src: "/images/added.png",
                     label:
                       "Fast add to cart",
                   },
+
                   {
                     src:
                       "/images/header before.png",
                     label:
                       "Fits every theme",
                   },
+
                 ].map((img) => (
 
                   <div
@@ -1562,7 +1676,8 @@ useEffect(() => {
               width: 100%;
               padding: 18px;
               box-sizing: border-box;
-              border: 1px solid #f0c36d;
+              border:
+                1px solid #f0c36d;
               border-radius: 14px;
               background: #fff8e6;
               color: #333;
@@ -1671,7 +1786,7 @@ useEffect(() => {
 
 
             /* =================================================
-               SUBSCRIPTION TIMER
+               TIMER
             ================================================= */
 
             .subscription-notice {
