@@ -19,64 +19,145 @@ export const action = async ({
   );
   console.log("=================================");
 
- const subscription =
-  payload?.app_subscription;
+  const subscription =
+    payload?.app_subscription;
 
-const status =
-  subscription?.status;
+  const status =
+    subscription?.status;
 
-const planHandle =
-  subscription?.plan_handle;
+  const planHandle =
+    subscription?.plan_handle;
 
-const isPro =
-  status === "ACTIVE" &&
-  planHandle === "pro";
+  const isPro =
+    status === "ACTIVE" &&
+    planHandle === "pro";
 
-console.log(
-  "SUBSCRIPTION STATUS:",
-  status
-);
+  console.log(
+    "SUBSCRIPTION STATUS:",
+    status
+  );
 
-console.log(
-  "PLAN HANDLE:",
-  planHandle
-);
+  console.log(
+    "PLAN HANDLE:",
+    planHandle
+  );
 
-console.log(
-  "CALCULATED isPro:",
-  isPro
-);
+  console.log(
+    "CALCULATED isPro:",
+    isPro
+  );
 
- await prisma.shopStats.upsert({
-  where: {
-    shop,
-  },
+  /*
+   * =====================================================
+   * GET EXISTING SHOP STATS
+   * =====================================================
+   */
 
-  update: {
-    shopId:
-      payload.app_subscription
-        .admin_graphql_api_shop_id,
+  const existingStats =
+    await prisma.shopStats.findUnique({
+      where: {
+        shop,
+      },
+      select: {
+        proStartedAt: true,
+        isPro: true,
+      },
+    });
 
-    isPro,
-  },
+  /*
+   * =====================================================
+   * PRO START DATE
+   * =====================================================
+   *
+   * Save the date only when Pro becomes ACTIVE.
+   *
+   * If the date already exists, keep it.
+   * This prevents every webhook from resetting
+   * the trial countdown.
+   */
 
-  create: {
-    shop,
+ let proStartedAt: Date | null =
+  existingStats?.proStartedAt ?? null;
 
-    shopId:
-      payload.app_subscription
-        .admin_graphql_api_shop_id,
+  if (
+    isPro &&
+    !proStartedAt
+  ) {
 
-    isPro,
-    limitHits: 0,
-  },
-});
+    proStartedAt = new Date();
+
+    console.log(
+      "🔥 NEW PRO SUBSCRIPTION"
+    );
+
+    console.log(
+      "🔥 PRO STARTED AT:",
+      proStartedAt
+    );
+
+  }
+
+  /*
+   * =====================================================
+   * DATABASE UPDATE
+   * =====================================================
+   */
+
+  await prisma.shopStats.upsert({
+
+    where: {
+      shop,
+    },
+
+    update: {
+
+      shopId:
+        payload.app_subscription
+          .admin_graphql_api_shop_id,
+
+      isPro,
+
+      /*
+       * Only write proStartedAt when we have
+       * a real Pro activation date.
+       */
+
+      ...(proStartedAt
+        ? {
+            proStartedAt,
+          }
+        : {}),
+
+    },
+
+    create: {
+
+      shop,
+
+      shopId:
+        payload.app_subscription
+          .admin_graphql_api_shop_id,
+
+      isPro,
+
+      limitHits: 0,
+
+      proStartedAt:
+        isPro
+          ? new Date()
+          : null,
+
+    },
+
+  });
 
   console.log(
     "DATABASE UPDATED:",
     shop,
     "=> isPro:",
-    isPro
+    isPro,
+    "=> proStartedAt:",
+    proStartedAt
   );
 
   return new Response(null, {

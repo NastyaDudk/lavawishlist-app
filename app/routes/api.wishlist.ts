@@ -108,7 +108,7 @@ const store =
     ""
   );
 
-if (!isPro && count >= 3) {
+if (!isPro && count >= 50) {
 await prisma.shopStats.upsert({
 
   where: {

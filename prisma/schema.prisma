@@ -54,4 +54,6 @@ model ShopStats {
 
   updatedAt DateTime @updatedAt
 
+  proStartedAt DateTime?
+
 }
