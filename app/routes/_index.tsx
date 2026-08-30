@@ -129,6 +129,8 @@ export default function Index() {
   ======================================================= */
 
 useEffect(() => {
+
+  console.log("🔥🔥🔥 TIMER EFFECT IS RUNNING 🔥🔥🔥");
   console.log("🔥 TIMER EFFECT:", {
     isPro,
     proStartedAt,
