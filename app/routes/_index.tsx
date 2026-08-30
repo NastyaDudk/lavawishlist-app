@@ -229,16 +229,7 @@ useEffect(() => {
 
 }, [isPro, proStartedAt]);
 
-<div
-  style={{
-    padding: "15px",
-    background: "#fff3cd",
-    borderRadius: "10px",
-    marginBottom: "15px",
-  }}
->
-  TIMER TEST: {countdown || "EMPTY"}
-</div>
+
 
   /* =======================================================
      FORMAT COUNTDOWN
