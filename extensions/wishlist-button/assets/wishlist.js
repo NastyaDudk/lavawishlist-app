@@ -954,10 +954,22 @@ header,
   top:0;
   width:360px;
   height:100%;
+  box-sizing:border-box;
   background:#fff;
   transition:.3s;
   z-index:9999;
   padding:20px;
+  display:flex;
+  flex-direction:column;
+}
+
+#wl-items {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:6px;
+  padding-bottom:10px;
 }
 
 #wl-drawer.open {

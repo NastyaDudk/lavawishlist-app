@@ -108,7 +108,7 @@ const store =
     ""
   );
 
-if (!isPro && count >= 50) {
+if (!isPro && count >= 20) {
 await prisma.shopStats.upsert({
 
   where: {
@@ -135,7 +135,7 @@ await prisma.shopStats.upsert({
   return json(
     {
       error:
-        "You reached the free plan limit (50 wishlist saves).",
+        "You reached the free plan limit (20 wishlist saves).",
 
       upgrade: true,
 

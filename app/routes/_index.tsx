@@ -581,7 +581,7 @@ export default function Index() {
                     <div className="free-info">
 
                       Free includes
-                      50 saves/month
+                      20 saves/month
 
                     </div>
 
@@ -597,7 +597,7 @@ export default function Index() {
                     <BlockStack gap="200">
 
                       {[
-                        "Up to 50 wishlist saves",
+                        "Up to 20 wishlist saves",
                         "Theme App Embed",
                         "Mobile optimized",
                         "Works with all Shopify themes",
@@ -888,49 +888,33 @@ export default function Index() {
                               role="alert"
                             >
 
-                              <div className="cancel-warning-title">
-                                Cancel your Pro subscription?
-                              </div>
+                            <div className="cancel-warning-title">
+  Cancel your Pro subscription?
+</div>
 
+<div className="cancel-warning-text">
+  We recommend cancelling when you no longer need
+  the Pro plan, as switching to the Free Plan will
+  take effect immediately.
+</div>
 
-                              <div className="cancel-warning-text">
+<div className="cancel-warning-text">
+  Your Pro access will end immediately after
+  switching to the Free Plan.
+</div>
 
-                                We recommend cancelling at least{" "}
+<div className="cancel-warning-text">
+  Any billing adjustments or credits are handled
+  by Shopify according to its billing policy.
+</div>
 
-                                <strong>
-                                  1 day before your next
-                                  billing date.
-                                </strong>
-
-                              </div>
-
-
-                              <div className="cancel-warning-text">
-
-                                By switching to the Free Plan,
-                                your Pro access will end immediately.
-
-                                <strong>
-                                  {" "}
-                                  No refund will be issued
-                                  for the current billing period.
-                                </strong>
-
-                              </div>
-
-
-                              <div className="cancel-warning-text">
-
-                                After switching, your account
-                                will have the Free Plan limits,
-                                including{" "}
-
-                                <strong>
-                                  50 wishlist saves per month.
-                                </strong>
-
-                              </div>
-
+<div className="cancel-warning-text">
+  After switching, your account will have the Free Plan
+  limits, including{" "}
+  <strong>
+    20 wishlist saves per month.
+  </strong>
+</div>
 
                               <div className="cancel-warning-actions">
 
