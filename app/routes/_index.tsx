@@ -117,46 +117,26 @@ export default function Index() {
      TIMER STATE
   ======================================================= */
 
-  const [countdown, setCountdown] =
-    useState("");
+  const getTimerData = (
+    startedAt: string | null
+  ) => {
 
-  const [isTrial, setIsTrial] =
-    useState(false);
-
-
-  /* =======================================================
-     TRIAL TIMER ONLY
-  ======================================================= */
-
-  useEffect(() => {
-
-    if (
-      !isPro ||
-      !proStartedAt
-    ) {
-      setCountdown("");
-      setIsTrial(false);
-
-      return;
+    if (!startedAt) {
+      return {
+        countdown: "",
+        isTrial: false,
+      };
     }
 
     const start =
-      new Date(
-        proStartedAt
-      ).getTime();
+      new Date(startedAt).getTime();
 
-    if (
-      Number.isNaN(start)
-    ) {
-      setCountdown("");
-      setIsTrial(false);
-
-      return;
+    if (Number.isNaN(start)) {
+      return {
+        countdown: "",
+        isTrial: false,
+      };
     }
-
-    /*
-     * 3 DAY FREE TRIAL
-     */
 
     const TRIAL_MS =
       3 *
@@ -168,14 +148,14 @@ export default function Index() {
     const trialEnd =
       start + TRIAL_MS;
 
+    const now =
+      Date.now();
 
     const formatTime = (
       milliseconds: number
     ) => {
 
-      if (
-        milliseconds <= 0
-      ) {
+      if (milliseconds <= 0) {
         return "0d 0h 0m 0s";
       }
 
@@ -191,14 +171,12 @@ export default function Index() {
 
       const hours =
         Math.floor(
-          (totalSeconds % 86400) /
-          3600
+          (totalSeconds % 86400) / 3600
         );
 
       const minutes =
         Math.floor(
-          (totalSeconds % 3600) /
-          60
+          (totalSeconds % 3600) / 60
         );
 
       const seconds =
@@ -208,42 +186,90 @@ export default function Index() {
     };
 
 
-    const updateTimer = () => {
+    if (now < trialEnd) {
 
-      const remaining =
-        trialEnd - Date.now();
-
-
-      /*
-       * TRIAL ACTIVE
-       */
-
-      if (
-        remaining > 0
-      ) {
-
-        setIsTrial(true);
-
-        setCountdown(
+      return {
+        countdown:
           formatTime(
-            remaining
-          )
-        );
+            trialEnd - now
+          ),
 
-        return;
-      }
+        isTrial: true,
+      };
+
+    }
 
 
-      /*
-       * TRIAL ENDED
-       *
-       * Do NOT calculate the next
-       * monthly or yearly payment.
-       */
+    /*
+     * Trial ended.
+     *
+     * IMPORTANT:
+     * We do NOT calculate the next
+     * monthly or yearly payment.
+     */
 
-      setIsTrial(false);
+    return {
+      countdown: "",
+      isTrial: false,
+    };
+
+  };
+
+
+  const initialTimer =
+    getTimerData(
+      isPro
+        ? proStartedAt
+        : null
+    );
+
+
+  const [countdown, setCountdown] =
+    useState(
+      initialTimer.countdown
+    );
+
+
+  const [isTrial, setIsTrial] =
+    useState(
+      initialTimer.isTrial
+    );
+
+
+  /* =======================================================
+     TIMER
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (
+      !isPro ||
+      !proStartedAt
+    ) {
 
       setCountdown("");
+      setIsTrial(false);
+
+      return;
+    }
+
+
+    const updateTimer = () => {
+
+      const timer =
+        getTimerData(
+          proStartedAt
+        );
+
+
+      setCountdown(
+        timer.countdown
+      );
+
+
+      setIsTrial(
+        timer.isTrial
+      );
 
     };
 
@@ -731,7 +757,7 @@ export default function Index() {
 
 
                         {/* =================================================
-                            TRIAL TIMER ONLY
+                            TRIAL TIMER
                         ================================================= */}
 
                         {isTrial && countdown && (
@@ -824,39 +850,30 @@ export default function Index() {
 
 
                               <div className="cancel-warning-text">
-
                                 We recommend cancelling when you no longer need
                                 the Pro plan, as switching to the Free Plan will
                                 take effect immediately.
-
                               </div>
 
 
                               <div className="cancel-warning-text">
-
                                 Your Pro access will end immediately after
                                 switching to the Free Plan.
-
                               </div>
 
 
                               <div className="cancel-warning-text">
-
                                 Any billing adjustments or credits are handled
                                 by Shopify according to its billing policy.
-
                               </div>
 
 
                               <div className="cancel-warning-text">
-
                                 After switching, your account will have the
                                 Free Plan limits, including{" "}
-
                                 <strong>
                                   20 wishlist saves per month.
                                 </strong>
-
                               </div>
 
 
