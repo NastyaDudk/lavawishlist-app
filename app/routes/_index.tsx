@@ -27,8 +27,42 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { session } =
+  const { admin, session } =
     await authenticate.admin(request);
+
+  let subscription: {
+    createdAt: string | null;
+    currentPeriodEnd: string | null;
+    trialDays: number;
+  } | null = null;
+
+  try {
+    const response = await admin.graphql(
+      `#graphql
+        query CurrentAppSubscriptions {
+          currentAppInstallation {
+            activeSubscriptions {
+              createdAt
+              currentPeriodEnd
+              trialDays
+            }
+          }
+        }
+      `
+    );
+
+    const data = await response.json();
+
+    subscription =
+      data?.data?.currentAppInstallation?.activeSubscriptions?.[0] ??
+      null;
+
+  } catch (error) {
+    console.error(
+      "Failed to load Shopify subscription:",
+      error
+    );
+  }
 
   const stats =
     await prisma.shopStats.findUnique({
@@ -86,6 +120,15 @@ export async function loader({
       stats?.proStartedAt
         ? stats.proStartedAt.toISOString()
         : null,
+
+    subscriptionCreatedAt:
+      subscription?.createdAt ?? null,
+
+    subscriptionCurrentPeriodEnd:
+      subscription?.currentPeriodEnd ?? null,
+
+    subscriptionTrialDays:
+      subscription?.trialDays ?? 0,
   };
 }
 
@@ -103,6 +146,9 @@ export default function Index() {
     cancellationScheduled,
     cancellationDate,
     proStartedAt,
+    subscriptionCreatedAt,
+    subscriptionCurrentPeriodEnd,
+    subscriptionTrialDays,
   } = useLoaderData<{
     shop: string;
     limitHits: number;
@@ -110,185 +156,158 @@ export default function Index() {
     cancellationScheduled: boolean;
     cancellationDate: string | null;
     proStartedAt: string | null;
+    subscriptionCreatedAt: string | null;
+    subscriptionCurrentPeriodEnd: string | null;
+    subscriptionTrialDays: number;
   }>();
 
   /* =======================================================
      TIMER STATE
   ======================================================= */
 
-  const getTimerData = (
-    startedAt: string | null
-  ) => {
-
-    if (!startedAt) {
-      return {
-        countdown: "",
-        isTrial: false,
-      };
-    }
-
-    const start =
-      new Date(startedAt).getTime();
-
-    if (Number.isNaN(start)) {
-      return {
-        countdown: "",
-        isTrial: false,
-      };
-    }
-
-    const TRIAL_MS =
-      3 *
-      24 *
-      60 *
-      60 *
-      1000;
-
-    const BILLING_MS =
-      30 *
-      24 *
-      60 *
-      60 *
-      1000;
-
-    const trialEnd =
-      start + TRIAL_MS;
-
-    const now =
-      Date.now();
-
-    const formatTime = (
-      milliseconds: number
-    ) => {
-
-      if (milliseconds <= 0) {
-        return "0d 0h 0m 0s";
-      }
-
-      const totalSeconds =
-        Math.floor(
-          milliseconds / 1000
-        );
-
-      const days =
-        Math.floor(
-          totalSeconds / 86400
-        );
-
-      const hours =
-        Math.floor(
-          (totalSeconds % 86400) / 3600
-        );
-
-      const minutes =
-        Math.floor(
-          (totalSeconds % 3600) / 60
-        );
-
-      const seconds =
-        totalSeconds % 60;
-
-      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-    };
-
-
-    if (now < trialEnd) {
-
-      return {
-        countdown:
-          formatTime(
-            trialEnd - now
-          ),
-
-        isTrial: true,
-      };
-
-    }
-
-
-    const periodsPassed =
-      Math.floor(
-        (now - trialEnd) /
-        BILLING_MS
-      );
-
-
-    const nextPayment =
-      trialEnd +
-      (periodsPassed + 1) *
-      BILLING_MS;
-
-
-    return {
-      countdown:
-        formatTime(
-          nextPayment - now
-        ),
-
-      isTrial: false,
-    };
-
-  };
-
-
-  const initialTimer =
-    getTimerData(
-      isPro
-        ? proStartedAt
-        : null
-    );
-
-
   const [countdown, setCountdown] =
-    useState(
-      initialTimer.countdown
-    );
-
+    useState("");
 
   const [isTrial, setIsTrial] =
-    useState(
-      initialTimer.isTrial
-    );
+    useState(false);
 
 
   /* =======================================================
      TIMER
+     Uses Shopify's real subscription period end.
   ======================================================= */
+
+  const formatTime = (
+    milliseconds: number
+  ) => {
+
+    if (milliseconds <= 0) {
+      return "0d 0h 0m 0s";
+    }
+
+    const totalSeconds =
+      Math.floor(
+        milliseconds / 1000
+      );
+
+    const days =
+      Math.floor(
+        totalSeconds / 86400
+      );
+
+    const hours =
+      Math.floor(
+        (totalSeconds % 86400) / 3600
+      );
+
+    const minutes =
+      Math.floor(
+        (totalSeconds % 3600) / 60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
+
 
   useEffect(() => {
 
     if (
       !isPro ||
-      !proStartedAt
+      !subscriptionCreatedAt ||
+      !subscriptionCurrentPeriodEnd
     ) {
-
       setCountdown("");
       setIsTrial(false);
-
       return;
     }
+
+    const subscriptionStart =
+      new Date(
+        subscriptionCreatedAt
+      ).getTime();
+
+    const periodEnd =
+      new Date(
+        subscriptionCurrentPeriodEnd
+      ).getTime();
+
+    if (
+      Number.isNaN(subscriptionStart) ||
+      Number.isNaN(periodEnd)
+    ) {
+      setCountdown("");
+      setIsTrial(false);
+      return;
+    }
+
+    const trialDays =
+      subscriptionTrialDays ?? 0;
+
+    const trialEnd =
+      subscriptionStart +
+      trialDays *
+        24 *
+        60 *
+        60 *
+        1000;
 
 
     const updateTimer = () => {
 
-      const timer =
-        getTimerData(
-          proStartedAt
+      const now = Date.now();
+
+
+      /*
+       * ================================
+       * FREE TRIAL
+       * ================================
+       */
+
+      if (
+        trialDays > 0 &&
+        now < trialEnd
+      ) {
+
+        setIsTrial(true);
+
+        setCountdown(
+          formatTime(
+            trialEnd - now
+          )
         );
 
-      setCountdown(
-        timer.countdown
-      );
+        return;
+      }
 
-      setIsTrial(
-        timer.isTrial
+
+      /*
+       * ================================
+       * CURRENT BILLING PERIOD
+       * ================================
+       *
+       * Shopify supplies the real
+       * currentPeriodEnd, so this works
+       * for both monthly and yearly plans.
+       */
+
+      setIsTrial(false);
+
+      setCountdown(
+        formatTime(
+          Math.max(
+            0,
+            periodEnd - now
+          )
+        )
       );
 
     };
 
 
     updateTimer();
-
 
     const interval =
       window.setInterval(
@@ -307,8 +326,11 @@ export default function Index() {
 
   }, [
     isPro,
-    proStartedAt,
+    subscriptionCreatedAt,
+    subscriptionCurrentPeriodEnd,
+    subscriptionTrialDays,
   ]);
+
 
   /* =======================================================
      SHOP NAME
