@@ -30,6 +30,30 @@ export async function loader({
   const { admin, session } =
     await authenticate.admin(request);
 
+const response = await admin.graphql(
+  `#graphql
+    query CurrentAppSubscriptions {
+      currentAppInstallation {
+        activeSubscriptions {
+          id
+          name
+          status
+          createdAt
+          currentPeriodEnd
+          trialDays
+        }
+      }
+    }
+  `
+);
+
+const data = await response.json();
+
+console.log(
+  "🔥 SHOPIFY GRAPHQL FULL RESPONSE:",
+  JSON.stringify(data, null, 2)
+);
+
   let subscription: {
     createdAt: string | null;
     currentPeriodEnd: string | null;
