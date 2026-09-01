@@ -13,39 +13,49 @@ export const action = async ({
   console.log("SUBSCRIPTION WEBHOOK");
   console.log("TOPIC:", topic);
   console.log("SHOP:", shop);
+
   console.log(
     "PAYLOAD:",
     JSON.stringify(payload, null, 2)
   );
+
   console.log("=================================");
+
 
   const subscription =
     payload?.app_subscription;
 
+
   const status =
     subscription?.status;
+
 
   const planHandle =
     subscription?.plan_handle;
 
+
   const isPro =
     status === "ACTIVE" &&
     planHandle === "pro";
+
 
   console.log(
     "SUBSCRIPTION STATUS:",
     status
   );
 
+
   console.log(
     "PLAN HANDLE:",
     planHandle
   );
 
+
   console.log(
     "CALCULATED isPro:",
     isPro
   );
+
 
   /*
    * =====================================================
@@ -55,47 +65,107 @@ export const action = async ({
 
   const existingStats =
     await prisma.shopStats.findUnique({
+
       where: {
         shop,
       },
+
       select: {
+
         proStartedAt: true,
+
         isPro: true,
+
+        trialUsed: true,
+
       },
+
     });
+
 
   /*
    * =====================================================
-   * PRO START DATE
+   * EXISTING VALUES
    * =====================================================
-   *
-   * Save the date only when Pro becomes ACTIVE.
-   *
-   * If the date already exists, keep it.
-   * This prevents every webhook from resetting
-   * the trial countdown.
    */
 
- let proStartedAt: Date | null =
-  existingStats?.proStartedAt ?? null;
+  const wasPro =
+    existingStats?.isPro ?? false;
+
+
+  let proStartedAt =
+    existingStats?.proStartedAt ?? null;
+
+
+  let trialUsed =
+    existingStats?.trialUsed ?? false;
+
+
+  /*
+   * =====================================================
+   * NEW PRO SUBSCRIPTION
+   * =====================================================
+   *
+   * We only start the trial when the shop changes
+   * from NOT PRO → PRO and the trial has never
+   * been used before.
+   */
 
   if (
     isPro &&
-    !proStartedAt
+    !wasPro
   ) {
 
-    proStartedAt = new Date();
+    /*
+     * FIRST EVER PRO ACTIVATION
+     */
 
-    console.log(
-      "🔥 NEW PRO SUBSCRIPTION"
-    );
+    if (!trialUsed) {
 
-    console.log(
-      "🔥 PRO STARTED AT:",
-      proStartedAt
-    );
+      proStartedAt =
+        new Date();
+
+      trialUsed =
+        true;
+
+
+      console.log(
+        "🔥 NEW PRO SUBSCRIPTION"
+      );
+
+
+      console.log(
+        "🔥 3-DAY TRIAL STARTED AT:",
+        proStartedAt
+      );
+
+    }
+
+
+    /*
+     * RETURNING PRO CUSTOMER
+     */
+
+    else {
+
+      console.log(
+        "💳 PRO REACTIVATED"
+      );
+
+
+      console.log(
+        "🚫 TRIAL ALREADY USED"
+      );
+
+
+      console.log(
+        "🚫 NO NEW 3-DAY TRIAL"
+      );
+
+    }
 
   }
+
 
   /*
    * =====================================================
@@ -109,17 +179,24 @@ export const action = async ({
       shop,
     },
 
+
     update: {
 
       shopId:
-        payload.app_subscription
-          .admin_graphql_api_shop_id,
+        subscription
+          ?.admin_graphql_api_shop_id
+          ?? undefined,
+
 
       isPro,
 
+
+      trialUsed,
+
+
       /*
-       * Only write proStartedAt when we have
-       * a real Pro activation date.
+       * Only update proStartedAt when
+       * the first trial was actually started.
        */
 
       ...(proStartedAt
@@ -130,37 +207,89 @@ export const action = async ({
 
     },
 
+
     create: {
 
       shop,
 
+
       shopId:
-        payload.app_subscription
-          .admin_graphql_api_shop_id,
+        subscription
+          ?.admin_graphql_api_shop_id
+          ?? null,
+
 
       isPro,
 
+
       limitHits: 0,
+
+
+      cancellationScheduled:
+        false,
+
+
+      cancellationDate:
+        null,
+
+
+      /*
+       * First Pro activation gets
+       * the trial start date.
+       */
 
       proStartedAt:
         isPro
           ? new Date()
           : null,
 
+
+      /*
+       * If the shop is created by an
+       * active Pro subscription, the
+       * trial is considered used.
+       */
+
+      trialUsed:
+        isPro,
+
     },
 
   });
 
+
+  /*
+   * =====================================================
+   * LOG FINAL STATE
+   * =====================================================
+   */
+
   console.log(
     "DATABASE UPDATED:",
-    shop,
+    shop
+  );
+
+
+  console.log(
     "=> isPro:",
-    isPro,
+    isPro
+  );
+
+
+  console.log(
     "=> proStartedAt:",
     proStartedAt
   );
 
+
+  console.log(
+    "=> trialUsed:",
+    trialUsed
+  );
+
+
   return new Response(null, {
     status: 200,
   });
+
 };

@@ -151,6 +151,7 @@ export default function Index() {
     const now =
       Date.now();
 
+
     const formatTime = (
       milliseconds: number
     ) => {
@@ -203,9 +204,10 @@ export default function Index() {
     /*
      * Trial ended.
      *
-     * IMPORTANT:
-     * We do NOT calculate the next
-     * monthly or yearly payment.
+     * We intentionally do not calculate
+     * the next monthly or yearly renewal here.
+     *
+     * The real renewal date must come from Shopify.
      */
 
     return {
@@ -822,7 +824,13 @@ export default function Index() {
 
                           </div>
 
-                        ) : (
+                        ) : isTrial ? (
+
+                          /*
+                           * DURING THE 3-DAY TRIAL
+                           *
+                           * Cancellation is available.
+                           */
 
                           <BlockStack gap="200">
 
@@ -850,27 +858,52 @@ export default function Index() {
 
 
                               <div className="cancel-warning-text">
-                                We recommend cancelling when you no longer need
-                                the Pro plan, as switching to the Free Plan will
-                                take effect immediately.
+                                You can cancel your Pro subscription at any
+                                time during your{" "}
+                                <strong>
+                                  3-day free trial
+                                </strong>{" "}
+                                if you decide that Lava Favorites is not right
+                                for your store.
                               </div>
 
 
                               <div className="cancel-warning-text">
-                                Your Pro access will end immediately after
-                                switching to the Free Plan.
+                                If you cancel during the trial, you will not be
+                                charged for the Pro subscription.
                               </div>
 
 
                               <div className="cancel-warning-text">
-                                Any billing adjustments or credits are handled
-                                by Shopify according to its billing policy.
+                                If you enjoy Pro and continue using it after
+                                the trial, your subscription will continue
+                                according to the billing plan you selected
+                                in Shopify.
                               </div>
 
 
                               <div className="cancel-warning-text">
-                                After switching, your account will have the
-                                Free Plan limits, including{" "}
+                                After the free trial ends, the cancellation
+                                option will become available again{" "}
+                                <strong>
+                                  24 hours before your next renewal
+                                </strong>
+                                , giving you the opportunity to cancel before
+                                the next billing period if the previous month
+                                was not useful for your store.
+                              </div>
+
+
+                              <div className="cancel-warning-text">
+                                Any billing adjustments, credits, refunds,
+                                or prorated charges are handled by Shopify
+                                according to its billing policies.
+                              </div>
+
+
+                              <div className="cancel-warning-text">
+                                If you switch to the Free Plan, your account
+                                will use the Free Plan limits, including{" "}
                                 <strong>
                                   20 wishlist saves per month.
                                 </strong>
@@ -892,9 +925,59 @@ export default function Index() {
                                   target="_top"
                                   className="confirm-cancel-btn"
                                 >
-                                  Continue to Free Plan
+                                  Cancel & Continue to Free Plan
                                 </a>
 
+                              </div>
+
+                            </div>
+
+                          </BlockStack>
+
+                        ) : (
+
+                          /*
+                           * AFTER THE 3-DAY TRIAL
+                           *
+                           * The real Shopify renewal date is not yet
+                           * available in this loader, so cancellation
+                           * remains disabled here.
+                           */
+
+                          <BlockStack gap="200">
+
+                            <div className="cancel-button-layer">
+
+                              <span
+                                className="cancel-subscription-link cancel-disabled"
+                                aria-disabled="true"
+                              >
+                                Cancel subscription
+                              </span>
+
+                            </div>
+
+
+                            <div className="cancel-unavailable-note">
+
+                              <div className="cancel-unavailable-title">
+                                Cancellation is currently unavailable
+                              </div>
+
+
+                              <div className="cancel-unavailable-text">
+                                Your 3-day free trial has ended and your Pro
+                                subscription is currently active.
+                              </div>
+
+
+                              <div className="cancel-unavailable-text">
+                                The cancellation option will become available{" "}
+                                <strong>
+                                  24 hours before your next renewal
+                                </strong>
+                                , so you can cancel if the previous billing
+                                period was not useful for your store.
                               </div>
 
                             </div>
@@ -1585,6 +1668,42 @@ export default function Index() {
 
             .cancel-subscription-link:hover {
               color: #374151;
+            }
+
+
+            .cancel-disabled {
+              color: #b5b5b5;
+              cursor: not-allowed;
+              pointer-events: none;
+              text-decoration-color: #d1d5db;
+            }
+
+
+            .cancel-unavailable-note {
+              width: 100%;
+              box-sizing: border-box;
+              padding: 14px;
+              border-radius: 14px;
+              background: #f6f6f7;
+              border:
+                1px solid #e1e3e5;
+              text-align: center;
+            }
+
+
+            .cancel-unavailable-title {
+              margin-bottom: 7px;
+              color: #333;
+              font-size: 13px;
+              font-weight: 700;
+            }
+
+
+            .cancel-unavailable-text {
+              margin-top: 6px;
+              color: #6b7280;
+              font-size: 12px;
+              line-height: 1.5;
             }
 
 

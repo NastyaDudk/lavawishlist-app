@@ -56,4 +56,6 @@ model ShopStats {
 
   proStartedAt DateTime?
 
+  trialUsed Boolean @default(false)
+
 }
