@@ -27,61 +27,8 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { admin, session } =
+  const { session } =
     await authenticate.admin(request);
-
-    const response = await admin.graphql(
-  `#graphql
-    query CheckAppScopes {
-      currentAppInstallation {
-        accessScopes {
-          handle
-        }
-      }
-    }
-  `
-);
-
-const data = await response.json();
-
-console.log(
-  "🔥 SHOPIFY ACCESS SCOPES:",
-  JSON.stringify(data, null, 2)
-);
-
-  let subscription: {
-    createdAt: string | null;
-    currentPeriodEnd: string | null;
-    trialDays: number;
-  } | null = null;
-
-  try {
-    const response = await admin.graphql(
-      `#graphql
-        query CurrentAppSubscriptions {
-          currentAppInstallation {
-            activeSubscriptions {
-              createdAt
-              currentPeriodEnd
-              trialDays
-            }
-          }
-        }
-      `
-    );
-
-    const data = await response.json();
-
-    subscription =
-      data?.data?.currentAppInstallation?.activeSubscriptions?.[0] ??
-      null;
-
-  } catch (error) {
-    console.error(
-      "Failed to load Shopify subscription:",
-      error
-    );
-  }
 
   const stats =
     await prisma.shopStats.findUnique({
@@ -139,15 +86,6 @@ console.log(
       stats?.proStartedAt
         ? stats.proStartedAt.toISOString()
         : null,
-
-    subscriptionCreatedAt:
-      subscription?.createdAt ?? null,
-
-    subscriptionCurrentPeriodEnd:
-      subscription?.currentPeriodEnd ?? null,
-
-    subscriptionTrialDays:
-      subscription?.trialDays ?? 0,
   };
 }
 
@@ -165,9 +103,6 @@ export default function Index() {
     cancellationScheduled,
     cancellationDate,
     proStartedAt,
-    subscriptionCreatedAt,
-    subscriptionCurrentPeriodEnd,
-    subscriptionTrialDays,
   } = useLoaderData<{
     shop: string;
     limitHits: number;
@@ -175,10 +110,8 @@ export default function Index() {
     cancellationScheduled: boolean;
     cancellationDate: string | null;
     proStartedAt: string | null;
-    subscriptionCreatedAt: string | null;
-    subscriptionCurrentPeriodEnd: string | null;
-    subscriptionTrialDays: number;
   }>();
+
 
   /* =======================================================
      TIMER STATE
@@ -192,104 +125,108 @@ export default function Index() {
 
 
   /* =======================================================
-     TIMER
-     Uses Shopify's real subscription period end.
+     TRIAL TIMER ONLY
   ======================================================= */
-
-  const formatTime = (
-    milliseconds: number
-  ) => {
-
-    if (milliseconds <= 0) {
-      return "0d 0h 0m 0s";
-    }
-
-    const totalSeconds =
-      Math.floor(
-        milliseconds / 1000
-      );
-
-    const days =
-      Math.floor(
-        totalSeconds / 86400
-      );
-
-    const hours =
-      Math.floor(
-        (totalSeconds % 86400) / 3600
-      );
-
-    const minutes =
-      Math.floor(
-        (totalSeconds % 3600) / 60
-      );
-
-    const seconds =
-      totalSeconds % 60;
-
-    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  };
-
 
   useEffect(() => {
 
     if (
       !isPro ||
-      !subscriptionCreatedAt
+      !proStartedAt
     ) {
       setCountdown("");
       setIsTrial(false);
+
       return;
     }
 
-    const subscriptionStart =
+    const start =
       new Date(
-        subscriptionCreatedAt
+        proStartedAt
       ).getTime();
 
     if (
-      Number.isNaN(subscriptionStart)
+      Number.isNaN(start)
     ) {
       setCountdown("");
       setIsTrial(false);
+
       return;
     }
 
-    const trialDays =
-      subscriptionTrialDays ?? 0;
+    /*
+     * 3 DAY FREE TRIAL
+     */
+
+    const TRIAL_MS =
+      3 *
+      24 *
+      60 *
+      60 *
+      1000;
 
     const trialEnd =
-      subscriptionStart +
-      trialDays *
-        24 *
-        60 *
-        60 *
-        1000;
+      start + TRIAL_MS;
+
+
+    const formatTime = (
+      milliseconds: number
+    ) => {
+
+      if (
+        milliseconds <= 0
+      ) {
+        return "0d 0h 0m 0s";
+      }
+
+      const totalSeconds =
+        Math.floor(
+          milliseconds / 1000
+        );
+
+      const days =
+        Math.floor(
+          totalSeconds / 86400
+        );
+
+      const hours =
+        Math.floor(
+          (totalSeconds % 86400) /
+          3600
+        );
+
+      const minutes =
+        Math.floor(
+          (totalSeconds % 3600) /
+          60
+        );
+
+      const seconds =
+        totalSeconds % 60;
+
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    };
+
 
     const updateTimer = () => {
 
-      const now = Date.now();
+      const remaining =
+        trialEnd - Date.now();
+
 
       /*
-       * ================================
-       * FREE TRIAL
-       * ================================
-       *
-       * During the trial Shopify may return
-       * currentPeriodEnd as null. Therefore
-       * the trial timer must not depend on it.
+       * TRIAL ACTIVE
        */
 
       if (
-        trialDays > 0 &&
-        now < trialEnd
+        remaining > 0
       ) {
 
         setIsTrial(true);
 
         setCountdown(
           formatTime(
-            trialEnd - now
+            remaining
           )
         );
 
@@ -298,102 +235,28 @@ export default function Index() {
 
 
       /*
-       * ================================
-       * CANCELLATION
-       * ================================
+       * TRIAL ENDED
        *
-       * If cancellation was scheduled,
-       * use the exact cancellation date.
+       * Do NOT calculate the next
+       * monthly or yearly payment.
        */
 
-      if (
-        cancellationScheduled &&
-        cancellationDate
-      ) {
-
-        const cancellationEnd =
-          new Date(
-            cancellationDate
-          ).getTime();
-
-        if (
-          !Number.isNaN(
-            cancellationEnd
-          )
-        ) {
-
-          setIsTrial(false);
-
-          setCountdown(
-            formatTime(
-              Math.max(
-                0,
-                cancellationEnd - now
-              )
-            )
-          );
-
-          return;
-        }
-      }
-
-
-      /*
-       * ================================
-       * CURRENT BILLING PERIOD
-       * ================================
-       *
-       * Shopify supplies the real
-       * currentPeriodEnd. This works for
-       * both 30-day and yearly plans.
-       */
-
-      if (
-        subscriptionCurrentPeriodEnd
-      ) {
-
-        const periodEnd =
-          new Date(
-            subscriptionCurrentPeriodEnd
-          ).getTime();
-
-        if (
-          !Number.isNaN(periodEnd)
-        ) {
-
-          setIsTrial(false);
-
-          setCountdown(
-            formatTime(
-              Math.max(
-                0,
-                periodEnd - now
-              )
-            )
-          );
-
-          return;
-        }
-      }
-
-
-      /*
-       * No valid billing date available.
-       */
+      setIsTrial(false);
 
       setCountdown("");
-      setIsTrial(false);
 
     };
 
 
     updateTimer();
 
+
     const interval =
       window.setInterval(
         updateTimer,
         1000
       );
+
 
     return () => {
 
@@ -405,11 +268,7 @@ export default function Index() {
 
   }, [
     isPro,
-    subscriptionCreatedAt,
-    subscriptionCurrentPeriodEnd,
-    subscriptionTrialDays,
-    cancellationScheduled,
-    cancellationDate,
+    proStartedAt,
   ]);
 
 
@@ -678,7 +537,7 @@ export default function Index() {
 
 
                     {/* =================================================
-                        50 SAVES
+                        20 SAVES
                     ================================================= */}
 
                     <div className="free-info">
@@ -872,67 +731,35 @@ export default function Index() {
 
 
                         {/* =================================================
-                            TIMER
+                            TRIAL TIMER ONLY
                         ================================================= */}
 
-                        <div className="subscription-notice">
+                        {isTrial && countdown && (
 
-                          <div className="subscription-notice-title">
+                          <div className="subscription-notice">
 
-                            {isTrial
-                              ? "🔥 Free trial active"
-                              : cancellationScheduled
-                                ? "⚠️ Subscription cancellation scheduled"
-                                : "💳 Pro subscription active"}
+                            <div className="subscription-notice-title">
+                              🔥 Free trial active
+                            </div>
+
+
+                            <div className="subscription-notice-label">
+                              Your free trial ends in:
+                            </div>
+
+
+                            <div className="subscription-notice-countdown">
+                              {countdown}
+                            </div>
+
+
+                            <div className="subscription-notice-text">
+                              You won&apos;t be charged before the trial ends.
+                            </div>
 
                           </div>
 
-
-                         {isPro && proStartedAt ? (
-
-                            <>
-
-                              <div className="subscription-notice-label">
-
-                                {isTrial
-                                  ? "Your free trial ends in:"
-                                  : cancellationScheduled
-                                    ? "Your Pro access ends in:"
-                                    : "Next payment in:"}
-
-                              </div>
-
-
-                              <div className="subscription-notice-countdown">
-
-                                {countdown}
-
-                              </div>
-
-
-                              <div className="subscription-notice-text">
-
-                                {isTrial
-                                  ? "You won't be charged before the trial ends."
-                                  : cancellationScheduled
-                                    ? "Your Pro plan remains active until the end of the current billing period."
-                                    : "Your next subscription payment will be charged after this period."}
-
-                              </div>
-
-                            </>
-
-                          ) : (
-
-                            <div className="subscription-notice-text">
-
-                              Subscription information is being loaded...
-
-                            </div>
-
-                          )}
-
-                        </div>
+                        )}
 
 
                         {/* =================================================
@@ -991,33 +818,47 @@ export default function Index() {
                               role="alert"
                             >
 
-                            <div className="cancel-warning-title">
-  Cancel your Pro subscription?
-</div>
+                              <div className="cancel-warning-title">
+                                Cancel your Pro subscription?
+                              </div>
 
-<div className="cancel-warning-text">
-  We recommend cancelling when you no longer need
-  the Pro plan, as switching to the Free Plan will
-  take effect immediately.
-</div>
 
-<div className="cancel-warning-text">
-  Your Pro access will end immediately after
-  switching to the Free Plan.
-</div>
+                              <div className="cancel-warning-text">
 
-<div className="cancel-warning-text">
-  Any billing adjustments or credits are handled
-  by Shopify according to its billing policy.
-</div>
+                                We recommend cancelling when you no longer need
+                                the Pro plan, as switching to the Free Plan will
+                                take effect immediately.
 
-<div className="cancel-warning-text">
-  After switching, your account will have the Free Plan
-  limits, including{" "}
-  <strong>
-    20 wishlist saves per month.
-  </strong>
-</div>
+                              </div>
+
+
+                              <div className="cancel-warning-text">
+
+                                Your Pro access will end immediately after
+                                switching to the Free Plan.
+
+                              </div>
+
+
+                              <div className="cancel-warning-text">
+
+                                Any billing adjustments or credits are handled
+                                by Shopify according to its billing policy.
+
+                              </div>
+
+
+                              <div className="cancel-warning-text">
+
+                                After switching, your account will have the
+                                Free Plan limits, including{" "}
+
+                                <strong>
+                                  20 wishlist saves per month.
+                                </strong>
+
+                              </div>
+
 
                               <div className="cancel-warning-actions">
 
