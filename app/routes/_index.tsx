@@ -216,8 +216,7 @@ export default function Index() {
 
     if (
       !isPro ||
-      !subscriptionCreatedAt ||
-      !subscriptionCurrentPeriodEnd
+      !subscriptionCreatedAt
     ) {
       setCountdown("");
       setIsTrial(false);
@@ -229,14 +228,8 @@ export default function Index() {
         subscriptionCreatedAt
       ).getTime();
 
-    const periodEnd =
-      new Date(
-        subscriptionCurrentPeriodEnd
-      ).getTime();
-
     if (
-      Number.isNaN(subscriptionStart) ||
-      Number.isNaN(periodEnd)
+      Number.isNaN(subscriptionStart)
     ) {
       setCountdown("");
       setIsTrial(false);
@@ -254,16 +247,18 @@ export default function Index() {
         60 *
         1000;
 
-
     const updateTimer = () => {
 
       const now = Date.now();
-
 
       /*
        * ================================
        * FREE TRIAL
        * ================================
+       *
+       * During the trial Shopify may return
+       * currentPeriodEnd as null. Therefore
+       * the trial timer must not depend on it.
        */
 
       if (
@@ -285,24 +280,90 @@ export default function Index() {
 
       /*
        * ================================
+       * CANCELLATION
+       * ================================
+       *
+       * If cancellation was scheduled,
+       * use the exact cancellation date.
+       */
+
+      if (
+        cancellationScheduled &&
+        cancellationDate
+      ) {
+
+        const cancellationEnd =
+          new Date(
+            cancellationDate
+          ).getTime();
+
+        if (
+          !Number.isNaN(
+            cancellationEnd
+          )
+        ) {
+
+          setIsTrial(false);
+
+          setCountdown(
+            formatTime(
+              Math.max(
+                0,
+                cancellationEnd - now
+              )
+            )
+          );
+
+          return;
+        }
+      }
+
+
+      /*
+       * ================================
        * CURRENT BILLING PERIOD
        * ================================
        *
        * Shopify supplies the real
-       * currentPeriodEnd, so this works
-       * for both monthly and yearly plans.
+       * currentPeriodEnd. This works for
+       * both 30-day and yearly plans.
        */
 
-      setIsTrial(false);
+      if (
+        subscriptionCurrentPeriodEnd
+      ) {
 
-      setCountdown(
-        formatTime(
-          Math.max(
-            0,
-            periodEnd - now
-          )
-        )
-      );
+        const periodEnd =
+          new Date(
+            subscriptionCurrentPeriodEnd
+          ).getTime();
+
+        if (
+          !Number.isNaN(periodEnd)
+        ) {
+
+          setIsTrial(false);
+
+          setCountdown(
+            formatTime(
+              Math.max(
+                0,
+                periodEnd - now
+              )
+            )
+          );
+
+          return;
+        }
+      }
+
+
+      /*
+       * No valid billing date available.
+       */
+
+      setCountdown("");
+      setIsTrial(false);
 
     };
 
@@ -314,7 +375,6 @@ export default function Index() {
         updateTimer,
         1000
       );
-
 
     return () => {
 
@@ -329,6 +389,8 @@ export default function Index() {
     subscriptionCreatedAt,
     subscriptionCurrentPeriodEnd,
     subscriptionTrialDays,
+    cancellationScheduled,
+    cancellationDate,
   ]);
 
 
