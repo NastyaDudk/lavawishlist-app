@@ -30,17 +30,12 @@ export async function loader({
   const { admin, session } =
     await authenticate.admin(request);
 
-const response = await admin.graphql(
+    const response = await admin.graphql(
   `#graphql
-    query CurrentAppSubscriptions {
+    query CheckAppScopes {
       currentAppInstallation {
-        activeSubscriptions {
-          id
-          name
-          status
-          createdAt
-          currentPeriodEnd
-          trialDays
+        accessScopes {
+          handle
         }
       }
     }
@@ -50,7 +45,7 @@ const response = await admin.graphql(
 const data = await response.json();
 
 console.log(
-  "🔥 SHOPIFY GRAPHQL FULL RESPONSE:",
+  "🔥 SHOPIFY ACCESS SCOPES:",
   JSON.stringify(data, null, 2)
 );
 
