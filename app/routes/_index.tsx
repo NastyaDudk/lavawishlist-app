@@ -695,7 +695,7 @@ export default function Index() {
                       as="h2"
                       variant="heading2xl"
                     >
-                      $9.99/mo
+                      $9.99/month
                     </Text>
 
 
@@ -925,7 +925,7 @@ export default function Index() {
                                   target="_top"
                                   className="confirm-cancel-btn"
                                 >
-                                  Cancel & Continue to Free Plan
+                                  Cancel Pro
                                 </a>
 
                               </div>

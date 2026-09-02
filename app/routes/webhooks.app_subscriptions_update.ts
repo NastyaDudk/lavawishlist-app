@@ -122,8 +122,18 @@ export const action = async ({
 
     if (!trialUsed) {
 
+      /*
+       * Use Shopify's subscription creation date
+       * instead of the webhook processing time.
+       */
+
       proStartedAt =
-        new Date();
+        subscription?.created_at
+          ? new Date(
+              subscription.created_at
+            )
+          : new Date();
+
 
       trialUsed =
         true;
@@ -196,7 +206,7 @@ export const action = async ({
 
       /*
        * Only update proStartedAt when
-       * the first trial was actually started.
+       * a new trial was actually started.
        */
 
       ...(proStartedAt
@@ -234,20 +244,25 @@ export const action = async ({
 
 
       /*
-       * First Pro activation gets
-       * the trial start date.
+       * Use Shopify's subscription creation
+       * date for the initial trial.
        */
 
       proStartedAt:
         isPro
-          ? new Date()
+          ? (
+              subscription?.created_at
+                ? new Date(
+                    subscription.created_at
+                  )
+                : new Date()
+            )
           : null,
 
 
       /*
-       * If the shop is created by an
-       * active Pro subscription, the
-       * trial is considered used.
+       * A newly created active Pro subscription
+       * has already used its one-time trial.
        */
 
       trialUsed:
@@ -260,7 +275,7 @@ export const action = async ({
 
   /*
    * =====================================================
-   * LOG FINAL STATE
+   * FINAL STATE
    * =====================================================
    */
 

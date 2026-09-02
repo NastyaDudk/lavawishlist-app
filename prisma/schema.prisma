@@ -58,4 +58,8 @@ model ShopStats {
 
   trialUsed Boolean @default(false)
 
+  billingInterval String?
+
+  currentPeriodEnd DateTime?
+
 }
