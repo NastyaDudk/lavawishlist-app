@@ -27,8 +27,16 @@ export async function loader({
   request,
 }: LoaderFunctionArgs) {
 
-  const { session } =
-    await authenticate.admin(request);
+  const { session, admin } =
+  await authenticate.admin(request);
+
+  await admin.graphql(`
+  {
+    shop {
+      name
+    }
+  }
+`);
 
   const stats =
     await prisma.shopStats.findUnique({
