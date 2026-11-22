@@ -37,6 +37,12 @@ export const shopify = shopifyApp({
   isEmbeddedApp: true,
 
   useOnlineTokens: false,
+
+  future: {
+
+    expiringOfflineAccessTokens: true,
+
+  },
 });
 
 export const authenticate =
